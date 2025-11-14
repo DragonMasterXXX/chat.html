@@ -74,12 +74,36 @@
       background: rgba(255, 69, 0, 0.2);
       box-shadow: 0 0 6px #ff4500aa;
       word-wrap: break-word;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #chatWindow .message .owner-tag {
+      background: linear-gradient(90deg, #ffff66, #ffec00);
+      color: #664d00;
+      font-weight: 900;
+      font-family: 'Anton', sans-serif;
+      padding: 0.1rem 0.5rem;
+      border-radius: 5px;
+      text-shadow:
+        0 0 6px #fff200,
+        0 0 10px #fff200;
+      user-select: none;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+      letter-spacing: 1.2px;
     }
     #chatWindow .message .username {
       font-weight: 700;
       color: #ff6a00;
-      margin-right: 0.5rem;
       user-select: text;
+      white-space: nowrap;
+    }
+    #chatWindow .message .text {
+      flex-grow: 1;
+      user-select: text;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
     form {
       display: flex;
@@ -193,12 +217,9 @@
   </main>
   <footer>
     © 2025 DragonVR. All rights reserved. &nbsp;|&nbsp;
-    <a href="https://dragonmasterxxx.github.io/dragonvr-realm" aria-label="Back to homepage">Back to Home</a>
+    <a href="index.html" aria-label="Back to homepage">Back to Home</a>
   </footer>
   <script>
-    // Simple public chat using localStorage (shared via Storage event) - note: works only within one browser profile and tabs, not real server chat
-    // For real worldwide chat, replace with WebSocket server integration
-
     const chatWindow = document.getElementById('chatWindow');
     const chatForm = document.getElementById('chatForm');
     const usernameInput = document.getElementById('username');
@@ -206,7 +227,15 @@
 
     const CHAT_STORAGE_KEY = 'dragonvr_public_chat_messages';
 
-    // Load messages from localStorage
+    // Define your owner name here exactly as you will type it in username input
+    const OWNER_NAME = "OfficialDragon1";
+
+    // Request notification permission on page load
+    if (window.Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+
+    // Load existing messages from localStorage
     function loadMessages() {
       const stored = localStorage.getItem(CHAT_STORAGE_KEY);
       if (!stored) return [];
@@ -222,27 +251,41 @@
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     }
 
-    // Display messages
+    // Render all messages to chat window
     function renderMessages(messages) {
       chatWindow.innerHTML = '';
       for (const msg of messages) {
         const div = document.createElement('div');
         div.className = 'message';
+
+        // If username matches owner, add owner tag before username
+        if (msg.username.toLowerCase() === OWNER_NAME.toLowerCase()) {
+          const ownerTag = document.createElement('span');
+          ownerTag.className = 'owner-tag';
+          ownerTag.textContent = 'Owner';
+          div.appendChild(ownerTag);
+        }
+
         const userSpan = document.createElement('span');
         userSpan.className = 'username';
         userSpan.textContent = msg.username + ':';
+
         const textSpan = document.createElement('span');
+        textSpan.className = 'text';
         textSpan.textContent = ' ' + msg.text;
+
         div.appendChild(userSpan);
         div.appendChild(textSpan);
+
         chatWindow.appendChild(div);
       }
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
+    // Add a new message
     function addMessage(username, text) {
       const messages = loadMessages();
-      const cleanUsername = username.trim().substring(0,20);
+      const cleanUsername = username.trim().substring(0, 20);
       const cleanText = text.trim().substring(0, 200);
       if (!cleanUsername || !cleanText) return;
       const newMessage = {
@@ -251,10 +294,29 @@
         timestamp: new Date().toISOString()
       };
       messages.push(newMessage);
-      // Keep only last 100 messages to limit size
+      // Keep only last 100 messages
       if (messages.length > 100) messages.shift();
       saveMessages(messages);
       renderMessages(messages);
+    }
+
+    // Notify if new message from others when tab is not visible
+    function notifyIfNeeded(fromUsername, messageText) {
+      if (!("Notification" in window)) return; // no support
+      if (document.visibilityState === "visible") return; // tab visible, no notification
+      if (Notification.permission !== "granted") return; // no permission
+
+      // Don't notify for owner's own messages
+      if (fromUsername.toLowerCase() === OWNER_NAME.toLowerCase()) return;
+
+      const notifTitle = `${fromUsername} sent "${messageText}" in your firey chat🔥`;
+      const notification = new Notification("DragonVR Chat", {
+        body: notifTitle,
+        icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png", // optional small fiery icon or replace with yours
+      });
+
+      // Auto close after 6 seconds
+      setTimeout(() => notification.close(), 6000);
     }
 
     chatForm.addEventListener('submit', e => {
@@ -262,25 +324,33 @@
       const username = usernameInput.value;
       const message = messageInput.value;
       if (!username || !message) return;
+
       addMessage(username, message);
+
+      // Notify if needed
+      notifyIfNeeded(username, message);
+
       messageInput.value = '';
       messageInput.focus();
     });
 
-    // Listen for localStorage changes (chat messages from other tabs)
-    window.addEventListener('storage', (event) => {
+    // Listen for message storage updates (from other tabs)
+    window.addEventListener('storage', event => {
       if (event.key === CHAT_STORAGE_KEY) {
-        renderMessages(loadMessages());
+        const messages = loadMessages();
+        renderMessages(messages);
+
+        // Parse last added message
+        if (messages.length > 0) {
+          const lastMsg = messages[messages.length - 1];
+          notifyIfNeeded(lastMsg.username, lastMsg.text);
+        }
       }
     });
 
-    // Load existing messages on page load
     window.addEventListener('load', () => {
       renderMessages(loadMessages());
     });
   </script>
 </body>
 </html>
-
-
-
