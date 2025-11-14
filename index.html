@@ -108,6 +108,8 @@
     form {
       display: flex;
       gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
     #username {
       flex: 0 0 140px;
@@ -120,6 +122,7 @@
       color: #fff;
       user-select: text;
       transition: border-color 0.3s ease;
+      display: none;
     }
     #username:focus {
       border-color: #ff6a00;
@@ -136,6 +139,7 @@
       color: #fff;
       user-select: text;
       transition: border-color 0.3s ease;
+      min-width: 180px;
     }
     #messageInput:focus {
       border-color: #ff6a00;
@@ -157,15 +161,70 @@
         0 0 15px #ff7500;
       transition: background 0.3s ease, box-shadow 0.3s ease;
       user-select: none;
+      opacity: 0.6;
+      pointer-events: none;
+      user-select:none;
+      min-width: 100px;
     }
-    #sendBtn:hover,
-    #sendBtn:focus {
-      background: #ff6a00;
+    #sendBtn.enabled {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #signInBtn {
+      background: #4285f4;
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
       box-shadow:
-        0 0 12px #ff6a00,
-        0 0 25px #ffa000;
+        0 0 8px #357ae8;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+    }
+    #signInBtn:hover,
+    #signInBtn:focus {
+      background: #357ae8;
+      box-shadow:
+        0 0 12px #2a65c7;
       outline: none;
     }
+    #signedInInfo {
+      font-size: 1rem;
+      color: #aaffaa;
+      user-select:none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      min-width: 180px;
+      white-space: nowrap;
+    }
+    #signedInName {
+      color: #ff6a00;
+    }
+    #signOutBtn {
+      cursor: pointer;
+      background: #ff4500;
+      border: none;
+      border-radius: 20px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.9rem;
+      color: #fff;
+      box-shadow:
+        0 0 6px #ff4500;
+      user-select: none;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    #signOutBtn:hover,
+    #signOutBtn:focus {
+      background: #ff6a00;
+      box-shadow:
+        0 0 10px #ff6a00;
+      outline: none;
+    }
+
     footer {
       text-align: center;
       padding: 1rem;
@@ -195,9 +254,26 @@
       #chatWindow {
         height: 300px;
       }
+      #signedInInfo {
+        min-width: unset;
+        font-size: 0.9rem;
+      }
+      form {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
       #username {
         flex: none;
-        width: 100px;
+        width: 100%;
+      }
+      #messageInput {
+        min-width: unset;
+        width: 100%;
+      }
+      #sendBtn,
+      #signInBtn {
+        width: 100%;
+        min-width: unset;
       }
     }
   </style>
@@ -206,83 +282,81 @@
   <header aria-label="Page header">Public Chat</header>
   <main>
     <h1>🔥 Join the DragonVR Chat 🔥</h1>
-    <div id="chatWindow" aria-live="polite" aria-relevant="additions" role="log" tabindex="0">
-      <!-- Chat messages show here -->
-    </div>
+    <div id="chatWindow" aria-live="polite" aria-relevant="additions" role="log" tabindex="0"></div>
+
     <form id="chatForm" aria-label="Send a message">
-      <input type="text" id="username" name="username" placeholder="Your name" aria-label="Username" maxlength="20" required />
+      <div id="signedInInfo" style="display:none;">
+        Signed in as <span id="signedInName"></span>
+        <button type="button" id="signOutBtn" aria-label="Sign out">Sign Out</button>
+      </div>
+
+      <input type="text" id="username" name="username" placeholder="Your name" aria-label="Username" maxlength="20" autocomplete="off" required />
       <input type="text" id="messageInput" name="message" placeholder="Type your message..." aria-label="Message input" maxlength="200" required autocomplete="off" />
-      <button type="submit" id="sendBtn" aria-label="Send message button">Send</button>
+      <button type="submit" id="sendBtn" aria-label="Send message button" class="">Send</button>
     </form>
+
+    <button id="signInBtn" aria-label="Sign in with Google">Sign in with Google</button>
   </main>
   <footer>
     © 2025 DragonVR. All rights reserved. &nbsp;|&nbsp;
     <a href="index.html" aria-label="Back to homepage">Back to Home</a>
   </footer>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     const chatWindow = document.getElementById('chatWindow');
     const chatForm = document.getElementById('chatForm');
     const usernameInput = document.getElementById('username');
     const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const signInBtn = document.getElementById('signInBtn');
+    const signedInInfo = document.getElementById('signedInInfo');
+    const signedInNameSpan = document.getElementById('signedInName');
+    const signOutBtn = document.getElementById('signOutBtn');
 
     const CHAT_STORAGE_KEY = 'dragonvr_public_chat_messages';
-
-    // Define your owner name here exactly as you will type it in username input
-    const OWNER_NAME = "OfficialDragon1";
+    const USER_STORAGE_KEY = 'dragonvr_chat_user';
+    const OWNER_NAME = "DragonVR";
 
     // Request notification permission on page load
     if (window.Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
       Notification.requestPermission();
     }
 
-    // Load existing messages from localStorage
     function loadMessages() {
       const stored = localStorage.getItem(CHAT_STORAGE_KEY);
       if (!stored) return [];
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return [];
-      }
+      try { return JSON.parse(stored); }
+      catch { return []; }
     }
-
-    // Save messages to localStorage
     function saveMessages(messages) {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     }
 
-    // Render all messages to chat window
     function renderMessages(messages) {
       chatWindow.innerHTML = '';
       for (const msg of messages) {
         const div = document.createElement('div');
         div.className = 'message';
-
-        // If username matches owner, add owner tag before username
         if (msg.username.toLowerCase() === OWNER_NAME.toLowerCase()) {
           const ownerTag = document.createElement('span');
           ownerTag.className = 'owner-tag';
           ownerTag.textContent = 'Owner';
           div.appendChild(ownerTag);
         }
-
         const userSpan = document.createElement('span');
         userSpan.className = 'username';
         userSpan.textContent = msg.username + ':';
-
         const textSpan = document.createElement('span');
         textSpan.className = 'text';
         textSpan.textContent = ' ' + msg.text;
-
         div.appendChild(userSpan);
         div.appendChild(textSpan);
-
         chatWindow.appendChild(div);
       }
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // Add a new message
     function addMessage(username, text) {
       const messages = loadMessages();
       const cleanUsername = username.trim().substring(0, 20);
@@ -294,63 +368,160 @@
         timestamp: new Date().toISOString()
       };
       messages.push(newMessage);
-      // Keep only last 100 messages
       if (messages.length > 100) messages.shift();
       saveMessages(messages);
       renderMessages(messages);
     }
 
-    // Notify if new message from others when tab is not visible
     function notifyIfNeeded(fromUsername, messageText) {
-      if (!("Notification" in window)) return; // no support
-      if (document.visibilityState === "visible") return; // tab visible, no notification
-      if (Notification.permission !== "granted") return; // no permission
-
-      // Don't notify for owner's own messages
+      if (!("Notification" in window)) return;
+      if (document.visibilityState === "visible") return;
+      if (Notification.permission !== "granted") return;
       if (fromUsername.toLowerCase() === OWNER_NAME.toLowerCase()) return;
-
       const notifTitle = `${fromUsername} sent "${messageText}" in your firey chat🔥`;
       const notification = new Notification("DragonVR Chat", {
         body: notifTitle,
-        icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png", // optional small fiery icon or replace with yours
+        icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png"
       });
-
-      // Auto close after 6 seconds
       setTimeout(() => notification.close(), 6000);
     }
 
+    // Enable or disable send button depending on inputs
+    function updateSendButtonState() {
+      const usernameVal = getCurrentUsername();
+      const messageVal = messageInput.value.trim();
+      if (usernameVal && messageVal) {
+        sendBtn.classList.add('enabled');
+        sendBtn.disabled = false;
+      } else {
+        sendBtn.classList.remove('enabled');
+        sendBtn.disabled = true;
+      }
+    }
+
+    // Get current username depending on login state
+    function getCurrentUsername() {
+      const user = getStoredUser();
+      if (user && user.displayName) return user.displayName;
+      if (!usernameInput.style.display || usernameInput.style.display === 'none') return null;
+      return usernameInput.value.trim();
+    }
+
+    // Store and retrieve user info from localStorage
+    function getStoredUser() {
+      const stored = localStorage.getItem(USER_STORAGE_KEY);
+      if (!stored) return null;
+      try { return JSON.parse(stored); }
+      catch { return null; }
+    }
+    function storeUser(user) {
+      if (user) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      else localStorage.removeItem(USER_STORAGE_KEY);
+    }
+
+    // Setup UI based on login state
+    function updateUIForUser(user) {
+      if (user && user.displayName) {
+        signedInInfo.style.display = 'flex';
+        signedInNameSpan.textContent = user.displayName;
+        usernameInput.style.display = 'none';
+        signInBtn.style.display = 'none';
+        sendBtn.classList.add('enabled');
+        sendBtn.disabled = false;
+      } else {
+        signedInInfo.style.display = 'none';
+        signedInNameSpan.textContent = '';
+        usernameInput.style.display = 'inline-block';
+        signInBtn.style.display = 'inline-block';
+        sendBtn.classList.remove('enabled');
+        sendBtn.disabled = true;
+      }
+    }
+
+    // Initialize - restore user from storage
+    function init() {
+      const user = getStoredUser();
+      updateUIForUser(user);
+    }
+
+    // Google One Tap Signin (using Google's client lib)
+    function handleCredentialResponse(response) {
+      // Decode credential JWT to get name (no server side validation here!)
+      function parseJwt (token) {
+        let base64Url = token.split('.')[1];
+        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      }
+      const data = parseJwt(response.credential);
+      const name = data.name || "DragonVR";
+      storeUser({displayName: name});
+      updateUIForUser({displayName: name});
+    }
+
+    // Sign out
+    signOutBtn.onclick = () => {
+      storeUser(null);
+      updateUIForUser(null);
+    };
+
+    // Form submit handler
     chatForm.addEventListener('submit', e => {
       e.preventDefault();
-      const username = usernameInput.value;
-      const message = messageInput.value;
+      const username = getCurrentUsername();
+      const message = messageInput.value.trim();
       if (!username || !message) return;
-
       addMessage(username, message);
-
-      // Notify if needed
       notifyIfNeeded(username, message);
-
       messageInput.value = '';
       messageInput.focus();
+      updateSendButtonState();
     });
 
-    // Listen for message storage updates (from other tabs)
-    window.addEventListener('storage', event => {
-      if (event.key === CHAT_STORAGE_KEY) {
+    // Enable button on input change
+    messageInput.addEventListener('input', updateSendButtonState);
+    usernameInput.addEventListener('input', updateSendButtonState);
+
+    // Listen for storage changes (other tabs)
+    window.addEventListener('storage', e => {
+      if (e.key === CHAT_STORAGE_KEY) {
         const messages = loadMessages();
         renderMessages(messages);
-
-        // Parse last added message
-        if (messages.length > 0) {
+        if (messages.length) {
           const lastMsg = messages[messages.length - 1];
           notifyIfNeeded(lastMsg.username, lastMsg.text);
         }
       }
+      if (e.key === USER_STORAGE_KEY) {
+        const user = getStoredUser();
+        updateUIForUser(user);
+      }
     });
 
-    window.addEventListener('load', () => {
+    // On load
+    window.onload = () => {
       renderMessages(loadMessages());
-    });
+      init();
+      updateSendButtonState();
+      if (window.google) {
+        google.accounts.id.initialize({
+          client_id: 'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com', // Replace with your OAuth client ID
+          callback: handleCredentialResponse,
+          ux_mode: 'popup'
+        });
+        google.accounts.id.renderButton(signInBtn, {
+          theme: "filled_blue",
+          size: "medium",
+          type: "standard"
+        });
+        google.accounts.id.prompt(); // Auto popup
+      } else {
+        signInBtn.textContent = 'Sign in with Google (Unavailable)';
+        signInBtn.disabled = true;
+      }
+    };
   </script>
 </body>
 </html>
