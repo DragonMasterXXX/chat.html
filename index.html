@@ -122,7 +122,7 @@
       color: #fff;
       user-select: text;
       transition: border-color 0.3s ease;
-      display: none;
+      display: inline-block;
     }
     #username:focus {
       border-color: #ff6a00;
@@ -169,61 +169,6 @@
       opacity: 1;
       pointer-events: auto;
     }
-    #signInBtn {
-      background: #4285f4;
-      border: none;
-      border-radius: 4px;
-      padding: 0.5rem 1rem;
-      color: white;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow:
-        0 0 8px #357ae8;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
-    }
-    #signInBtn:hover,
-    #signInBtn:focus {
-      background: #357ae8;
-      box-shadow:
-        0 0 12px #2a65c7;
-      outline: none;
-    }
-    #signedInInfo {
-      font-size: 1rem;
-      color: #aaffaa;
-      user-select:none;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 700;
-      min-width: 180px;
-      white-space: nowrap;
-    }
-    #signedInName {
-      color: #ff6a00;
-    }
-    #signOutBtn {
-      cursor: pointer;
-      background: #ff4500;
-      border: none;
-      border-radius: 20px;
-      padding: 0.3rem 0.8rem;
-      font-size: 0.9rem;
-      color: #fff;
-      box-shadow:
-        0 0 6px #ff4500;
-      user-select: none;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-    }
-    #signOutBtn:hover,
-    #signOutBtn:focus {
-      background: #ff6a00;
-      box-shadow:
-        0 0 10px #ff6a00;
-      outline: none;
-    }
-
     footer {
       text-align: center;
       padding: 1rem;
@@ -242,41 +187,10 @@
         0 0 8px #ff7a00,
         0 0 12px #ff4500;
     }
-    @media (max-width: 600px) {
-      header {
-        font-size: 2rem;
-        min-height: 90px;
-      }
-      h1 {
-        font-size: 2rem;
-      }
-      #chatWindow {
-        height: 300px;
-      }
-      #signedInInfo {
-        min-width: unset;
-        font-size: 0.9rem;
-      }
-      form {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      #username {
-        flex: none;
-        width: 100%;
-      }
-      #messageInput {
-        min-width: unset;
-        width: 100%;
-      }
-      #sendBtn,
-      #signInBtn {
-        width: 100%;
-        min-width: unset;
-      }
-    }
   </style>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
   <header aria-label="Page header">Public Chat</header>
@@ -285,249 +199,120 @@
     <div id="chatWindow" aria-live="polite" aria-relevant="additions" role="log" tabindex="0"></div>
 
     <form id="chatForm" aria-label="Send a message">
-      <div id="signedInInfo" style="display:none;">
-        Signed in as <span id="signedInName"></span>
-        <button type="button" id="signOutBtn" aria-label="Sign out">Sign Out</button>
-      </div>
-
-      <input type="text" id="username" name="username" placeholder="Your name" aria-label="Username" maxlength="20" autocomplete="off" required />
-      <input type="text" id="messageInput" name="message" placeholder="Type your message..." aria-label="Message input" maxlength="200" required autocomplete="off" />
-      <button type="submit" id="sendBtn" aria-label="Send message button" class="">Send</button>
+      <input type="text" id="username" placeholder="Your name" maxlength="20" autocomplete="off" required />
+      <input type="text" id="messageInput" placeholder="Type your message..." maxlength="200" autocomplete="off" required />
+      <button type="submit" id="sendBtn">Send</button>
     </form>
-
-    <div id="g_id_onload"
-         data-client_id="656931677750-ceec9jj27rgvt1qer5p3e34o8ebqj60j.apps.googleusercontent.com"
-         data-callback="handleCredentialResponse"
-         data-auto_prompt="false">
-    </div>
-    <div id="googleSignInButton"></div>
   </main>
   <footer>
     © 2025 DragonVR. All rights reserved. &nbsp;|&nbsp;
-    <a href="https://dragonmasterxxx.github.io/dragonvr-realm/" aria-label="Back to homepage">Back to Home</a>
+    <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
   </footer>
 
   <script>
+    // ---------------------- Firebase config ----------------------
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "firebase/app";
+    import { getAnalytics } from "firebase/analytics";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
+      authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
+      databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
+      projectId: "dragonvr-s-realm-d91d0",
+      storageBucket: "dragonvr-s-realm-d91d0.firebasestorage.app",
+      messagingSenderId: "469303383863",
+      appId: "1:469303383863:web:fe9a8e946fe81458a86cb2",
+      measurementId: "G-FLTP7DK55E"
+    };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+const messagesRef = db.ref('messages');
+
+    // ---------------------- Variables ----------------------
     const chatWindow = document.getElementById('chatWindow');
     const chatForm = document.getElementById('chatForm');
     const usernameInput = document.getElementById('username');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-    const signedInInfo = document.getElementById('signedInInfo');
-    const signedInNameSpan = document.getElementById('signedInName');
-    const signOutBtn = document.getElementById('signOutBtn');
 
-    const CHAT_STORAGE_KEY = 'dragonvr_public_chat_messages';
-    const USER_STORAGE_KEY = 'dragonvr_chat_user';
     const OWNER_NAME = "DragonVR";
+    const COOLDOWN_MS = 3000;
+    let lastMessageTime = 0;
+    const profanityList = ["badword1","badword2","badword3"]; // add more
 
-    // Notification permission request
-    if (window.Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
+    // ---------------------- Utility Functions ----------------------
+    function filterProfanity(text) {
+      let filtered = text;
+      profanityList.forEach(word => {
+        const regex = new RegExp(word, "gi");
+        filtered = filtered.replace(regex, "****");
+      });
+      return filtered;
     }
 
-    function loadMessages() {
-      const stored = localStorage.getItem(CHAT_STORAGE_KEY);
-      if (!stored) return [];
-      try { return JSON.parse(stored); }
-      catch { return []; }
-    }
-    function saveMessages(messages) {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
-    }
-
-    function renderMessages(messages) {
-      chatWindow.innerHTML = '';
-      for (const msg of messages) {
-        const div = document.createElement('div');
-        div.className = 'message';
-        if (msg.username.toLowerCase() === OWNER_NAME.toLowerCase()) {
-          const ownerTag = document.createElement('span');
-          ownerTag.className = 'owner-tag';
-          ownerTag.textContent = 'Owner';
-          div.appendChild(ownerTag);
-        }
-        const userSpan = document.createElement('span');
-        userSpan.className = 'username';
-        userSpan.textContent = msg.username + ':';
-        const textSpan = document.createElement('span');
-        textSpan.className = 'text';
-        textSpan.textContent = ' ' + msg.text;
-        div.appendChild(userSpan);
-        div.appendChild(textSpan);
-        chatWindow.appendChild(div);
+    function addMessageToChat(msg) {
+      const div = document.createElement('div');
+      div.className = 'message';
+      if(msg.username.toLowerCase() === OWNER_NAME.toLowerCase()){
+        const ownerTag = document.createElement('span');
+        ownerTag.className = 'owner-tag';
+        ownerTag.textContent = 'Owner';
+        div.appendChild(ownerTag);
       }
+      const userSpan = document.createElement('span');
+      userSpan.className = 'username';
+      userSpan.textContent = msg.username + ':';
+      const textSpan = document.createElement('span');
+      textSpan.className = 'text';
+      textSpan.textContent = ' ' + msg.text;
+      div.appendChild(userSpan);
+      div.appendChild(textSpan);
+      chatWindow.appendChild(div);
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    function addMessage(username, text) {
-      const messages = loadMessages();
-      const cleanUsername = username.trim().substring(0, 20);
-      const cleanText = text.trim().substring(0, 200);
-      if (!cleanUsername || !cleanText) return;
-      const newMessage = {
-        username: cleanUsername,
-        text: cleanText,
-        timestamp: new Date().toISOString()
-      };
-      messages.push(newMessage);
-      if (messages.length > 100) messages.shift();
-      saveMessages(messages);
-      renderMessages(messages);
-    }
+    // ---------------------- Real-time Listener ----------------------
+    const messagesRef = db.ref('chatMessages');
+    messagesRef.on('child_added', snapshot => {
+      addMessageToChat(snapshot.val());
+    });
 
-    function notifyIfNeeded(fromUsername, messageText) {
-      if (!("Notification" in window)) return;
-      if (document.visibilityState === "visible") return;
-      if (Notification.permission !== "granted") return;
-      if (fromUsername.toLowerCase() === OWNER_NAME.toLowerCase()) return;
-      const notifTitle = `${fromUsername} sent "${messageText}" in your firey chat🔥`;
-      const notification = new Notification("DragonVR Chat", {
-        body: notifTitle,
-        icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png"
-      });
-      setTimeout(() => notification.close(), 6000);
-    }
-
-    // Enable or disable send button depending on inputs
-    function updateSendButtonState() {
-      const usernameVal = getCurrentUsername();
-      const messageVal = messageInput.value.trim();
-      if (usernameVal && messageVal) {
-        sendBtn.classList.add('enabled');
-        sendBtn.disabled = false;
-      } else {
-        sendBtn.classList.remove('enabled');
-        sendBtn.disabled = true;
-      }
-    }
-
-    // Get current username depending on login state
-    function getCurrentUsername() {
-      const user = getStoredUser();
-      if (user && user.displayName) return user.displayName;
-      if (!usernameInput.style.display || usernameInput.style.display === 'none') return null;
-      return usernameInput.value.trim();
-    }
-
-    // Store and retrieve user info from localStorage
-    function getStoredUser() {
-      const stored = localStorage.getItem(USER_STORAGE_KEY);
-      if (!stored) return null;
-      try { return JSON.parse(stored); }
-      catch { return null; }
-    }
-    function storeUser(user) {
-      if (user) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-      else localStorage.removeItem(USER_STORAGE_KEY);
-    }
-
-    // Setup UI based on login state
-    function updateUIForUser(user) {
-      if (user && user.displayName) {
-        signedInInfo.style.display = 'flex';
-        signedInNameSpan.textContent = user.displayName;
-        usernameInput.style.display = 'none';
-        sendBtn.classList.add('enabled');
-        sendBtn.disabled = false;
-        signInBtn.style.display = 'none';
-      } else {
-        signedInInfo.style.display = 'none';
-        signedInNameSpan.textContent = '';
-        usernameInput.style.display = 'inline-block';
-        signInBtn.style.display = 'inline-block';
-        sendBtn.classList.remove('enabled');
-        sendBtn.disabled = true;
-      }
-    }
-
-    // Initialize - restore user from storage
-    function init() {
-      const user = getStoredUser();
-      updateUIForUser(user);
-    }
-
-    // Google Sign-In callback
-    function handleCredentialResponse(response) {
-      // Parse JWT token to extract user's name
-      function parseJwt(token) {
-        let base64Url = token.split('.')[1];
-        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-      }
-      const data = parseJwt(response.credential);
-      const name = data.name || "DragonVR";
-      storeUser({displayName: name});
-      updateUIForUser({displayName: name});
-    }
-
-    // Attach to global for Google callback
-    window.handleCredentialResponse = handleCredentialResponse;
-
-    // Sign out
-    signOutBtn.onclick = () => {
-      storeUser(null);
-      updateUIForUser(null);
-    };
-
-    // Form submit handler
+    // ---------------------- Send Message ----------------------
     chatForm.addEventListener('submit', e => {
       e.preventDefault();
-      const username = getCurrentUsername();
-      const message = messageInput.value.trim();
-      if (!username || !message) return;
-      addMessage(username, message);
-      notifyIfNeeded(username, message);
-      messageInput.value = '';
-      messageInput.focus();
-      updateSendButtonState();
-    });
+      const now = Date.now();
+      if(now - lastMessageTime < COOLDOWN_MS){
+        alert("Please wait a few seconds before sending another message.");
+        return;
+      }
+      const username = usernameInput.value.trim().substring(0,20) || "Anonymous";
+      let text = messageInput.value.trim().substring(0,200);
+      if(!text) return;
+      text = filterProfanity(text);
 
-    // Enable button on input change
-    messageInput.addEventListener('input', updateSendButtonState);
-    usernameInput.addEventListener('input', updateSendButtonState);
-
-    // Listen for storage changes (other tabs)
-    window.addEventListener('storage', e => {
-      if (e.key === CHAT_STORAGE_KEY) {
-        const messages = loadMessages();
-        renderMessages(messages);
-        if (messages.length) {
-          const lastMsg = messages[messages.length - 1];
-          notifyIfNeeded(lastMsg.username, lastMsg.text);
+      // ---------------- Owner Commands ----------------
+      if(username.toLowerCase() === OWNER_NAME.toLowerCase() && text.startsWith("/")){
+        if(text.startsWith("/clear")){
+          messagesRef.remove();
+          chatWindow.innerHTML = "";
+          messageInput.value = "";
+          return;
         }
       }
-      if (e.key === USER_STORAGE_KEY) {
-        const user = getStoredUser();
-        updateUIForUser(user);
-      }
+
+      messagesRef.push({username, text, timestamp: new Date().toISOString()});
+      messageInput.value = "";
+      lastMessageTime = now;
     });
-
-    window.onload = () => {
-      renderMessages(loadMessages());
-      init();
-      updateSendButtonState();
-
-      if (window.google && google.accounts && google.accounts.id) {
-        google.accounts.id.initialize({
-          client_id: '656931677750-ceec9jj27rgvt1qer5p3e34o8ebqj60j.apps.googleusercontent.com',
-          callback: handleCredentialResponse,
-          ux_mode: 'popup'
-        });
-        google.accounts.id.renderButton(
-          document.getElementById('signInBtn'),
-          { theme: 'filled_blue', size: 'large', width: 240 }
-        );
-        google.accounts.id.prompt();
-      } else {
-        document.getElementById('signInBtn').textContent = 'Sign in with Google (Unavailable)';
-        document.getElementById('signInBtn').disabled = true;
-      }
-    };
   </script>
 </body>
 </html>
-
