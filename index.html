@@ -238,6 +238,7 @@ const usernameInput = document.getElementById('username');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 
+// ---------------------- Config ----------------------
 const COOLDOWN_MS = 3000;
 let lastMessageTime = 0;
 const profanityList = ["fuck","ass","asshole","shit","shithead","dumbass","bitch","dickhead","dick"]; // add more
@@ -260,7 +261,8 @@ function addMessageToChat(msg){
   const div = document.createElement('div');
   div.className = 'message';
 
-  if(msg.ownerToken && msg.ownerToken === OWNER_TOKEN){
+  const localToken = localStorage.getItem("ownerToken");
+  if(msg.ownerToken && msg.ownerToken === localToken){
     const ownerTag = document.createElement('span');
     ownerTag.className = 'owner-tag';
     ownerTag.textContent = 'Owner';
@@ -298,16 +300,17 @@ function sendMessage(){
 
   message = filterProfanity(message);
 
-  const ownerToken = (username.toLowerCase() === OWNER_NAME.toLowerCase()) ? OWNER_TOKEN : null;
+  // Assign owner token only if this browser is the owner
+  const ownerToken = localStorage.getItem("ownerToken");
 
   const newMessage = {
-    username: username.substring(0,20),
-    text: message.substring(0,200),
+    username: username.substring(0, 20),
+    text: message.substring(0, 200),
     timestamp: new Date().toISOString(),
     ownerToken: ownerToken
   };
 
-  messagesRef.push(newMessage);
+  messagesRef.push(newMessage); // Firebase handles live display via child_added
 
   messageInput.value = '';
   messageInput.focus();
@@ -336,3 +339,4 @@ updateSendButtonState();
 </script>
 </body>
 </html>
+
