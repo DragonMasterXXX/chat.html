@@ -288,16 +288,22 @@ const messagesRef = db.ref('messages');
 
     // ---------------------- Send Message ----------------------
     chatForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const now = Date.now();
-      if(now - lastMessageTime < COOLDOWN_MS){
-        alert("Please wait a few seconds before sending another message.");
-        return;
-      }
-      const username = usernameInput.value.trim().substring(0,20) || "Anonymous";
-      let text = messageInput.value.trim().substring(0,200);
-      if(!text) return;
-      text = filterProfanity(text);
+    e.preventDefault();
+    const username = getCurrentUsername();
+    const message = messageInput.value.trim();
+    if (!username || !message) return;
+
+    // Add message to storage and render immediately
+    addMessage(username, message);  // this already calls renderMessages
+    notifyIfNeeded(username, message);
+
+    // Clear the input AFTER rendering
+    messageInput.value = '';
+    messageInput.focus();
+    updateSendButtonState();
+
+    // Optional: scroll chat window to bottom
+    chatWindow.scrollTop = chatWindow.scrollHeight;
 
       // ---------------- Owner Commands ----------------
       if(username.toLowerCase() === OWNER_NAME.toLowerCase() && text.startsWith("/")){
@@ -316,3 +322,4 @@ const messagesRef = db.ref('messages');
   </script>
 </body>
 </html>
+
