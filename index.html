@@ -1,342 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Public Chat - DragonVR's Realm</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;700&display=swap');
-    body {
-      margin: 0;
-      background: linear-gradient(180deg, #0b0a0f 0%, #1a120b 80%);
-      color: #fff;
-      font-family: 'Montserrat', sans-serif;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    header {
-      background: #330b00;
-      padding: 1rem 2rem;
-      font-family: 'Anton', sans-serif;
-      color: #ff4500;
-      text-transform: uppercase;
-      font-size: 2.8rem;
-      letter-spacing: 4px;
-      box-shadow: inset 0 0 20px #ff4500;
-      user-select: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100px;
-    }
-    main {
-      flex-grow: 1;
-      max-width: 900px;
-      margin: 2rem auto 3rem;
-      padding: 0 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      background: radial-gradient(circle at top center, #2b1200 0%, #0f0a04 90%);
-      border: 2px solid #ff4700;
-      border-radius: 16px;
-      box-shadow: 0 0 15px #ff5700cc;
-    }
-    h1 {
-      font-family: 'Anton', sans-serif;
-      font-size: 2.8rem;
-      text-align: center;
-      color: #ff6a00;
-      text-shadow:
-        0 0 10px #ff8c00,
-        0 0 20px #ff5e00,
-        0 0 30px #ff3c00;
-      margin: 1.5rem 0;
-      user-select: none;
-    }
-    #chatWindow {
-      background: #1a0b00;
-      border: 2px solid #ff4500;
-      border-radius: 12px;
-      height: 400px;
-      padding: 1rem;
-      overflow-y: auto;
-      font-size: 1rem;
-      color: #f0d8b4cc;
-      line-height: 1.4;
-      user-select: text;
-    }
-    #chatWindow .message {
-      margin-bottom: 0.8rem;
-      padding: 0.4rem 0.6rem;
-      border-radius: 8px;
-      background: rgba(255, 69, 0, 0.2);
-      box-shadow: 0 0 6px #ff4500aa;
-      word-wrap: break-word;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    #chatWindow .message .owner-tag {
-      background: linear-gradient(90deg, #ffff66, #ffec00);
-      color: #664d00;
-      font-weight: 900;
-      font-family: 'Anton', sans-serif;
-      padding: 0.1rem 0.5rem;
-      border-radius: 5px;
-      text-shadow:
-        0 0 6px #fff200,
-        0 0 10px #fff200;
-      user-select: none;
-      flex-shrink: 0;
-      font-size: 0.85rem;
-      letter-spacing: 1.2px;
-    }
-    #chatWindow .message .username {
-      font-weight: 700;
-      color: #ff6a00;
-      user-select: text;
-      white-space: nowrap;
-    }
-    #chatWindow .message .text {
-      flex-grow: 1;
-      user-select: text;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    form {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    #username {
-      flex: 0 0 140px;
-      border: 2px solid #ff4500;
-      border-radius: 25px;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      outline: none;
-      background: #220900;
-      color: #fff;
-      user-select: text;
-      transition: border-color 0.3s ease;
-      display: inline-block;
-    }
-    #username:focus {
-      border-color: #ff6a00;
-      box-shadow: 0 0 10px #ff6a00;
-    }
-    #messageInput {
-      flex-grow: 1;
-      border: 2px solid #ff4500;
-      border-radius: 25px;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      outline: none;
-      background: #220900;
-      color: #fff;
-      user-select: text;
-      transition: border-color 0.3s ease;
-      min-width: 180px;
-    }
-    #messageInput:focus {
-      border-color: #ff6a00;
-      box-shadow: 0 0 10px #ff6a00;
-    }
-    #sendBtn {
-      background: #ff4500;
-      border: none;
-      border-radius: 25px;
-      padding: 0 1.5rem;
-      color: #fff;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      box-shadow:
-        0 0 8px #ff4500,
-        0 0 15px #ff7500;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
-      opacity: 0.6;
-      pointer-events: none;
-      min-width: 100px;
-    }
-    #sendBtn.enabled {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      color: #aaa;
-      user-select: none;
-    }
-    footer a {
-      color: #ff4500;
-      font-weight: 700;
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-    footer a:hover {
-      color: #ff7a00;
-      text-shadow:
-        0 0 8px #ff7a00,
-        0 0 12px #ff4500;
-    }
-  </style>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Public Chat - DragonVR's Realm</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #0b0a0f 0%, #1a120b 80%);
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+}
+
+header {
+  background: #330b00;
+  padding: 1rem;
+  font-family: 'Anton', sans-serif;
+  color: #ff4500;
+  font-size: 2.5rem;
+  text-align: center;
+}
+
+#ownerStatus {
+  text-align: center;
+  font-weight: 700;
+  margin: 0.5rem;
+  color: #aaa;
+}
+
+#ownerStatus.online {
+  color: #00ff7f;
+}
+
+main {
+  max-width: 900px;
+  margin: 1rem auto;
+  padding: 1rem;
+}
+
+#chatWindow {
+  background: #1a0b00;
+  border: 2px solid #ff4500;
+  border-radius: 12px;
+  height: 400px;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.message {
+  margin-bottom: 0.7rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255,69,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.owner-crown {
+  font-size: 1.1rem;
+  color: gold;
+}
+
+.username {
+  font-weight: 700;
+  color: #ff6a00;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+input {
+  padding: 0.5rem;
+  border-radius: 20px;
+  border: 2px solid #ff4500;
+  background: #220900;
+  color: #fff;
+}
+
+button {
+  background: #ff4500;
+  border: none;
+  border-radius: 20px;
+  padding: 0 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+button.enabled {
+  opacity: 1;
+}
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
+
 <body>
-  <header aria-label="Page header">Public Chat</header>
-  <main>
-    <h1>🔥 Join the DragonVR Chat 🔥</h1>
-    <div id="chatWindow" aria-live="polite" aria-relevant="additions" role="log" tabindex="0"></div>
 
-    <form id="chatForm" aria-label="Send a message">
-      <input type="text" id="username" placeholder="Your name" maxlength="20" autocomplete="off" required />
-      <input type="text" id="messageInput" placeholder="Type your message..." maxlength="200" autocomplete="off" required />
-      <button type="button" id="sendBtn">Send</button>
-    </form>
-  </main>
-  <footer>
-    © 2025 DragonVR. All rights reserved. &nbsp;|&nbsp;
-    <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
-  </footer>
+<header>🔥 DragonVR Live Chat 🔥</header>
+<div id="ownerStatus">Owner offline</div>
 
-  <script>
-// ---------------------- Owner Token ----------------------
-const OWNER_NAME = "DragonVR";
-const OWNER_TOKEN = "Dragon-IS-A-LEGEND!!!"; // Only you
-localStorage.setItem("ownerToken", OWNER_TOKEN);
+<main>
+  <div id="chatWindow"></div>
 
-// ---------------------- Firebase Setup (compat mode) ----------------------
-const firebaseConfig = {
+  <form id="chatForm">
+    <input id="username" placeholder="Name" maxlength="20" required />
+    <input id="messageInput" placeholder="Message" maxlength="200" required />
+    <button id="sendBtn" type="submit">Send</button>
+  </form>
+</main>
+
+<script>
+// ---------------- CONFIG ----------------
+const OWNER_TOKEN_SECRET = "Dragon-IS-A-LEGEND!!!";
+const COOLDOWN_MS = 3000;
+const profanity = ["fuck","shit","bitch","asshole","dick"];
+
+// ---------------- FIREBASE ----------------
+firebase.initializeApp({
   apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
   authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
   databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
   projectId: "dragonvr-s-realm-d91d0",
-  storageBucket: "dragonvr-s-realm-d91d0.firebasestorage.app",
-  messagingSenderId: "469303383863",
-  appId: "1:469303383863:web:fe9a8e946fe81458a86cb2",
-  measurementId: "G-FLTP7DK55E"
-};
+});
 
-firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const messagesRef = db.ref('chatMessages');
+const messagesRef = db.ref("chatMessages");
+const ownerRef = db.ref("ownerOnline");
 
-// ---------------------- DOM Elements ----------------------
-const chatWindow = document.getElementById('chatWindow');
-const chatForm = document.getElementById('chatForm');
-const usernameInput = document.getElementById('username');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
+// ---------------- DOM ----------------
+const chatWindow = document.getElementById("chatWindow");
+const chatForm = document.getElementById("chatForm");
+const usernameInput = document.getElementById("username");
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const ownerStatus = document.getElementById("ownerStatus");
 
-// ---------------------- Config ----------------------
-const COOLDOWN_MS = 3000;
 let lastMessageTime = 0;
-const profanityList = ["fuck","ass","asshole","shit","shithead","dumbass","bitch","dickhead","dick"]; // add more
+let slowMode = false;
 
-// ---------------------- Utility Functions ----------------------
-function filterProfanity(text){
-  let filtered = text;
-  profanityList.forEach(word => {
-    const regex = new RegExp(word, "gi");
-    filtered = filtered.replace(regex, "****");
+// ---------------- OWNER DETECTION ----------------
+const isOwner = localStorage.getItem("ownerToken") === OWNER_TOKEN_SECRET;
+
+// Owner online indicator
+if (isOwner) {
+  ownerRef.set(true);
+  window.addEventListener("beforeunload", () => ownerRef.set(false));
+}
+
+ownerRef.on("value", snap => {
+  ownerStatus.textContent = snap.val() ? "🟢 Owner online" : "Owner offline";
+  ownerStatus.className = snap.val() ? "online" : "";
+});
+
+// ---------------- UTILS ----------------
+function cleanText(t) {
+  profanity.forEach(w => {
+    t = t.replace(new RegExp(w,"gi"), "****");
   });
-  return filtered;
+  return t;
 }
 
-function updateSendButtonState() {
-  sendBtn.classList.toggle('enabled', messageInput.value.trim() !== '' && usernameInput.value.trim() !== '');
-}
+function addMessage(msg) {
+  const div = document.createElement("div");
+  div.className = "message";
 
-function addMessageToChat(msg){
-  const div = document.createElement('div');
-  div.className = 'message';
-
-  const localToken = localStorage.getItem("ownerToken");
-  if(msg.ownerToken && msg.ownerToken === localToken){
-    const ownerTag = document.createElement('span');
-    ownerTag.className = 'owner-tag';
-    ownerTag.textContent = 'Owner';
-    div.appendChild(ownerTag);
+  if (msg.ownerToken && msg.ownerToken === localStorage.getItem("ownerToken")) {
+    div.innerHTML += `<span class="owner-crown">👑</span>`;
   }
 
-  const userSpan = document.createElement('span');
-  userSpan.className = 'username';
-  userSpan.textContent = msg.username + ':';
-
-  const textSpan = document.createElement('span');
-  textSpan.className = 'text';
-  textSpan.textContent = ' ' + msg.text;
-
-  div.appendChild(userSpan);
-  div.appendChild(textSpan);
-
+  div.innerHTML += `<span class="username">${msg.username}:</span> ${msg.text}`;
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// ---------------------- Real-time Listener ----------------------
-messagesRef.on('child_added', snapshot => {
-  const msg = snapshot.val();
-  addMessageToChat(msg);
-});
+// ---------------- LISTENER ----------------
+messagesRef.limitToLast(100).on("child_added", s => addMessage(s.val()));
 
-// ---------------------- Send Message ----------------------
-function sendMessage(){
-  const now = Date.now();
-  if(now - lastMessageTime < COOLDOWN_MS) return; // cooldown
-  const username = usernameInput.value.trim();
-  let message = messageInput.value.trim();
-  if(!username || !message) return;
-
-  message = filterProfanity(message);
-
-  // Assign owner token only if this browser is the owner
-  const ownerToken = localStorage.getItem("ownerToken");
-
-  const newMessage = {
-    username: username.substring(0, 20),
-    text: message.substring(0, 200),
-    timestamp: new Date().toISOString(),
-    ownerToken: ownerToken
-  };
-
-  messagesRef.push(newMessage); // Firebase handles live display via child_added
-
-  messageInput.value = '';
-  messageInput.focus();
-  lastMessageTime = now;
-  updateSendButtonState();
-}
-
-// ---------------------- Event Listeners ----------------------
-sendBtn.addEventListener('click', sendMessage);
-
-chatForm.addEventListener('submit', e=>{
+// ---------------- SEND ----------------
+chatForm.addEventListener("submit", e => {
   e.preventDefault();
-  sendMessage();
-});
+  const now = Date.now();
+  if (now - lastMessageTime < COOLDOWN_MS || slowMode && !isOwner) return;
 
-usernameInput.addEventListener('input', updateSendButtonState);
-messageInput.addEventListener('input', updateSendButtonState);
-messageInput.addEventListener('keydown', e=>{
-  if(e.key==='Enter'){
-    e.preventDefault();
-    sendMessage();
+  let text = cleanText(messageInput.value.trim());
+  const username = usernameInput.value.trim();
+  if (!text || !username) return;
+
+  // Owner commands
+  if (isOwner && text.startsWith("/")) {
+    if (text === "/clear") messagesRef.remove();
+    if (text === "/slowmode on") slowMode = true;
+    if (text === "/slowmode off") slowMode = false;
+    messageInput.value = "";
+    return;
   }
+
+  messagesRef.push({
+    username,
+    text,
+    ownerToken: localStorage.getItem("ownerToken") || null,
+    time: Date.now()
+  });
+
+  messageInput.value = "";
+  lastMessageTime = now;
 });
 
-updateSendButtonState();
+sendBtn.classList.add("enabled");
 </script>
+
 </body>
 </html>
-
