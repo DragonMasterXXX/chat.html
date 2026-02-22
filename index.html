@@ -293,11 +293,27 @@ const messagesRef = db.ref('messages');
     const message = messageInput.value.trim();
     if (!username || !message) return;
 
-    // Add message to storage and render immediately
-    addMessage(username, message);  // this already calls renderMessages
+    // Create the new message object
+    const newMessage = {
+      username: username.trim().substring(0, 20),
+      text: message.trim().substring(0, 200),
+      timestamp: new Date().toISOString(),
+      isOwner: username.trim().toLowerCase() === OWNER_NAME.toLowerCase() // owner flag
+    };
+
+    // Save to localStorage
+    const messages = loadMessages();
+    messages.push(newMessage);
+    if (messages.length > 100) messages.shift();
+    saveMessages(messages);
+
+    // Render the new message immediately
+    renderMessages(messages);
+
+    // Notify if needed
     notifyIfNeeded(username, message);
 
-    // Clear the input AFTER rendering
+    // Clear input & focus
     messageInput.value = '';
     messageInput.focus();
     updateSendButtonState();
@@ -322,4 +338,5 @@ const messagesRef = db.ref('messages');
   </script>
 </body>
 </html>
+
 
