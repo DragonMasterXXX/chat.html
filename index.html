@@ -201,7 +201,7 @@
     <form id="chatForm" aria-label="Send a message">
       <input type="text" id="username" placeholder="Your name" maxlength="20" autocomplete="off" required />
       <input type="text" id="messageInput" placeholder="Type your message..." maxlength="200" autocomplete="off" required />
-      <button type="submit" id="sendBtn">Send</button>
+      <button type="button" id="sendBtn">Send</button>
     </form>
   </main>
   <footer>
@@ -210,134 +210,141 @@
   </footer>
 
   <script>
-    // ---------------------- Firebase config ----------------------
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "firebase/app";
-    import { getAnalytics } from "firebase/analytics";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
+  // ---------------------- Firebase Config ----------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
+    authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
+    databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
+    projectId: "dragonvr-s-realm-d91d0",
+    storageBucket: "dragonvr-s-realm-d91d0.firebasestorage.app",
+    messagingSenderId: "469303383863",
+    appId: "1:469303383863:web:fe9a8e946fe81458a86cb2",
+    measurementId: "G-FLTP7DK55E"
+  };
 
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-      apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
-      authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
-      databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
-      projectId: "dragonvr-s-realm-d91d0",
-      storageBucket: "dragonvr-s-realm-d91d0.firebasestorage.app",
-      messagingSenderId: "469303383863",
-      appId: "1:469303383863:web:fe9a8e946fe81458a86cb2",
-      measurementId: "G-FLTP7DK55E"
-    };
+  // Initialize Firebase (compat)
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const messagesRef = db.ref('chatMessages');
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-const messagesRef = db.ref('messages');
+  // ---------------------- Variables ----------------------
+  const chatWindow = document.getElementById('chatWindow');
+  const chatForm = document.getElementById('chatForm');
+  const usernameInput = document.getElementById('username');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
 
-    // ---------------------- Variables ----------------------
-    const chatWindow = document.getElementById('chatWindow');
-    const chatForm = document.getElementById('chatForm');
-    const usernameInput = document.getElementById('username');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
+  const OWNER_NAME = "DragonVR";
+  const COOLDOWN_MS = 3000;
+  let lastMessageTime = 0;
+  const profanityList = ["badword1","badword2","badword3"]; // add more
 
-    const OWNER_NAME = "DragonVR";
-    const COOLDOWN_MS = 3000;
-    let lastMessageTime = 0;
-    const profanityList = ["badword1","badword2","badword3"]; // add more
+  // ---------------------- Utility Functions ----------------------
+  function filterProfanity(text) {
+    let filtered = text;
+    profanityList.forEach(word => {
+      const regex = new RegExp(word, "gi");
+      filtered = filtered.replace(regex, "****");
+    });
+    return filtered;
+  }
 
-    // ---------------------- Utility Functions ----------------------
-    function filterProfanity(text) {
-      let filtered = text;
-      profanityList.forEach(word => {
-        const regex = new RegExp(word, "gi");
-        filtered = filtered.replace(regex, "****");
-      });
-      return filtered;
-    }
+  function addMessageToChat(msg) {
+    const div = document.createElement('div');
+    div.className = 'message';
 
-    function addMessageToChat(msg) {
-      const div = document.createElement('div');
-      div.className = 'message';
-      if (msg.isOwner) {
-        const ownerTag = document.createElement('span');
-        ownerTag.className = 'owner-tag';
-        ownerTag.textContent = 'Owner';
+    if(msg.isOwner) {
+      const ownerTag = document.createElement('span');
+      ownerTag.className = 'owner-tag';
+      ownerTag.textContent = 'Owner';
       div.appendChild(ownerTag);
     }
-      const userSpan = document.createElement('span');
-      userSpan.className = 'username';
-      userSpan.textContent = msg.username + ':';
-      const textSpan = document.createElement('span');
-      textSpan.className = 'text';
-      textSpan.textContent = ' ' + msg.text;
-      div.appendChild(userSpan);
-      div.appendChild(textSpan);
-      chatWindow.appendChild(div);
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
 
-    // ---------------------- Real-time Listener ----------------------
-    const messagesRef = db.ref('chatMessages');
-    messagesRef.on('child_added', snapshot => {
-      addMessageToChat(snapshot.val());
-    });
+    const userSpan = document.createElement('span');
+    userSpan.className = 'username';
+    userSpan.textContent = msg.username + ':';
+    const textSpan = document.createElement('span');
+    textSpan.className = 'text';
+    textSpan.textContent = ' ' + msg.text;
 
-    // ---------------------- Send Message ----------------------
-    chatForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const username = getCurrentUsername();
+    div.appendChild(userSpan);
+    div.appendChild(textSpan);
+    chatWindow.appendChild(div);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // ---------------------- Send Message ----------------------
+  function sendMessage() {
+    const username = usernameInput.value.trim();
     const message = messageInput.value.trim();
+    const now = Date.now();
     if (!username || !message) return;
 
-    // Create the new message object
+    // Cooldown check
+    if(now - lastMessageTime < COOLDOWN_MS) return;
+
+    // Profanity filter
+    const filteredMessage = filterProfanity(message);
+
     const newMessage = {
-      username: username.trim().substring(0, 20),
-      text: message.trim().substring(0, 200),
+      username: username.substring(0, 20),
+      text: filteredMessage.substring(0, 200),
       timestamp: new Date().toISOString(),
-      isOwner: username.trim().toLowerCase() === OWNER_NAME.toLowerCase() // owner flag
+      isOwner: username.toLowerCase() === OWNER_NAME.toLowerCase()
     };
 
-    // Save to localStorage
-    const messages = loadMessages();
-    messages.push(newMessage);
-    if (messages.length > 100) messages.shift();
-    saveMessages(messages);
+    // Owner commands
+    if(newMessage.isOwner && filteredMessage.startsWith("/")) {
+      if(filteredMessage.startsWith("/clear")) {
+        messagesRef.remove();
+        chatWindow.innerHTML = "";
+        messageInput.value = "";
+        lastMessageTime = now;
+        return;
+      }
+    }
 
-    // Render the new message immediately
-    renderMessages(messages);
-
-    // Notify if needed
-    notifyIfNeeded(username, message);
+    // Push to Firebase
+    messagesRef.push(newMessage);
 
     // Clear input & focus
     messageInput.value = '';
     messageInput.focus();
-    updateSendButtonState();
+    lastMessageTime = now;
+  }
 
-    // Optional: scroll chat window to bottom
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+  // ---------------------- Event Listeners ----------------------
+  // Send button click
+  sendBtn.addEventListener('click', sendMessage);
 
-      // ---------------- Owner Commands ----------------
-      if(username.toLowerCase() === OWNER_NAME.toLowerCase() && text.startsWith("/")){
-        if(text.startsWith("/clear")){
-          messagesRef.remove();
-          chatWindow.innerHTML = "";
-          messageInput.value = "";
-          return;
-        }
-      }
+  // Enter key
+  messageInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
 
-      messagesRef.push({username, text, timestamp: new Date().toISOString()});
-      messageInput.value = "";
-      lastMessageTime = now;
-    });
-  </script>
+  // ---------------------- Real-time Firebase Listener ----------------------
+  messagesRef.on('child_added', snapshot => {
+    addMessageToChat(snapshot.val());
+  });
+
+  // ---------------------- Optional: Enable send button only when input ----------------------
+  function updateSendButtonState() {
+    if(messageInput.value.trim() && usernameInput.value.trim()) {
+      sendBtn.classList.add('enabled');
+    } else {
+      sendBtn.classList.remove('enabled');
+    }
+  }
+
+  usernameInput.addEventListener('input', updateSendButtonState);
+  messageInput.addEventListener('input', updateSendButtonState);
+</script>
 </body>
 </html>
+
 
 
 
