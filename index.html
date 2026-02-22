@@ -212,10 +212,10 @@
   <script>
 // ---------------------- Owner Token ----------------------
 const OWNER_NAME = "DragonVR";
-const OWNER_TOKEN = "my-unique-secret-token-123"; // Only you should have this
-localStorage.setItem("ownerToken", OWNER_TOKEN); // persist token across reloads
+const OWNER_TOKEN = "Dragon-IS-A-LEGEND!!!"; // Only you
+localStorage.setItem("ownerToken", OWNER_TOKEN);
 
-// ---------------------- Firebase Setup ----------------------
+// ---------------------- Firebase Setup (compat mode) ----------------------
 const firebaseConfig = {
   apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
   authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
@@ -240,10 +240,10 @@ const sendBtn = document.getElementById('sendBtn');
 
 const COOLDOWN_MS = 3000;
 let lastMessageTime = 0;
-const profanityList = ["badword1","badword2","badword3"]; // add more if needed
+const profanityList = ["fuck","ass","asshole","shit","shithead","dumbass","bitch","dickhead","dick"]; // add more
 
 // ---------------------- Utility Functions ----------------------
-function filterProfanity(text) {
+function filterProfanity(text){
   let filtered = text;
   profanityList.forEach(word => {
     const regex = new RegExp(word, "gi");
@@ -256,11 +256,11 @@ function updateSendButtonState() {
   sendBtn.classList.toggle('enabled', messageInput.value.trim() !== '' && usernameInput.value.trim() !== '');
 }
 
-function addMessageToChat(msg) {
+function addMessageToChat(msg){
   const div = document.createElement('div');
   div.className = 'message';
 
-  if(msg.isOwner){
+  if(msg.ownerToken && msg.ownerToken === OWNER_TOKEN){
     const ownerTag = document.createElement('span');
     ownerTag.className = 'owner-tag';
     ownerTag.textContent = 'Owner';
@@ -289,43 +289,25 @@ messagesRef.on('child_added', snapshot => {
 });
 
 // ---------------------- Send Message ----------------------
-function sendMessage() {
+function sendMessage(){
   const now = Date.now();
   if(now - lastMessageTime < COOLDOWN_MS) return; // cooldown
   const username = usernameInput.value.trim();
   let message = messageInput.value.trim();
   if(!username || !message) return;
 
-  // Filter profanity
   message = filterProfanity(message);
 
-  // Check owner
-  const isOwner = username.toLowerCase() === OWNER_NAME.toLowerCase() &&
-                  localStorage.getItem("ownerToken") === OWNER_TOKEN;
+  const ownerToken = (username.toLowerCase() === OWNER_NAME.toLowerCase()) ? OWNER_TOKEN : null;
 
-  // Create message object
   const newMessage = {
     username: username.substring(0,20),
     text: message.substring(0,200),
     timestamp: new Date().toISOString(),
-    isOwner: isOwner
+    ownerToken: ownerToken
   };
 
-  // Push to Firebase
   messagesRef.push(newMessage);
-
-  // Immediately render locally
-  addMessageToChat(newMessage);
-
-  // Owner commands
-  if(isOwner && message.startsWith("/")){
-    if(message.startsWith("/clear")){
-      messagesRef.remove();
-      chatWindow.innerHTML = "";
-      messageInput.value = "";
-      return;
-    }
-  }
 
   messageInput.value = '';
   messageInput.focus();
@@ -336,27 +318,21 @@ function sendMessage() {
 // ---------------------- Event Listeners ----------------------
 sendBtn.addEventListener('click', sendMessage);
 
-chatForm.addEventListener('submit', e => {
+chatForm.addEventListener('submit', e=>{
   e.preventDefault();
   sendMessage();
 });
 
 usernameInput.addEventListener('input', updateSendButtonState);
 messageInput.addEventListener('input', updateSendButtonState);
-messageInput.addEventListener('keydown', e => {
-  if(e.key === 'Enter'){
+messageInput.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
     e.preventDefault();
     sendMessage();
   }
 });
 
-// Enable send button initially if fields have values
 updateSendButtonState();
 </script>
 </body>
 </html>
-
-
-
-
-
