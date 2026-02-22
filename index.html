@@ -262,12 +262,12 @@ const messagesRef = db.ref('messages');
     function addMessageToChat(msg) {
       const div = document.createElement('div');
       div.className = 'message';
-      if(msg.username.toLowerCase() === OWNER_NAME.toLowerCase()){
+      if (msg.isOwner) {
         const ownerTag = document.createElement('span');
         ownerTag.className = 'owner-tag';
         ownerTag.textContent = 'Owner';
-        div.appendChild(ownerTag);
-      }
+      div.appendChild(ownerTag);
+    }
       const userSpan = document.createElement('span');
       userSpan.className = 'username';
       userSpan.textContent = msg.username + ':';
@@ -338,5 +338,6 @@ const messagesRef = db.ref('messages');
   </script>
 </body>
 </html>
+
 
 
