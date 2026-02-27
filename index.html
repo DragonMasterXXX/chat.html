@@ -174,16 +174,31 @@ function cleanText(text) {
   return text;
 }
 
-// ---------------- OWNER STATUS ----------------
+// ---------------- OWNER PRESENCE (WORKING) ----------------
 const connectedRef = db.ref(".info/connected");
 
-connectedRef.on("value", snap => {
-  if (snap.val() && isOwnerUser(usernameInput.value.trim())) {
+function updateOwnerPresence() {
+  const isOwner = isOwnerUser(usernameInput.value.trim());
+
+  if (isOwner) {
     ownerRef.onDisconnect().set(false);
     ownerRef.set(true);
+  } else {
+    ownerRef.set(false);
+  }
+}
+
+// Run when Firebase connects
+connectedRef.on("value", snap => {
+  if (snap.val() === true) {
+    updateOwnerPresence();
   }
 });
 
+// Run whenever username changes
+usernameInput.addEventListener("input", updateOwnerPresence);
+
+// Listen for owner status
 ownerRef.on("value", snap => {
   ownerStatus.textContent = snap.val() ? "🟢 Owner online" : "Owner offline";
   ownerStatus.className = snap.val() ? "online" : "";
@@ -258,4 +273,5 @@ chatForm.addEventListener("submit", e => {
 </script>
 </body>
 </html>
+
 
