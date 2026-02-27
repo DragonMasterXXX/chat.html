@@ -161,7 +161,7 @@ function cleanText(text) {
 
 // ---------------- DISPLAY ----------------
 function addMessage(msg) {
-  if (!msg) return;
+  if (!msg || !msg.username || !msg.text) return;
 
   const div = document.createElement("div");
   div.className = "message";
@@ -185,9 +185,11 @@ function addMessage(msg) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// ✅ FIXED LISTENER
-messagesRef.on("child_added", snap => {
-  addMessage(snap.val());
+// ---------------- FIXED LISTENER ----------------
+// Listen in order of time, ignore null values
+messagesRef.orderByChild('time').on('child_added', snap => {
+  const val = snap.val();
+  if (val && val.username && val.text) addMessage(val);
 });
 
 // ---------------- SEND ----------------
@@ -206,6 +208,7 @@ chatForm.addEventListener("submit", e => {
 
   if (owner && text === "/clear") {
     messagesRef.remove();
+    chatWindow.innerHTML = "";
     messageInput.value = "";
     return;
   }
