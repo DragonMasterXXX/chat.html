@@ -174,15 +174,13 @@ function cleanText(text) {
   return text;
 }
 
-// ---------------- OWNER PRESENCE (FIXED) ----------------
+// ---------------- OWNER STATUS ----------------
 const connectedRef = db.ref(".info/connected");
 
 connectedRef.on("value", snap => {
-  if (snap.val() === true) {
-    if (isOwnerUser(usernameInput.value.trim())) {
-      ownerRef.onDisconnect().set(false);
-      ownerRef.set(true);
-    }
+  if (snap.val() && isOwnerUser(usernameInput.value.trim())) {
+    ownerRef.onDisconnect().set(false);
+    ownerRef.set(true);
   }
 });
 
@@ -191,14 +189,12 @@ ownerRef.on("value", snap => {
   ownerStatus.className = snap.val() ? "online" : "";
 });
 
-// ---------------- MESSAGES ----------------
+// ---------------- MESSAGE RENDER ----------------
 function addMessage(msg) {
-  if (!msg) return;
-
   const div = document.createElement("div");
   div.className = "message";
 
-  if (msg.isOwner === true) {
+  if (msg.isOwner) {
     const crown = document.createElement("span");
     crown.className = "owner-crown";
     crown.textContent = "👑";
@@ -217,43 +213,49 @@ function addMessage(msg) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
+// ---------------- FIREBASE LISTENER ----------------
 messagesRef.limitToLast(100).on("child_added", snap => {
-  addMessage(snap.val());
+  const msg = snap.val();
+  if (msg) addMessage(msg);
 });
 
-// ---------------- SEND ----------------
+// ---------------- SEND (FIXED) ----------------
 chatForm.addEventListener("submit", e => {
   e.preventDefault();
 
   const now = Date.now();
   const username = usernameInput.value.trim();
-  let text = cleanText(messageInput.value.trim());
-
+  const text = cleanText(messageInput.value.trim());
   if (!username || !text) return;
 
-  const owner = isOwnerUser(username);
+  const isOwner = isOwnerUser(username);
+  if (!isOwner && now - lastMessageTime < COOLDOWN_MS) return;
 
-  if (!owner && now - lastMessageTime < COOLDOWN_MS) return;
-
-  // Owner commands
-  if (owner && text === "/clear") {
-    messagesRef.set(null);
+  // Owner command
+  if (isOwner && text === "/clear") {
     chatWindow.innerHTML = "";
+    messagesRef.set(null);
     messageInput.value = "";
     return;
   }
 
-  messagesRef.push({
+  const messageData = {
     username,
     text,
-    isOwner: owner,
+    isOwner,
     time: now
-  });
+  };
+
+  // 🔥 INSTANT LOCAL RENDER (this fixes your issue)
+  addMessage(messageData);
+
+  // Push to Firebase for others
+  messagesRef.push(messageData);
 
   messageInput.value = "";
   lastMessageTime = now;
 });
 </script>
-
 </body>
 </html>
+
