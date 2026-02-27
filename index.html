@@ -26,17 +26,6 @@ header {
   text-align: center;
 }
 
-#ownerStatus {
-  text-align: center;
-  font-weight: 700;
-  margin: 0.5rem;
-  color: #aaa;
-}
-
-#ownerStatus.online {
-  color: #00ff7f;
-}
-
 main {
   max-width: 900px;
   margin: 1rem auto;
@@ -118,7 +107,6 @@ footer a {
 <body>
 
 <header>🔥 DragonVR Live Chat 🔥</header>
-<div id="ownerStatus">Owner offline</div>
 
 <main>
   <div id="chatWindow"></div>
@@ -151,14 +139,12 @@ firebase.initializeApp({
 
 const db = firebase.database();
 const messagesRef = db.ref("chatMessages");
-const ownerRef = db.ref("ownerOnline");
 
 // ---------------- DOM ----------------
 const chatWindow = document.getElementById("chatWindow");
 const chatForm = document.getElementById("chatForm");
 const usernameInput = document.getElementById("username");
 const messageInput = document.getElementById("messageInput");
-const ownerStatus = document.getElementById("ownerStatus");
 
 let lastMessageTime = 0;
 
@@ -174,42 +160,14 @@ function cleanText(text) {
   return text;
 }
 
-// ---------------- OWNER PRESENCE (WORKING) ----------------
-const connectedRef = db.ref(".info/connected");
-
-function updateOwnerPresence() {
-  const isOwner = isOwnerUser(usernameInput.value.trim());
-
-  if (isOwner) {
-    ownerRef.onDisconnect().set(false);
-    ownerRef.set(true);
-  } else {
-    ownerRef.set(false);
-  }
-}
-
-// Run when Firebase connects
-connectedRef.on("value", snap => {
-  if (snap.val() === true) {
-    updateOwnerPresence();
-  }
-});
-
-// Run whenever username changes
-usernameInput.addEventListener("input", updateOwnerPresence);
-
-// Listen for owner status
-ownerRef.on("value", snap => {
-  ownerStatus.textContent = snap.val() ? "🟢 Owner online" : "Owner offline";
-  ownerStatus.className = snap.val() ? "online" : "";
-});
-
-// ---------------- MESSAGE RENDER ----------------
+// ---------------- DISPLAY ----------------
 function addMessage(msg) {
+  if (!msg) return;
+
   const div = document.createElement("div");
   div.className = "message";
 
-  if (msg.isOwner) {
+  if (msg.isOwner === true) {
     const crown = document.createElement("span");
     crown.className = "owner-crown";
     crown.textContent = "👑";
@@ -228,50 +186,43 @@ function addMessage(msg) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// ---------------- FIREBASE LISTENER ----------------
+// ---------------- LISTENER ----------------
 messagesRef.limitToLast(100).on("child_added", snap => {
-  const msg = snap.val();
-  if (msg) addMessage(msg);
+  addMessage(snap.val());
 });
 
-// ---------------- SEND (FIXED) ----------------
+// ---------------- SEND ----------------
 chatForm.addEventListener("submit", e => {
   e.preventDefault();
 
   const now = Date.now();
   const username = usernameInput.value.trim();
-  const text = cleanText(messageInput.value.trim());
+  let text = cleanText(messageInput.value.trim());
+
   if (!username || !text) return;
 
-  const isOwner = isOwnerUser(username);
-  if (!isOwner && now - lastMessageTime < COOLDOWN_MS) return;
+  const owner = isOwnerUser(username);
 
-  // Owner command
-  if (isOwner && text === "/clear") {
-    chatWindow.innerHTML = "";
-    messagesRef.set(null);
+  if (!owner && now - lastMessageTime < COOLDOWN_MS) return;
+
+  // OWNER COMMAND
+  if (owner && text === "/clear") {
+    messagesRef.remove();
     messageInput.value = "";
     return;
   }
 
-  const messageData = {
+  messagesRef.push({
     username,
     text,
-    isOwner,
+    isOwner: owner,
     time: now
-  };
-
-  // 🔥 INSTANT LOCAL RENDER (this fixes your issue)
-  addMessage(messageData);
-
-  // Push to Firebase for others
-  messagesRef.push(messageData);
+  });
 
   messageInput.value = "";
   lastMessageTime = now;
 });
 </script>
+
 </body>
 </html>
-
-
