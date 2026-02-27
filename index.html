@@ -169,13 +169,22 @@ footer a {
 
 <header>🔥 DragonVR Live Chat 🔥</header>
 
-<div id="chatWindow"></div>
+<main>
+  <div id="chatWindow"></div>
 
-<form id="chatForm">
-  <input id="username" placeholder="Name" maxlength="20" required />
-  <input id="messageInput" placeholder="Message" maxlength="200" required />
-  <button type="submit">Send</button>
-</form>
+  <!-- Username + message inputs -->
+  <form id="chatForm">
+    <input id="username" placeholder="Name" maxlength="20" required />
+    <input id="messageInput" placeholder="Message" maxlength="200" required />
+    <button type="submit">Send</button>
+  </form>
+
+  <!-- Owner login -->
+  <div style="margin-top: 1rem;">
+    <input type="password" id="ownerPassword" placeholder="Owner password" />
+    <button id="ownerLoginBtn">Login as Owner</button>
+  </div>
+</main>
 
 <div id="confirmDialog">
   <p>Are you sure you want to delete this message?</p>
@@ -187,7 +196,7 @@ footer a {
 
 <footer>
   © 2025 DragonVR. All rights reserved.
-  <a href="https://dragonmasterxxx.github.io/dragonvr-realm/" target="_blank">Back to Home</a>
+  <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
 </footer>
 
 <script>
@@ -214,6 +223,8 @@ const chatWindow = document.getElementById("chatWindow");
 const chatForm = document.getElementById("chatForm");
 const usernameInput = document.getElementById("username");
 const messageInput = document.getElementById("messageInput");
+const ownerPasswordInput = document.getElementById("ownerPassword");
+const ownerLoginBtn = document.getElementById("ownerLoginBtn");
 const confirmDialog = document.getElementById("confirmDialog");
 const cancelBtn = document.getElementById("cancelBtn");
 const deleteBtn = document.getElementById("deleteBtn");
@@ -309,19 +320,6 @@ chatForm.addEventListener("submit", e => {
 
   if (!username || !text) return;
 
-  if (text.startsWith("/owner ")) {
-    const password = text.split(" ")[1];
-    if (password === OWNER_PASSWORD) {
-      ownerLoggedIn = true;
-      showNotification("Owner login successful!");
-    } else {
-      ownerLoggedIn = false;
-      showNotification("Incorrect owner password.");
-    }
-    messageInput.value = "";
-    return;
-  }
-
   if (!isOwnerUser(username) && now - lastMessageTime < COOLDOWN_MS) return;
 
   if (isOwnerUser(username) && text === "/clear") {
@@ -340,6 +338,19 @@ chatForm.addEventListener("submit", e => {
 
   messageInput.value = "";
   lastMessageTime = now;
+});
+
+// ---------------- OWNER LOGIN ----------------
+ownerLoginBtn.addEventListener("click", () => {
+  const password = ownerPasswordInput.value.trim();
+  if (password === OWNER_PASSWORD) {
+    ownerLoggedIn = true;
+    showNotification("Owner login successful!");
+    ownerPasswordInput.value = "";
+  } else {
+    ownerLoggedIn = false;
+    showNotification("Incorrect owner password.");
+  }
 });
 
 // ---------------- CONFIRM DIALOG ----------------
