@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Public Chat - DragonVR's Realm</title>
 
-<!-- Favicon -->
 <link rel="icon" href="https://i.imgur.com/75ryOK9.png" type="image/png">
 
 <style>
@@ -109,19 +108,11 @@ footer {
   font-size: 0.9rem;
   color: #aaa;
   box-shadow: inset 0 3px 15px #ff450050;
-  user-select: none;
 }
 footer a {
   color: #ff4500;
   font-weight: 700;
   text-decoration: none;
-  transition: color 0.3s ease;
-}
-footer a:hover {
-  color: #ff7a00;
-  text-shadow:
-    0 0 8px #ff7a00,
-    0 0 12px #ff4500;
 }
 </style>
 
@@ -145,14 +136,13 @@ footer a:hover {
 </main>
 
 <footer>
-    © 2025 DragonVR. All rights reserved. <a href="https://dragonmasterxxx.github.io/dragonvr-realm/" target="_blank" rel="noopener noreferrer" aria-label="OfficialDragon1 YouTube channel link">
-      Back to Home
-    </a>
-  </footer>
-  
+  © 2025 DragonVR. All rights reserved.
+  <a href="https://dragonmasterxxx.github.io/dragonvr-realm/" target="_blank">Back to Home</a>
+</footer>
+
 <script>
 // ---------------- CONFIG ----------------
-const OWNER_SECRET = "Dragon-IS-A-LEGEND!!!";
+const OWNER_NAME = "DragonVR";
 const COOLDOWN_MS = 3000;
 const profanity = ["fuck","shit","bitch","asshole","dick"];
 
@@ -161,7 +151,7 @@ firebase.initializeApp({
   apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
   authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
   databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
-  projectId: "dragonvr-s-realm-d91d0",
+  projectId: "dragonvr-s-realm-d91d0"
 });
 
 const db = firebase.database();
@@ -179,14 +169,18 @@ const ownerStatus = document.getElementById("ownerStatus");
 let lastMessageTime = 0;
 let slowMode = false;
 
-// ---------------- OWNER ----------------
-const isOwner = localStorage.getItem("ownerToken") === OWNER_SECRET;
+// ---------------- OWNER HELPERS ----------------
+function isOwnerUser(name) {
+  return name.toLowerCase() === OWNER_NAME.toLowerCase();
+}
 
 // Owner online indicator
-if (isOwner) {
-  ownerRef.set(true);
-  window.addEventListener("beforeunload", () => ownerRef.set(false));
-}
+usernameInput.addEventListener("input", () => {
+  if (isOwnerUser(usernameInput.value.trim())) {
+    ownerRef.set(true);
+  }
+});
+window.addEventListener("beforeunload", () => ownerRef.set(false));
 
 ownerRef.on("value", snap => {
   ownerStatus.textContent = snap.val() ? "🟢 Owner online" : "Owner offline";
@@ -202,6 +196,8 @@ function cleanText(text) {
 }
 
 function addMessage(msg) {
+  if (!msg) return;
+
   const div = document.createElement("div");
   div.className = "message";
 
@@ -225,21 +221,25 @@ function addMessage(msg) {
 }
 
 // ---------------- LISTENER ----------------
-messagesRef.limitToLast(100).on("child_added", s => addMessage(s.val()));
+messagesRef.limitToLast(100).on("child_added", snap => {
+  addMessage(snap.val());
+});
 
 // ---------------- SEND ----------------
 chatForm.addEventListener("submit", e => {
   e.preventDefault();
+
   const now = Date.now();
-
-  if (!isOwner && (now - lastMessageTime < COOLDOWN_MS || slowMode)) return;
-
   const username = usernameInput.value.trim();
   let text = cleanText(messageInput.value.trim());
   if (!username || !text) return;
 
-  // OWNER COMMANDS
-  if (isOwner && text.startsWith("/")) {
+  const owner = isOwnerUser(username);
+
+  if (!owner && now - lastMessageTime < COOLDOWN_MS) return;
+
+  // Owner commands
+  if (owner && text.startsWith("/")) {
     if (text === "/clear") messagesRef.remove();
     if (text === "/slowmode on") slowMode = true;
     if (text === "/slowmode off") slowMode = false;
@@ -250,8 +250,8 @@ chatForm.addEventListener("submit", e => {
   messagesRef.push({
     username,
     text,
-    isOwner,
-    time: Date.now()
+    isOwner: owner,
+    time: now
   });
 
   messageInput.value = "";
@@ -263,8 +263,3 @@ sendBtn.classList.add("enabled");
 
 </body>
 </html>
-
-
-
-
-
