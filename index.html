@@ -24,31 +24,7 @@ header {
   color: #ff4500;
   font-size: 2.5rem;
   text-align: center;
-
-  /* Slightly stronger bloom */
-  text-shadow:
-    0 0 3px #ff4500,
-    0 0 6px #ff7a00;
-
-  animation: glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-  0% {
-    text-shadow:
-      0 0 3px #ff4500,
-      0 0 6px #ff7a00;
-  }
-  50% {
-    text-shadow:
-      0 0 4px #ff4500,
-      0 0 8px #ff7a00;
-  }
-  100% {
-    text-shadow:
-      0 0 3px #ff4500,
-      0 0 6px #ff7a00;
-  }
+  text-shadow: 0 0 4px #ff7a00, 0 0 8px #ff4500;
 }
 
 main {
@@ -67,6 +43,7 @@ main {
 }
 
 .message {
+  position: relative;
   margin-bottom: 0.7rem;
   padding: 0.4rem 0.6rem;
   border-radius: 8px;
@@ -74,6 +51,11 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: background 0.2s;
+}
+
+.message:hover {
+  background: rgba(255,69,0,0.3);
 }
 
 .owner-crown {
@@ -85,6 +67,22 @@ main {
 .username {
   font-weight: 700;
   color: #ff6a00;
+}
+
+.trash-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  opacity: 0;
+  font-size: 14px;
+  color: #ff4500;
+  transition: opacity 0.2s;
+}
+
+.message:hover .trash-btn {
+  opacity: 1;
 }
 
 form {
@@ -122,6 +120,45 @@ footer a {
   font-weight: 700;
   text-decoration: none;
 }
+
+/* Notification */
+.notification {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ff4500;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+/* Confirmation Dialog */
+#confirmDialog {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1a0b00;
+  border: 2px solid #ff4500;
+  border-radius: 12px;
+  padding: 1rem;
+  z-index: 1000;
+  text-align: center;
+  width: 300px;
+}
+
+#confirmDialog p {
+  margin-bottom: 1rem;
+}
+
+#confirmDialog button {
+  margin: 0 0.5rem;
+}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -132,15 +169,21 @@ footer a {
 
 <header>🔥 DragonVR Live Chat 🔥</header>
 
-<main>
-  <div id="chatWindow"></div>
+<div id="chatWindow"></div>
 
-  <form id="chatForm">
-    <input id="username" placeholder="Name" maxlength="20" required />
-    <input id="messageInput" placeholder="Message" maxlength="200" required />
-    <button type="submit">Send</button>
-  </form>
-</main>
+<form id="chatForm">
+  <input id="username" placeholder="Name" maxlength="20" required />
+  <input id="messageInput" placeholder="Message" maxlength="200" required />
+  <button type="submit">Send</button>
+</form>
+
+<div id="confirmDialog">
+  <p>Are you sure you want to delete this message?</p>
+  <button id="cancelBtn">Cancel</button>
+  <button id="deleteBtn">Delete</button>
+</div>
+
+<div id="notification" class="notification"></div>
 
 <footer>
   © 2025 DragonVR. All rights reserved.
@@ -150,6 +193,7 @@ footer a {
 <script>
 // ---------------- CONFIG ----------------
 const OWNER_NAME = "DragonVR";
+const OWNER_PASSWORD = "Dragon-IS-A-LEGEND!!!";
 const COOLDOWN_MS = 3000;
 const profanity = ["fuck","shit","bitch","asshole","dick"];
 
@@ -163,18 +207,34 @@ firebase.initializeApp({
 
 const db = firebase.database();
 const messagesRef = db.ref("chatMessages");
+const usersRef = db.ref("activeUsers");
 
 // ---------------- DOM ----------------
 const chatWindow = document.getElementById("chatWindow");
 const chatForm = document.getElementById("chatForm");
 const usernameInput = document.getElementById("username");
 const messageInput = document.getElementById("messageInput");
+const confirmDialog = document.getElementById("confirmDialog");
+const cancelBtn = document.getElementById("cancelBtn");
+const deleteBtn = document.getElementById("deleteBtn");
+const notificationDiv = document.getElementById("notification");
 
 let lastMessageTime = 0;
+let ownerLoggedIn = false;
+let messageToDelete = null;
+
+// ---------------- USERNAME SAVE ----------------
+if (localStorage.getItem("username")) {
+  usernameInput.value = localStorage.getItem("username");
+}
+
+usernameInput.addEventListener("change", () => {
+  localStorage.setItem("username", usernameInput.value.trim());
+});
 
 // ---------------- HELPERS ----------------
 function isOwnerUser(name) {
-  return name.toLowerCase() === OWNER_NAME.toLowerCase();
+  return ownerLoggedIn && name.toLowerCase() === OWNER_NAME.toLowerCase();
 }
 
 function cleanText(text) {
@@ -184,8 +244,18 @@ function cleanText(text) {
   return text;
 }
 
-// ---------------- DISPLAY ----------------
-function addMessage(msg) {
+function showNotification(msg) {
+  notificationDiv.textContent = msg;
+  notificationDiv.style.opacity = "1";
+  notificationDiv.style.transform = "translateX(-50%) translateY(0)";
+  setTimeout(() => {
+    notificationDiv.style.opacity = "0";
+    notificationDiv.style.transform = "translateX(-50%) translateY(-20px)";
+  }, 2500);
+}
+
+// ---------------- MESSAGES ----------------
+function addMessage(msg, key) {
   if (!msg || !msg.username || !msg.text) return;
 
   const div = document.createElement("div");
@@ -205,16 +275,28 @@ function addMessage(msg) {
   const text = document.createElement("span");
   text.textContent = " " + msg.text;
 
+  // Trashcan button
+  const trash = document.createElement("span");
+  trash.className = "trash-btn";
+  trash.textContent = "🗑";
+  div.appendChild(trash);
+
+  // Only show if owner or user's own message
+  trash.style.display = (isOwnerUser(usernameInput.value) || msg.username === usernameInput.value) ? "inline" : "none";
+
+  trash.addEventListener("click", () => {
+    messageToDelete = key;
+    confirmDialog.style.display = "block";
+  });
+
   div.append(user, text);
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// ---------------- FIXED LISTENER ----------------
-// Listen in order of time, ignore null values
+// ---------------- LISTENERS ----------------
 messagesRef.orderByChild('time').on('child_added', snap => {
-  const val = snap.val();
-  if (val && val.username && val.text) addMessage(val);
+  addMessage(snap.val(), snap.key);
 });
 
 // ---------------- SEND ----------------
@@ -227,11 +309,22 @@ chatForm.addEventListener("submit", e => {
 
   if (!username || !text) return;
 
-  const owner = isOwnerUser(username);
+  if (text.startsWith("/owner ")) {
+    const password = text.split(" ")[1];
+    if (password === OWNER_PASSWORD) {
+      ownerLoggedIn = true;
+      showNotification("Owner login successful!");
+    } else {
+      ownerLoggedIn = false;
+      showNotification("Incorrect owner password.");
+    }
+    messageInput.value = "";
+    return;
+  }
 
-  if (!owner && now - lastMessageTime < COOLDOWN_MS) return;
+  if (!isOwnerUser(username) && now - lastMessageTime < COOLDOWN_MS) return;
 
-  if (owner && text === "/clear") {
+  if (isOwnerUser(username) && text === "/clear") {
     messagesRef.remove();
     chatWindow.innerHTML = "";
     messageInput.value = "";
@@ -241,12 +334,38 @@ chatForm.addEventListener("submit", e => {
   messagesRef.push({
     username,
     text,
-    isOwner: owner,
+    isOwner: isOwnerUser(username),
     time: now
   });
 
   messageInput.value = "";
   lastMessageTime = now;
+});
+
+// ---------------- CONFIRM DIALOG ----------------
+cancelBtn.addEventListener("click", () => {
+  confirmDialog.style.display = "none";
+  messageToDelete = null;
+});
+
+deleteBtn.addEventListener("click", () => {
+  if (!messageToDelete) return;
+  messagesRef.child(messageToDelete).remove();
+  confirmDialog.style.display = "none";
+  messageToDelete = null;
+});
+
+// ---------------- JOIN/LEAVE ----------------
+const userKey = usersRef.push().key;
+usersRef.child(userKey).set({username: usernameInput.value});
+usersRef.child(userKey).onDisconnect().remove();
+
+usersRef.on("child_added", snap => {
+  showNotification(`${snap.val().username} joined the chat`);
+});
+
+usersRef.on("child_removed", snap => {
+  showNotification(`${snap.val().username} left the chat`);
 });
 </script>
 
