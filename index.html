@@ -275,8 +275,6 @@ const ownerLoginBtn = document.getElementById("ownerLoginBtn");
 const deleteModal = document.getElementById("deleteModal");
 const cancelDeleteBtn = document.getElementById("cancelDelete");
 const confirmDeleteBtn = document.getElementById("confirmDelete");
-const systemInput = document.getElementById("systemMessageInput");
-const systemSendBtn = document.getElementById("systemSendBtn");
 
 let lastMessageTime = 0;
 let isOwner = false;
@@ -285,8 +283,7 @@ let messageToDeleteKey = null;
 // ---------------- HELPERS ----------------
 function cleanText(text) {
   profanity.forEach(w => {
-    const regex = new RegExp(w, "gi");
-    text = text.replace(regex, "****");
+    text = text.replace(new RegExp(w,"gi"), "****");
   });
   return text;
 }
@@ -303,8 +300,6 @@ function showNotification(text) {
 ownerLoginBtn.addEventListener("click", () => {
   if(ownerPasswordInput.value === OWNER_PASSWORD){
     isOwner = true;
-    systemInput.style.display = "inline-block";
-    systemSendBtn.style.display = "inline-block";
     ownerPasswordInput.value = "";
     showNotification("Owner privileges enabled!");
   } else {
@@ -319,30 +314,31 @@ usernameInput.addEventListener("change", () => {
   localStorage.setItem("chatUsername", usernameInput.value.trim());
 });
 
-// ---------------- DISPLAY MESSAGES ----------------
+// ---------------- DISPLAY ----------------
 function addMessage(msg, key){
-  if(!msg || (!msg.username && !msg.text)) return;
+  if(!msg || !msg.text) return;
 
   const div = document.createElement("div");
   div.className = "message";
   div.dataset.key = key;
 
-  const user = document.createElement("span");
+  // Owner crown (not for System messages)
+  if(msg.isOwner && msg.username !== "System") {
+    const crown = document.createElement("span");
+    crown.className = "owner-crown";
+    crown.textContent = "👑";
+    div.appendChild(crown);
+  }
 
-  if(msg.username === "System") {
-    user.className = "username";
-    user.style.color = "#fff"; // white for system
+  const user = document.createElement("span");
+  user.className = "username";
+
+  if(msg.username === "System"){
+    user.style.color = "#fff";
     user.textContent = "System:";
   } else {
-    if(msg.isOwner) {
-      const crown = document.createElement("span");
-      crown.className = "owner-crown";
-      crown.textContent = "👑";
-      div.appendChild(crown);
-    }
-    user.className = "username";
+    user.style.color = "#ff6a00";
     user.textContent = msg.username + ":";
-    user.style.color = "#ff6a00"; // orange for regular users
   }
 
   const text = document.createElement("span");
@@ -385,48 +381,27 @@ messagesRef.on('child_removed', snap => {
   if(div) div.remove();
 });
 
-// ---------------- SEND SYSTEM MESSAGE ----------------
-function sendSystemMessage() {
-  if(!isOwner) return;
-
-  const text = systemInput.value.trim();
-  if(!text) return;
-
-  messagesRef.push({
-    username: "System",
-    text: text,
-    isOwner: true,
-    time: Date.now()
-  });
-
-  systemInput.value = "";
-}
-
-systemSendBtn.addEventListener("click", sendSystemMessage);
-systemInput.addEventListener("keydown", e => {
-  if(e.key === "Enter") {
-    e.preventDefault();
-    sendSystemMessage();
-  }
-});
-
 // ---------------- SEND NORMAL CHAT ----------------
 chatForm.addEventListener("submit", e => {
   e.preventDefault();
 
   const now = Date.now();
   const username = usernameInput.value.trim();
-  let text = cleanText(messageInput.value.trim());
-  if(!username || !text) return;
+  let textRaw = messageInput.value.trim();
+  if(!username || !textRaw) return;
 
   if(!isOwner && now - lastMessageTime < COOLDOWN_MS) return;
 
-  if(isOwner && text === "/clear"){
+  // Owner commands
+  if(isOwner && textRaw === "/clear"){
     messagesRef.remove();
     chatWindow.innerHTML = "";
     messageInput.value = "";
     return;
   }
+
+  // Clean text after command check
+  let text = cleanText(textRaw);
 
   messagesRef.push({
     username,
@@ -466,3 +441,4 @@ usernameInput.addEventListener("change", () => {
 
 </body>
 </html>
+
