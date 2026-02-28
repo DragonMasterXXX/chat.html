@@ -195,22 +195,15 @@ footer a {
 <main>
   <!-- Owner login at the top -->
   <div id="ownerLogin">
-    <input id="ownerPassword" placeholder="Owner Password" type="password" />
-    <button id="ownerLoginBtn">Login</button>
-    <input
-  id="systemMessageInput"
-  placeholder="System Message"
-  maxlength="200"
-  style="display:none; padding:0.4rem 0.6rem; border-radius:20px; border:2px solid #fff; background:#111; color:#fff; outline:none; width:160px;"
-/>
-
-<button
-  id="systemSendBtn"
-  style="display:none; padding:0.4rem 0.8rem; border:none; border-radius:20px; background:#fff; color:#000; font-weight:bold; cursor:pointer;"
->
-  Send
-</button>
-  </div>
+  <input id="ownerPassword" placeholder="Owner Password" type="password" />
+  <button id="ownerLoginBtn">Login</button>
+  <input id="systemMessageInput" placeholder="System Message" maxlength="200"
+    style="display:none; padding:0.4rem 0.6rem; border-radius:20px; border:2px solid #fff; background:#111; color:#fff; outline:none; width:160px;" />
+  <button id="systemSendBtn"
+    style="display:none; padding:0.4rem 0.8rem; border:none; border-radius:20px; background:#fff; color:#000; font-weight:bold; cursor:pointer;">
+    Send
+  </button>
+</div>
 
   <!-- Chat display -->
   <div id="chatWindow"></div>
@@ -459,6 +452,7 @@ usernameInput.addEventListener("change", e => {
 
 </body>
 </html>
+
 
 
 
