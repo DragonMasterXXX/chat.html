@@ -276,15 +276,25 @@ const deleteModal = document.getElementById("deleteModal");
 const cancelDeleteBtn = document.getElementById("cancelDelete");
 const confirmDeleteBtn = document.getElementById("confirmDelete");
 
+// System message input (added dynamically for owner)
+const systemInput = document.createElement("input");
+systemInput.placeholder = "System Message";
+systemInput.maxLength = 200;
+systemInput.style.cssText = "display:none; padding:0.4rem 0.6rem; border-radius:20px; border:2px solid #fff; background:#111; color:#fff; outline:none; width:160px; margin-left:0.5rem;";
+ownerPasswordInput.parentNode.appendChild(systemInput);
+
+const systemSendBtn = document.createElement("button");
+systemSendBtn.textContent = "Send";
+systemSendBtn.style.cssText = "display:none; padding:0.4rem 0.8rem; border:none; border-radius:20px; background:#fff; color:#000; font-weight:bold; cursor:pointer;";
+ownerPasswordInput.parentNode.appendChild(systemSendBtn);
+
 let lastMessageTime = 0;
 let isOwner = false;
 let messageToDeleteKey = null;
 
 // ---------------- HELPERS ----------------
 function cleanText(text) {
-  profanity.forEach(w => {
-    text = text.replace(new RegExp(w,"gi"), "****");
-  });
+  profanity.forEach(w => text = text.replace(new RegExp(w,"gi"), "****"));
   return text;
 }
 
@@ -301,6 +311,8 @@ ownerLoginBtn.addEventListener("click", () => {
   if(ownerPasswordInput.value === OWNER_PASSWORD){
     isOwner = true;
     ownerPasswordInput.value = "";
+    systemInput.style.display = "inline-block";
+    systemSendBtn.style.display = "inline-block";
     showNotification("Owner privileges enabled!");
   } else {
     showNotification("Incorrect password!");
@@ -334,7 +346,7 @@ function addMessage(msg, key){
   user.className = "username";
 
   if(msg.username === "System"){
-    user.style.color = "#fff";
+    user.style.color = "#fff"; // white text
     user.textContent = "System:";
   } else {
     user.style.color = "#ff6a00";
@@ -392,7 +404,7 @@ chatForm.addEventListener("submit", e => {
 
   if(!isOwner && now - lastMessageTime < COOLDOWN_MS) return;
 
-  // Owner commands
+  // Owner command: clear chat
   if(isOwner && textRaw === "/clear"){
     messagesRef.remove();
     chatWindow.innerHTML = "";
@@ -400,7 +412,6 @@ chatForm.addEventListener("submit", e => {
     return;
   }
 
-  // Clean text after command check
   let text = cleanText(textRaw);
 
   messagesRef.push({
@@ -412,6 +423,33 @@ chatForm.addEventListener("submit", e => {
 
   messageInput.value = "";
   lastMessageTime = now;
+});
+
+// ---------------- SEND SYSTEM MESSAGE ----------------
+function sendSystemMessage() {
+  if(!isOwner) return;
+  const text = systemInput.value.trim();
+  if(!text) return;
+
+  messagesRef.push({
+    username: "System",
+    text,
+    isOwner: true,
+    time: Date.now()
+  });
+
+  systemInput.value = "";
+}
+
+// Button click
+systemSendBtn.addEventListener("click", sendSystemMessage);
+
+// Enter key
+systemInput.addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    e.preventDefault();
+    sendSystemMessage();
+  }
 });
 
 // ---------------- DELETE MODAL ----------------
@@ -441,4 +479,5 @@ usernameInput.addEventListener("change", () => {
 
 </body>
 </html>
+
 
