@@ -263,7 +263,7 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 const messagesRef = db.ref("chatMessages");
-const usersRef = db.ref("chatUsers"); // join/leave notifications
+const usersRef = db.ref("chatUsers");
 
 // ---------------- DOM ----------------
 const chatWindow = document.getElementById("chatWindow");
@@ -275,23 +275,21 @@ const ownerLoginBtn = document.getElementById("ownerLoginBtn");
 const deleteModal = document.getElementById("deleteModal");
 const cancelDeleteBtn = document.getElementById("cancelDelete");
 const confirmDeleteBtn = document.getElementById("confirmDelete");
-
-// Owner system message input/button
-let systemInput = document.getElementById("systemMessageInput");
-let systemSendBtn = document.getElementById("systemSendBtn");
+const systemInput = document.getElementById("systemMessageInput");
+const systemSendBtn = document.getElementById("systemSendBtn");
 
 // ---------------- STATE ----------------
-let lastMessageTime = 0;
 let isOwner = false;
+let lastMessageTime = 0;
 let messageToDeleteKey = null;
 
 // ---------------- HELPERS ----------------
-function cleanText(text){
+function cleanText(text) {
   profanity.forEach(w => text = text.replace(new RegExp(w,"gi"), "****"));
   return text;
 }
 
-function showNotification(text){
+function showNotification(text) {
   const notif = document.createElement("div");
   notif.className = "notification";
   notif.textContent = text;
@@ -303,12 +301,9 @@ function showNotification(text){
 ownerLoginBtn.addEventListener("click", () => {
   if(ownerPasswordInput.value === OWNER_PASSWORD){
     isOwner = true;
-
-    // Show system message inputs
-    if(systemInput) systemInput.style.display = "inline-block";
-    if(systemSendBtn) systemSendBtn.style.display = "inline-block";
-
     ownerPasswordInput.value = "";
+    systemInput.style.display = "inline-block";
+    systemSendBtn.style.display = "inline-block";
     showNotification("Owner privileges enabled!");
   } else {
     showNotification("Incorrect password!");
@@ -322,9 +317,9 @@ usernameInput.addEventListener("change", () => {
   localStorage.setItem("chatUsername", usernameInput.value.trim());
 });
 
-// ---------------- DISPLAY ----------------
-function addMessage(msg, key){
-  if(!msg || (!msg.username && !msg.text)) return;
+// ---------------- DISPLAY MESSAGES ----------------
+function addMessage(msg, key) {
+  if(!msg || !msg.text) return;
 
   const div = document.createElement("div");
   div.className = "message";
@@ -334,24 +329,22 @@ function addMessage(msg, key){
   const text = document.createElement("span");
   text.textContent = " " + msg.text;
 
-  // System message style
-  if(msg.username === "System"){
+  if(msg.username === "System") {
     user.className = "username";
-    user.style.color = "#fff"; // white text
     user.textContent = "System:";
+    user.style.color = "#fff";
   } else {
-    if(msg.isOwner){
+    user.className = "username";
+    user.textContent = msg.username + ":";
+    if(msg.isOwner) {
       const crown = document.createElement("span");
       crown.className = "owner-crown";
       crown.textContent = "👑";
       div.appendChild(crown);
     }
-    user.className = "username";
-    user.textContent = msg.username + ":";
-    user.style.color = "#ff6a00"; // orange
+    user.style.color = "#ff6a00";
   }
 
-  // Trash button
   const trashBtn = document.createElement("span");
   trashBtn.className = "trash-btn";
   trashBtn.textContent = "🗑️";
@@ -368,87 +361,77 @@ function addMessage(msg, key){
 }
 
 // ---------------- JOIN/LEAVE ----------------
-function joinChat(username){
+function joinChat(username) {
   if(!username) return;
   usersRef.child(username).set(true);
   showNotification(`${username} has joined the chat!`);
 }
-function leaveChat(username){
+
+function leaveChat(username) {
   if(!username) return;
   usersRef.child(username).remove();
   showNotification(`${username} has left the chat!`);
 }
 
-// ---------------- LISTENERS ----------------
 window.addEventListener("beforeunload", () => {
-  const username = usernameInput.value.trim();
-  if(username) leaveChat(username);
+  leaveChat(usernameInput.value.trim());
 });
 
-// Listen for new messages
+// ---------------- FIREBASE LISTENERS ----------------
 messagesRef.orderByChild('time').on('child_added', snap => addMessage(snap.val(), snap.key));
 messagesRef.on('child_removed', snap => {
   const div = chatWindow.querySelector(`[data-key='${snap.key}']`);
   if(div) div.remove();
 });
 
-// ---------------- SEND SYSTEM MESSAGE ----------------
-function sendSystemMessage(){
-  if(!isOwner || !systemInput) return;
-  const text = systemInput.value.trim();
-  if(!text) return;
-
-  messagesRef.push({
-    username: "System",
-    text,
-    isOwner: true,
-    time: Date.now()
-  });
-  systemInput.value = "";
-}
-
-if(systemSendBtn){
-  systemSendBtn.addEventListener("click", sendSystemMessage);
-}
-if(systemInput){
-  systemInput.addEventListener("keydown", e => {
-    if(e.key === "Enter"){
-      e.preventDefault();
-      sendSystemMessage();
-    }
-  });
-}
-
-// ---------------- SEND NORMAL CHAT ----------------
+// ---------------- SEND NORMAL MESSAGE ----------------
 chatForm.addEventListener("submit", e => {
   e.preventDefault();
+  const username = usernameInput.value.trim();
+  const textRaw = messageInput.value.trim();
+  if(!username || !textRaw) return;
 
   const now = Date.now();
-  const username = usernameInput.value.trim();
-  const rawText = messageInput.value.trim();
-  if(!username || !rawText) return;
-
   if(!isOwner && now - lastMessageTime < COOLDOWN_MS) return;
 
-  // Owner command
-  if(isOwner && rawText === "/clear"){
+  if(isOwner && textRaw === "/clear") {
     messagesRef.remove();
     chatWindow.innerHTML = "";
     messageInput.value = "";
     return;
   }
 
-  const text = cleanText(rawText);
-
+  const text = cleanText(textRaw);
   messagesRef.push({
     username,
     text,
     isOwner,
     time: now
   });
-
   messageInput.value = "";
   lastMessageTime = now;
+});
+
+// ---------------- SEND SYSTEM MESSAGE ----------------
+function sendSystemMessage() {
+  if(!isOwner) return;
+  const textRaw = systemInput.value.trim();
+  if(!textRaw) return;
+  messagesRef.push({
+    username: "System",
+    text: textRaw,
+    isOwner: true,
+    time: Date.now()
+  });
+  systemInput.value = "";
+}
+
+systemSendBtn.addEventListener("click", sendSystemMessage);
+systemInput.addEventListener("keydown", e => {
+  if(e.key === "Enter") {
+    e.preventDefault();
+    sendSystemMessage();
+  }
 });
 
 // ---------------- DELETE MODAL ----------------
@@ -457,7 +440,7 @@ cancelDeleteBtn.addEventListener("click", () => {
   messageToDeleteKey = null;
 });
 confirmDeleteBtn.addEventListener("click", () => {
-  if(messageToDeleteKey){
+  if(messageToDeleteKey) {
     messagesRef.child(messageToDeleteKey).remove();
     messageToDeleteKey = null;
   }
@@ -465,18 +448,18 @@ confirmDeleteBtn.addEventListener("click", () => {
 });
 
 // ---------------- USER JOIN ----------------
-function handleUsernameJoin(){
-  const username = usernameInput.value.trim();
-  if(!username) return;
-
-  joinChat(username);
-}
-handleUsernameJoin();
-usernameInput.addEventListener("change", handleUsernameJoin);
+if(usernameInput.value.trim()) joinChat(usernameInput.value.trim());
+usernameInput.addEventListener("change", e => {
+  const oldUsername = e.target.defaultValue || "";
+  const newUsername = e.target.value.trim();
+  if(oldUsername) leaveChat(oldUsername);
+  if(newUsername) joinChat(newUsername);
+});
 </script>
 
 </body>
 </html>
+
 
 
 
