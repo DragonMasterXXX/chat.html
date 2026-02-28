@@ -197,6 +197,19 @@ footer a {
   <div id="ownerLogin">
     <input id="ownerPassword" placeholder="Owner Password" type="password" />
     <button id="ownerLoginBtn">Login</button>
+    <input
+  id="systemMessageInput"
+  placeholder="System Message"
+  maxlength="200"
+  style="display:none; padding:0.4rem 0.6rem; border-radius:20px; border:2px solid #fff; background:#111; color:#fff; outline:none; width:160px;"
+/>
+
+<button
+  id="systemSendBtn"
+  style="display:none; padding:0.4rem 0.8rem; border:none; border-radius:20px; background:#fff; color:#000; font-weight:bold; cursor:pointer;"
+>
+  Send
+</button>
   </div>
 
   <!-- Chat display -->
@@ -224,9 +237,22 @@ footer a {
 <script>
 // ---------------- CONFIG ----------------
 const OWNER_NAME = "DragonVR";
-const OWNER_PASSWORD = "DRAGON123"; // Your owner password
+const OWNER_PASSWORD = "Dragon-IS-A-LEGEND!!!";
 const COOLDOWN_MS = 3000;
-const profanity = ["fuck","shit","bitch","asshole","dick"];
+
+// ---------------- PROFANITY FILTER ----------------
+// Huge list of English curse words and common variants
+const profanity = [
+  "fuck","f*ck","f**k","f***","shit","sh*t","s**t","sh1t",
+  "bitch","b*tch","bi**h","b!tch","asshole","a**hole","a**h0le",
+  "dick","d!ck","d1ck","cunt","c*nt","c**t","slut","whore","wh0re",
+  "bastard","damn","bollocks","bugger","twat","prick","motherfucker",
+  "m*therf*cker","m0therfucker","fag","faggot","nigger","n1gger",
+  "piss","p*ss","p***","cock","c0ck","pussy","pu55y","tit","t1t","wank",
+  "douche","douchebag","skank","slapper","jackass","twunt","arse","arsehole",
+  "clit","c0ck","cum","shag","bollok","tosser","git","slag","nazi","kike"
+  // You can keep adding more words here
+];
 
 // ---------------- FIREBASE ----------------
 firebase.initializeApp({
@@ -237,7 +263,7 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 const messagesRef = db.ref("chatMessages");
-const usersRef = db.ref("chatUsers"); // for join/leave notifications
+const usersRef = db.ref("chatUsers");
 
 // ---------------- DOM ----------------
 const chatWindow = document.getElementById("chatWindow");
@@ -249,6 +275,8 @@ const ownerLoginBtn = document.getElementById("ownerLoginBtn");
 const deleteModal = document.getElementById("deleteModal");
 const cancelDeleteBtn = document.getElementById("cancelDelete");
 const confirmDeleteBtn = document.getElementById("confirmDelete");
+const systemInput = document.getElementById("systemMessageInput");
+const systemSendBtn = document.getElementById("systemSendBtn");
 
 let lastMessageTime = 0;
 let isOwner = false;
@@ -256,7 +284,10 @@ let messageToDeleteKey = null;
 
 // ---------------- HELPERS ----------------
 function cleanText(text) {
-  profanity.forEach(w => text = text.replace(new RegExp(w,"gi"), "****"));
+  profanity.forEach(w => {
+    const regex = new RegExp(w, "gi");
+    text = text.replace(regex, "****");
+  });
   return text;
 }
 
@@ -272,6 +303,8 @@ function showNotification(text) {
 ownerLoginBtn.addEventListener("click", () => {
   if(ownerPasswordInput.value === OWNER_PASSWORD){
     isOwner = true;
+    systemInput.style.display = "inline-block";
+    systemSendBtn.style.display = "inline-block";
     ownerPasswordInput.value = "";
     showNotification("Owner privileges enabled!");
   } else {
@@ -286,29 +319,35 @@ usernameInput.addEventListener("change", () => {
   localStorage.setItem("chatUsername", usernameInput.value.trim());
 });
 
-// ---------------- DISPLAY ----------------
+// ---------------- DISPLAY MESSAGES ----------------
 function addMessage(msg, key){
-  if(!msg || !msg.username || !msg.text) return;
+  if(!msg || (!msg.username && !msg.text)) return;
 
   const div = document.createElement("div");
   div.className = "message";
   div.dataset.key = key;
 
-  if(msg.isOwner) {
-    const crown = document.createElement("span");
-    crown.className = "owner-crown";
-    crown.textContent = "👑";
-    div.appendChild(crown);
-  }
-
   const user = document.createElement("span");
-  user.className = "username";
-  user.textContent = msg.username + ":";
+
+  if(msg.username === "System") {
+    user.className = "username";
+    user.style.color = "#fff"; // white for system
+    user.textContent = "System:";
+  } else {
+    if(msg.isOwner) {
+      const crown = document.createElement("span");
+      crown.className = "owner-crown";
+      crown.textContent = "👑";
+      div.appendChild(crown);
+    }
+    user.className = "username";
+    user.textContent = msg.username + ":";
+    user.style.color = "#ff6a00"; // orange for regular users
+  }
 
   const text = document.createElement("span");
   text.textContent = " " + msg.text;
 
-  // Trash button
   const trashBtn = document.createElement("span");
   trashBtn.className = "trash-btn";
   trashBtn.textContent = "🗑️";
@@ -346,7 +385,32 @@ messagesRef.on('child_removed', snap => {
   if(div) div.remove();
 });
 
-// ---------------- SEND ----------------
+// ---------------- SEND SYSTEM MESSAGE ----------------
+function sendSystemMessage() {
+  if(!isOwner) return;
+
+  const text = systemInput.value.trim();
+  if(!text) return;
+
+  messagesRef.push({
+    username: "System",
+    text: text,
+    isOwner: true,
+    time: Date.now()
+  });
+
+  systemInput.value = "";
+}
+
+systemSendBtn.addEventListener("click", sendSystemMessage);
+systemInput.addEventListener("keydown", e => {
+  if(e.key === "Enter") {
+    e.preventDefault();
+    sendSystemMessage();
+  }
+});
+
+// ---------------- SEND NORMAL CHAT ----------------
 chatForm.addEventListener("submit", e => {
   e.preventDefault();
 
@@ -389,13 +453,14 @@ confirmDeleteBtn.addEventListener("click", () => {
 });
 
 // ---------------- USER JOIN ----------------
-const username = usernameInput.value.trim();
-if(username) joinChat(username);
+let currentUsername = usernameInput.value.trim();
+if(currentUsername) joinChat(currentUsername);
 usernameInput.addEventListener("change", () => {
-  const oldUsername = username;
+  const oldUsername = currentUsername;
   const newUsername = usernameInput.value.trim();
   if(oldUsername) leaveChat(oldUsername);
   if(newUsername) joinChat(newUsername);
+  currentUsername = newUsername;
 });
 </script>
 
