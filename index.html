@@ -71,14 +71,13 @@ main {
   border-radius: 8px;
   background: rgba(255,69,0,0.2);
   display: flex;
-  flex-wrap: wrap; /* Allows time to sit on top row */
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   position: relative;
   border: 2px solid transparent;
 }
 
-/* Timestamp Style */
 .message-time {
   display: block;
   width: 100%;
@@ -86,6 +85,17 @@ main {
   color: #888;
   margin-bottom: 2px;
 }
+
+/* Header Markdown Styles */
+.message h1, .message h2, .message h3 {
+  margin: 5px 0;
+  color: #ff8c00;
+  display: inline-block;
+  width: 100%;
+}
+.message h1 { font-size: 1.5rem; text-transform: uppercase; }
+.message h2 { font-size: 1.2rem; }
+.message h3 { font-size: 1rem; color: #ffb380; }
 
 .owner-message {
   border: 2px solid gold !important;
@@ -314,6 +324,21 @@ function cleanText(t) {
   return t;
 }
 
+function formatMarkdown(text) {
+  // Headers (Check for hashtags at the start of a line)
+  if (text.startsWith("### ")) text = `<h3>${text.substring(4)}</h3>`;
+  else if (text.startsWith("## ")) text = `<h2>${text.substring(3)}</h2>`;
+  else if (text.startsWith("# ")) text = `<h1>${text.substring(2)}</h1>`;
+
+  // Bold + Italic: ***text***
+  text = text.replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>');
+  // Bold: **text**
+  text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  // Italic: *text*
+  text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');
+  return text;
+}
+
 function showNotification(text) {
   const n = document.createElement("div");
   n.className = "notification";
@@ -362,9 +387,10 @@ function addMessage(msg, key) {
     div.classList.add("owner-message");
   }
 
-  // Time Tracker Logic
   const timeDate = new Date(msg.time);
   const timeStr = timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const formattedText = formatMarkdown(msg.text);
 
   let badge = "";
   let nameStyle = "";
@@ -381,22 +407,16 @@ function addMessage(msg, key) {
   div.innerHTML = `
     <span class="message-time">${timeStr}</span>
     ${msg.username === "System"
-      ? `<span class="username" style="color:#fff">System:</span> <span>${msg.text}</span>`
+      ? `<span class="username" style="color:#fff">System:</span> <span>${formattedText}</span>`
       : `${badge ? `<span>${badge}</span>` : ""}
          <span class="username" ${nameStyle}>${msg.username}:</span>
-         <span ${textStyle}>${msg.text}</span>`
+         <span ${textStyle}>${formattedText}</span>`
     }`;
 
-  // -------- MUTE BUTTON (OWNER + ADMIN) --------
   if ((isOwner || isAdmin) && msg.username !== currentUsername && msg.username !== "System") {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
-    
-    if (isAdmin && !isOwner) {
-      muteBtn.style.right = "10px";
-    } else {
-      muteBtn.style.right = "40px";
-    }
+    if (isAdmin && !isOwner) { muteBtn.style.right = "10px"; } else { muteBtn.style.right = "40px"; }
 
     mutesRef.child(msg.username).on("value", snap => {
       const until = snap.val() || 0;
@@ -418,7 +438,6 @@ function addMessage(msg, key) {
     div.appendChild(muteBtn);
   }
 
-  // -------- TRASH BUTTON RULES --------
   const isMyOwn = (msg.username === currentUsername);
   const canDelete = isOwner || (isMyOwn && msg.username !== "System");
 
@@ -442,7 +461,6 @@ function sendSystemMessage() {
   if (!isOwner) return;
   const text = systemMessageInput.value.trim();
   if (!text) return;
-
   messagesRef.push({
     username: "System",
     text: text,
@@ -454,26 +472,19 @@ function sendSystemMessage() {
 }
 
 systemSendBtn.onclick = sendSystemMessage;
-systemMessageInput.onkeydown = e => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    sendSystemMessage();
-  }
-};
+systemMessageInput.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); sendSystemMessage(); } };
 
 // ---------------- LOGIN ----------------
 ownerLoginBtn.onclick = () => {
   const pass = ownerPassword.value;
   if (pass === OWNER_PASSWORD) {
-    isOwner = true;
-    isAdmin = true;
+    isOwner = true; isAdmin = true;
     showNotification("Owner privileges enabled!");
     systemMessageInput.style.display = "inline-block";
     systemSendBtn.style.display = "inline-block";
     refreshChatUI();
   } else if (pass === ADMIN_PASSWORD) {
-    isAdmin = true;
-    isOwner = false;
+    isAdmin = true; isOwner = false;
     showNotification("Admin privileges enabled!");
     systemMessageInput.style.display = "none";
     systemSendBtn.style.display = "none";
@@ -489,19 +500,16 @@ chatForm.onsubmit = e => {
   const u = username.value.trim();
   const t = messageInput.value.trim();
   if (!u || !t) return;
-
   if (t === "/clear" && isOwner) {
     messagesRef.remove();
     messageInput.value = "";
     showNotification("Chat Cleared!");
     return;
   }
-
   if (Date.now() < mutedUntil) return showNotification("You are muted");
   const now = Date.now();
   if (!isOwner && !isAdmin && now - lastMessageTime < COOLDOWN_MS)
     return showNotification("Slow down");
-
   messagesRef.push({
     username: u,
     text: (isOwner || isAdmin) ? t : cleanText(t),
@@ -509,7 +517,6 @@ chatForm.onsubmit = e => {
     isAdmin: isAdmin,
     time: now
   });
-
   messageInput.value = "";
   lastMessageTime = now;
 };
