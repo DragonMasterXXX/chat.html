@@ -67,14 +67,24 @@ main {
 
 .message {
   margin-bottom: 0.7rem;
-  padding: 0.4rem 0.6rem;
+  padding: 0.6rem 0.8rem;
   border-radius: 8px;
   background: rgba(255,69,0,0.2);
   display: flex;
+  flex-wrap: wrap; /* Allows time to sit on top row */
   align-items: center;
   gap: 0.5rem;
   position: relative;
   border: 2px solid transparent;
+}
+
+/* Timestamp Style */
+.message-time {
+  display: block;
+  width: 100%;
+  font-size: 0.7rem;
+  color: #888;
+  margin-bottom: 2px;
 }
 
 .owner-message {
@@ -100,6 +110,8 @@ main {
   cursor: pointer;
   color: #888;
   font-size: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .mute-btn {
@@ -111,22 +123,12 @@ main {
   height: 20px;
   filter: grayscale(100%);
   opacity: 0.6;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .mute-btn:hover, .trash-btn:hover {
   opacity: 1;
-}
-
-.owner-crown {
-  font-size: 1.1rem;
-  color: gold;
-  filter: drop-shadow(0 0 4px gold);
-}
-
-.admin-star {
-  font-size: 1.1rem;
-  color: gold;
-  filter: drop-shadow(0 0 2px gold);
 }
 
 .username {
@@ -360,6 +362,10 @@ function addMessage(msg, key) {
     div.classList.add("owner-message");
   }
 
+  // Time Tracker Logic
+  const timeDate = new Date(msg.time);
+  const timeStr = timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   let badge = "";
   let nameStyle = "";
   let textStyle = "";
@@ -372,20 +378,20 @@ function addMessage(msg, key) {
     nameStyle = 'style="color: yellow"';
   }
 
-  div.innerHTML = msg.username === "System"
-    ? `<span class="username" style="color:#fff">System:</span> <span>${msg.text}</span>`
-    : `${badge ? `<span>${badge}</span>` : ""}
-       <span class="username" ${nameStyle}>${msg.username}:</span>
-       <span ${textStyle}>${msg.text}</span>`;
+  div.innerHTML = `
+    <span class="message-time">${timeStr}</span>
+    ${msg.username === "System"
+      ? `<span class="username" style="color:#fff">System:</span> <span>${msg.text}</span>`
+      : `${badge ? `<span>${badge}</span>` : ""}
+         <span class="username" ${nameStyle}>${msg.username}:</span>
+         <span ${textStyle}>${msg.text}</span>`
+    }`;
 
   // -------- MUTE BUTTON (OWNER + ADMIN) --------
   if ((isOwner || isAdmin) && msg.username !== currentUsername && msg.username !== "System") {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
     
-    // POSITION LOGIC: 
-    // If Admin (but not Owner), put mic in the trashcan's spot (10px).
-    // If Owner, keep it at 40px so the trashcan can fit at 10px.
     if (isAdmin && !isOwner) {
       muteBtn.style.right = "10px";
     } else {
@@ -413,9 +419,6 @@ function addMessage(msg, key) {
   }
 
   // -------- TRASH BUTTON RULES --------
-  // Owner can delete everything. 
-  // Regular users can delete their OWN messages.
-  // Admins CANNOT delete (unless it's their own message).
   const isMyOwn = (msg.username === currentUsername);
   const canDelete = isOwner || (isMyOwn && msg.username !== "System");
 
