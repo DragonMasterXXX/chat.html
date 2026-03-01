@@ -413,7 +413,11 @@ function addMessage(msg, key) {
          <span ${textStyle}>${formattedText}</span>`
     }`;
 
-  if ((isOwner || isAdmin) && msg.username !== currentUsername && msg.username !== "System") {
+  // Owners can see the mute button on everyone (including themselves for testing). 
+// Admins see it on everyone except themselves.
+const canMute = isOwner ? (msg.username !== "System") : (isAdmin && msg.username !== currentUsername && msg.username !== "System");
+
+if (canMute) {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
     if (isAdmin && !isOwner) { muteBtn.style.right = "10px"; } else { muteBtn.style.right = "40px"; }
