@@ -524,25 +524,34 @@ chatForm.onsubmit = e => {
 };
 
 // ---------------- USER STATE ----------------
+function listenForMute(n) {
+  // This listener stays active and triggers the MOMENT an admin mutes you
+  mutesRef.child(n).on("value", snap => {
+    mutedUntil = snap.val() || 0;
+    if (Date.now() < mutedUntil) {
+      startCountdown();
+    } else {
+      // If the mute expires or is removed, clear the overlay
+      clearInterval(countdownInterval);
+      muteOverlay.style.display = "none";
+      messageInput.disabled = false;
+    }
+  });
+}
+
 username.onchange = () => {
   const n = username.value.trim();
   if (!n) return;
-  if (currentUsername) usersRef.child(currentUsername).remove();
+  if (currentUsername) {
+    usersRef.child(currentUsername).remove();
+    mutesRef.child(currentUsername).off(); // Stop listening to the old name
+  }
   currentUsername = n;
   usersRef.child(n).set(true);
   localStorage.setItem("chatUsername", n);
-  mutesRef.child(n).on("value", snap => {
-    mutedUntil = snap.val() || 0;
-    if (Date.now() < mutedUntil) startCountdown();
-  });
+  
+  listenForMute(n); // Start listening for the new name
 };
-
-// ---------------- DELETE ----------------
-confirmDelete.onclick = () => {
-  if (messageToDeleteKey) messagesRef.child(messageToDeleteKey).remove();
-  deleteModal.style.display = "none";
-};
-cancelDelete.onclick = () => deleteModal.style.display = "none";
 
 // ---------------- INIT ----------------
 messagesRef.orderByChild("time").on("child_added", snap => addMessage(snap.val(), snap.key));
