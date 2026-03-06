@@ -553,6 +553,21 @@ username.onchange = () => {
   listenForMute(n); // Start listening for the new name
 };
 
+// ---------------- DELETE ----------------
+confirmDelete.onclick = () => {
+  if (messageToDeleteKey) {
+    messagesRef.child(messageToDeleteKey).remove();
+    showNotification("Message deleted");
+  }
+  deleteModal.style.display = "none";
+  messageToDeleteKey = null;
+};
+
+cancelDelete.onclick = () => {
+  deleteModal.style.display = "none";
+  messageToDeleteKey = null;
+};
+
 // ---------------- INIT ----------------
 messagesRef.orderByChild("time").on("child_added", snap => addMessage(snap.val(), snap.key));
 messagesRef.on("child_removed", snap => {
