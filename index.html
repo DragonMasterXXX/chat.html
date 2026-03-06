@@ -84,6 +84,8 @@ main {
   font-size: 0.7rem;
   color: #888;
   margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 2px;
 }
 
 /* Header Markdown Styles */
@@ -325,16 +327,12 @@ function cleanText(t) {
 }
 
 function formatMarkdown(text) {
-  // Headers (Check for hashtags at the start of a line)
   if (text.startsWith("### ")) text = `<h3>${text.substring(4)}</h3>`;
   else if (text.startsWith("## ")) text = `<h2>${text.substring(3)}</h2>`;
   else if (text.startsWith("# ")) text = `<h1>${text.substring(2)}</h1>`;
 
-  // Bold + Italic: ***text***
   text = text.replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>');
-  // Bold: **text**
   text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-  // Italic: *text*
   text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');
   return text;
 }
@@ -387,7 +385,9 @@ function addMessage(msg, key) {
     div.classList.add("owner-message");
   }
 
+  // --- TIME & DATE LOGIC ---
   const timeDate = new Date(msg.time);
+  const dateStr = timeDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   const timeStr = timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const formattedText = formatMarkdown(msg.text);
@@ -405,7 +405,7 @@ function addMessage(msg, key) {
   }
 
   div.innerHTML = `
-    <span class="message-time">${timeStr}</span>
+    <span class="message-time">${dateStr} • ${timeStr}</span>
     ${msg.username === "System"
       ? `<span class="username" style="color:#fff">System:</span> <span>${formattedText}</span>`
       : `${badge ? `<span>${badge}</span>` : ""}
@@ -413,14 +413,12 @@ function addMessage(msg, key) {
          <span ${textStyle}>${formattedText}</span>`
     }`;
 
-  // Owners can see the mute button on everyone (including themselves for testing). 
-// Admins see it on everyone except themselves.
-const canMute = isOwner ? (msg.username !== "System") : (isAdmin && msg.username !== currentUsername && msg.username !== "System");
+  const canMute = isOwner ? (msg.username !== "System") : (isAdmin && msg.username !== currentUsername && msg.username !== "System");
 
-if (canMute) {
+  if (canMute) {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
-    if (isAdmin && !isOwner) { muteBtn.style.right = "10px"; } else { muteBtn.style.right = "40px"; }
+    muteBtn.style.right = (isAdmin && !isOwner) ? "10px" : "40px";
 
     mutesRef.child(msg.username).on("value", snap => {
       const until = snap.val() || 0;
