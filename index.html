@@ -457,21 +457,40 @@ messageInput.addEventListener("input", () => {
   else setTyping(true);
 });
 
+function getTypingDisplayName(username, isOwner, isAdmin) {
+  if (isOwner) return `<span style="color: yellow">${username}</span>`;
+  if (isAdmin) return `<span style="color: yellow">${username}</span>`;
+  return username;
+}
+
 typingRef.on("value", snapshot => {
-  if (!currentUsername) return;
   const typingUsers = [];
   snapshot.forEach(child => {
-    if (child.key !== currentUsername) typingUsers.push(child.key);
+    typingUsers.push({
+      name: child.key,
+      isOwner: child.key === currentUsername ? isOwner : false, // current user owner/admin
+      isAdmin: child.key === currentUsername ? isAdmin : false
+    });
   });
 
   if (typingUsers.length === 0) {
     typingIndicator.style.visibility = "hidden";
+    typingText.innerHTML = "";
   } else {
     typingIndicator.style.visibility = "visible";
-    if (typingUsers.length === 1) typingText.textContent = `${typingUsers[0]} is typing...`;
-    else if (typingUsers.length === 2) typingText.textContent = `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
-    else if (typingUsers.length === 3) typingText.textContent = `${typingUsers[0]} and 2 more are typing...`;
-    else typingText.textContent = "Several people are typing...";
+
+    // Display names with color if owner/admin
+    const displayNames = typingUsers.map(u => getTypingDisplayName(u.name, u.isOwner, u.isAdmin));
+
+    if (displayNames.length === 1) {
+      typingText.innerHTML = `${displayNames[0]} is typing...`;
+    } else if (displayNames.length === 2) {
+      typingText.innerHTML = `${displayNames[0]} and ${displayNames[1]} are typing...`;
+    } else if (displayNames.length === 3) {
+      typingText.innerHTML = `${displayNames[0]} and 2 more are typing...`;
+    } else {
+      typingText.innerHTML = "Several people are typing...";
+    }
   }
 });
 
@@ -666,3 +685,4 @@ if (saved) {
 </script>
 </body>
 </html>
+
