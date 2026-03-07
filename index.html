@@ -332,13 +332,18 @@ footer a {
 const MIC_NORMAL = "https://i.imgur.com/XCFidkl.png"; 
 const MIC_MUTED = "https://i.imgur.com/jYohHJ8.png"; 
 
-const OWNER_PASSWORD = "Dragon-IS-A-LEGEND!!!";
-const ADMIN_PASSWORD = "ADMINS-ARE-COOL-TOO!!!";
+const OWNER_PASSWORD = "Dragon-IS-A-LEGEND!!!"; // Warning: frontend-only
+const ADMIN_PASSWORD = "ADMINS-ARE-COOL-TOO!!!"; // Warning: frontend-only
 
 const COOLDOWN_MS = 3000;
 const MUTE_DURATION_MS = 30 * 60 * 1000;
 
-const profanity = ["fuck","f*ck","f**k","f***","shit","sh*t","s**t","sh1t","bitch","b*tch","bi**h","b!tch","asshole","a**hole","a**h0le","dick","d!ck","d1ck","cunt","c*nt","c**t","slut","whore","wh0re","bastard","damn","bollocks","bugger","twat","prick","motherfucker","m*therf*cker","m0therfucker","fag","faggot","nigger","n1gger","piss","p*ss","p***","cock","c0ck","pussy","pu55y","tit","t1t","wank","douche","douchebag","skank","slapper","jackass","twunt","arse","arsehole","clit","cum","shag","bollok","tosser","git","slag","nazi","kike"];
+let profanity = [];
+
+// Fetch profanity list from JSON
+fetch('profanity.json')
+  .then(res => res.json())
+  .then(data => { profanity = data; });
 
 // ---------------- DOM ELEMENTS ----------------
 const chatWindow = document.getElementById("chatWindow");
@@ -441,7 +446,7 @@ function setTyping(status) {
   if (status) {
     typingRef.child(currentUsername).set({ isOwner, isAdmin });
     typingRef.child(currentUsername).onDisconnect().remove();
-    clearTimeout(typingTimeout);
+    if (typingTimeout) clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => setTyping(false), 3000);
   } else {
     typingRef.child(currentUsername).remove();
@@ -450,8 +455,7 @@ function setTyping(status) {
 
 messageInput.addEventListener("input", () => {
   if (!currentUsername) return;
-  if (messageInput.value.trim() === "") setTyping(false);
-  else setTyping(true);
+  setTyping(messageInput.value.trim() !== "");
 });
 
 function getTypingDisplayName(username, isOwnerFlag, isAdminFlag) {
@@ -507,12 +511,15 @@ function addMessage(msg, key) {
       : `${badge ? `<span>${badge}</span>` : ""} <span class="username" ${nameStyle}>${msg.username}:</span> <span ${textStyle}>${formattedText}</span>`
     }`;
 
-  const canMute = isOwner ? (msg.username !== "System") : (isAdmin && msg.username !== currentUsername && msg.username !== "System");
+  const canMute = isOwner ? (msg.username !== "System") : (isAdmin && !msg.isOwner && msg.username !== "System");
   if (canMute) {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
     muteBtn.style.right = (isAdmin && !isOwner) ? "10px" : "40px";
+    muteBtn.setAttribute("aria-label", `Mute ${msg.username}`);
+    muteBtn.title = `Mute ${msg.username}`;
 
+    mutesRef.child(msg.username).off(); // remove old listener
     mutesRef.child(msg.username).on("value", snap => {
       const until = snap.val() || 0;
       muteBtn.src = Date.now() < until ? MIC_MUTED : MIC_NORMAL;
@@ -539,6 +546,8 @@ function addMessage(msg, key) {
     const trash = document.createElement("span");
     trash.className = "trash-btn";
     trash.textContent = "🗑️";
+    trash.setAttribute("aria-label", `Delete message from ${msg.username}`);
+    trash.title = `Delete message from ${msg.username}`;
     trash.onclick = () => { messageToDeleteKey = key; deleteModal.style.display = "block"; };
     div.appendChild(trash);
   }
@@ -601,11 +610,24 @@ chatForm.onsubmit = e => {
 };
 
 // ---------------- DELETE ----------------
-confirmDelete.onclick = () => { if (messageToDeleteKey) { messagesRef.child(messageToDeleteKey).remove(); showNotification("Message deleted"); } deleteModal.style.display = "none"; messageToDeleteKey = null; };
+confirmDelete.onclick = () => { 
+  if (messageToDeleteKey) { 
+    messagesRef.child(messageToDeleteKey).remove(); 
+    showNotification("Message deleted"); 
+  } 
+  deleteModal.style.display = "none"; 
+  messageToDeleteKey = null; 
+};
 cancelDelete.onclick = () => { deleteModal.style.display = "none"; messageToDeleteKey = null; };
+
+// Close modal if click outside
+window.onclick = e => { 
+  if (e.target === deleteModal) { deleteModal.style.display = "none"; messageToDeleteKey = null; }
+};
 
 // ---------------- USER STATE ----------------
 function listenForMute(n) {
+  mutesRef.child(n).off();
   mutesRef.child(n).on("value", snap => {
     mutedUntil = snap.val() || 0;
     if (Date.now() < mutedUntil) startCountdown();
@@ -642,6 +664,8 @@ messagesRef.on("child_removed", snap => {
 
 const saved = localStorage.getItem("chatUsername");
 if (saved) { usernameInput.value = saved; usernameInput.dispatchEvent(new Event("change")); }
+
 </script>
 </body>
 </html>
+
