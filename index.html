@@ -422,10 +422,14 @@ function refreshChatUI() {
 
 // ---------------- TYPING LOGIC ----------------
 function setTyping(status) {
+  // If no username is set, don't try to sync typing status
   if (!currentUsername) return;
+  
   if (status) {
     typingRef.child(currentUsername).set(true);
-    // Auto-clear if the user stops typing
+    // Ensure it cleans up if they close the tab abruptly
+    typingRef.child(currentUsername).onDisconnect().remove();
+    
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => setTyping(false), 3000);
   } else {
@@ -433,10 +437,15 @@ function setTyping(status) {
   }
 }
 
-messageInput.addEventListener('input', () => setTyping(true));
+// Listen for input
+messageInput.addEventListener('input', () => {
+  setTyping(true);
+});
 
+// Update the UI when anyone's typing status changes
 typingRef.on('value', (snap) => {
   const data = snap.val() || {};
+  // Filter out YOURSELF so you don't see "You are typing..."
   const typers = Object.keys(data).filter(u => u !== currentUsername);
   const indicator = document.getElementById('typingIndicator');
   const text = document.getElementById('typingText');
@@ -449,8 +458,6 @@ typingRef.on('value', (snap) => {
       text.innerText = `${typers[0]} is typing...`;
     } else if (typers.length === 2) {
       text.innerText = `${typers[0]} and ${typers[1]} are typing...`;
-    } else if (typers.length === 3) {
-      text.innerText = `${typers[0]} and 2 more...`;
     } else {
       text.innerText = `Several people are typing...`;
     }
@@ -673,4 +680,5 @@ if (saved) {
 </script>
 </body>
 </html>
+
 
