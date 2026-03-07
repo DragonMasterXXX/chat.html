@@ -431,22 +431,15 @@ function startCountdown() {
 function refreshChatUI() {
   chatWindow.innerHTML = "";
   messagesRef.orderByChild("time").once("value", snapshot => {
-    snapshot.forEach(child => {
-      addMessage(child.val(), child.key);
-    });
+    snapshot.forEach(child => addMessage(child.val(), child.key));
   });
 }
 
 // ---------------- TYPING LOGIC ----------------
 function setTyping(status) {
   if (!currentUsername) return;
-
   if (status) {
-    // Save both username and role
-    typingRef.child(currentUsername).set({
-      isOwner: isOwner,
-      isAdmin: isAdmin
-    });
+    typingRef.child(currentUsername).set({ isOwner, isAdmin });
     typingRef.child(currentUsername).onDisconnect().remove();
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => setTyping(false), 3000);
@@ -469,13 +462,9 @@ function getTypingDisplayName(username, isOwnerFlag, isAdminFlag) {
 typingRef.on("value", snapshot => {
   const typingUsers = [];
   snapshot.forEach(child => {
-    if (child.key !== currentUsername) { // Never show your own typing
+    if (child.key !== currentUsername) {
       const data = child.val();
-      typingUsers.push({
-        name: child.key,
-        isOwnerFlag: data.isOwner || false,
-        isAdminFlag: data.isAdmin || false
-      });
+      typingUsers.push({ name: child.key, isOwnerFlag: data.isOwner || false, isAdminFlag: data.isAdmin || false });
     }
   });
 
@@ -485,20 +474,14 @@ typingRef.on("value", snapshot => {
   } else {
     typingIndicator.style.visibility = "visible";
     const displayNames = typingUsers.map(u => getTypingDisplayName(u.name, u.isOwnerFlag, u.isAdminFlag));
-
-    if (displayNames.length === 1) {
-      typingText.innerHTML = `${displayNames[0]} is typing...`;
-    } else if (displayNames.length === 2) {
-      typingText.innerHTML = `${displayNames[0]} and ${displayNames[1]} are typing...`;
-    } else if (displayNames.length === 3) {
-      typingText.innerHTML = `${displayNames[0]} and 2 more are typing...`;
-    } else {
-      typingText.innerHTML = "Several people are typing...";
-    }
+    if (displayNames.length === 1) typingText.innerHTML = `${displayNames[0]} is typing...`;
+    else if (displayNames.length === 2) typingText.innerHTML = `${displayNames[0]} and ${displayNames[1]} are typing...`;
+    else if (displayNames.length === 3) typingText.innerHTML = `${displayNames[0]} and 2 more are typing...`;
+    else typingText.innerHTML = "Several people are typing...";
   }
 });
 
-// ---------------- MESSAGES ----------------
+// ---------------- ADD MESSAGE ----------------
 function addMessage(msg, key) {
   if (!msg || !msg.text) return;
 
@@ -511,13 +494,9 @@ function addMessage(msg, key) {
   const timeDate = new Date(msg.time);
   const dateStr = timeDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   const timeStr = timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
   const formattedText = formatMarkdown(msg.text);
 
-  let badge = "";
-  let nameStyle = "";
-  let textStyle = "";
-
+  let badge = "", nameStyle = "", textStyle = "";
   if (msg.isOwner) { badge = "👑"; textStyle = 'style="color: yellow; font-weight:600"'; }
   else if (msg.isAdmin) { badge = "⭐"; nameStyle = 'style="color: yellow"'; }
 
@@ -525,13 +504,10 @@ function addMessage(msg, key) {
     <span class="message-time">${dateStr} • ${timeStr}</span>
     ${msg.username === "System"
       ? `<span class="username" style="color:#fff">System:</span> <span>${formattedText}</span>`
-      : `${badge ? `<span>${badge}</span>` : ""}
-         <span class="username" ${nameStyle}>${msg.username}:</span>
-         <span ${textStyle}>${formattedText}</span>`
+      : `${badge ? `<span>${badge}</span>` : ""} <span class="username" ${nameStyle}>${msg.username}:</span> <span ${textStyle}>${formattedText}</span>`
     }`;
 
   const canMute = isOwner ? (msg.username !== "System") : (isAdmin && msg.username !== currentUsername && msg.username !== "System");
-
   if (canMute) {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
@@ -559,7 +535,6 @@ function addMessage(msg, key) {
 
   const isMyOwn = (msg.username === currentUsername);
   const canDelete = isOwner || (isMyOwn && msg.username !== "System");
-
   if (canDelete) {
     const trash = document.createElement("span");
     trash.className = "trash-btn";
@@ -577,16 +552,9 @@ function sendSystemMessage() {
   if (!isOwner) return;
   const text = systemMessageInput.value.trim();
   if (!text) return;
-  messagesRef.push({
-    username: "System",
-    text: text,
-    isOwner: true,
-    isAdmin: false,
-    time: Date.now()
-  });
+  messagesRef.push({ username: "System", text, isOwner: true, isAdmin: false, time: Date.now() });
   systemMessageInput.value = "";
 }
-
 systemSendBtn.onclick = sendSystemMessage;
 systemMessageInput.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); sendSystemMessage(); } };
 
@@ -627,18 +595,14 @@ chatForm.onsubmit = e => {
   if (!isOwner && !isAdmin && now - lastMessageTime < COOLDOWN_MS) return showNotification("Slow down");
 
   setTyping(false);
-
-  messagesRef.push({
-    username: u,
-    text: (isOwner || isAdmin) ? t : cleanText(t),
-    isOwner: isOwner,
-    isAdmin: isAdmin,
-    time: now
-  });
-
+  messagesRef.push({ username: u, text: (isOwner || isAdmin) ? t : cleanText(t), isOwner, isAdmin, time: now });
   messageInput.value = "";
   lastMessageTime = now;
 };
+
+// ---------------- DELETE ----------------
+confirmDelete.onclick = () => { if (messageToDeleteKey) { messagesRef.child(messageToDeleteKey).remove(); showNotification("Message deleted"); } deleteModal.style.display = "none"; messageToDeleteKey = null; };
+cancelDelete.onclick = () => { deleteModal.style.display = "none"; messageToDeleteKey = null; };
 
 // ---------------- USER STATE ----------------
 function listenForMute(n) {
@@ -649,7 +613,7 @@ function listenForMute(n) {
   });
 }
 
-usernameInput.onchange = () => {
+usernameInput.addEventListener("change", () => {
   const n = usernameInput.value.trim();
   if (!n) return;
   if (currentUsername) {
@@ -663,16 +627,11 @@ usernameInput.onchange = () => {
   usersRef.child(n).onDisconnect().remove();
   localStorage.setItem("chatUsername", n);
   listenForMute(n);
-};
+});
 
-// ---------------- DELETE ----------------
-confirmDelete.onclick = () => {
-  if (messageToDeleteKey) { messagesRef.child(messageToDeleteKey).remove(); showNotification("Message deleted"); }
-  deleteModal.style.display = "none";
-  messageToDeleteKey = null;
-};
-
-cancelDelete.onclick = () => { deleteModal.style.display = "none"; messageToDeleteKey = null; };
+usernameInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); usernameInput.dispatchEvent(new Event("change")); }
+});
 
 // ---------------- INIT ----------------
 messagesRef.orderByChild("time").on("child_added", snap => addMessage(snap.val(), snap.key));
@@ -682,10 +641,7 @@ messagesRef.on("child_removed", snap => {
 });
 
 const saved = localStorage.getItem("chatUsername");
-if (saved) {
-  usernameInput.value = saved;
-  usernameInput.dispatchEvent(new Event("change"));
-}
+if (saved) { usernameInput.value = saved; usernameInput.dispatchEvent(new Event("change")); }
 </script>
 </body>
 </html>
