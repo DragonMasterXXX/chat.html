@@ -519,11 +519,10 @@ function addMessage(msg, key) {
     muteBtn.setAttribute("aria-label", `Mute ${msg.username}`);
     muteBtn.title = `Mute ${msg.username}`;
 
-    mutesRef.child(msg.username).off(); // remove old listener
-    mutesRef.child(msg.username).on("value", snap => {
-      const until = snap.val() || 0;
-      muteBtn.src = Date.now() < until ? MIC_MUTED : MIC_NORMAL;
-    });
+    mutesRef.child(msg.username).once("value").then(snap => {
+  const until = snap.val() || 0;
+  muteBtn.src = Date.now() < until ? MIC_MUTED : MIC_NORMAL;
+});
 
     muteBtn.onclick = () => {
       mutesRef.child(msg.username).once("value").then(snap => {
@@ -668,4 +667,5 @@ if (saved) { usernameInput.value = saved; usernameInput.dispatchEvent(new Event(
 </script>
 </body>
 </html>
+
 
