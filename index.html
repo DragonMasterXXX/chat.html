@@ -457,20 +457,23 @@ messageInput.addEventListener("input", () => {
   else setTyping(true);
 });
 
-function getTypingDisplayName(username, isOwner, isAdmin) {
-  if (isOwner) return `<span style="color: yellow">${username}</span>`;
-  if (isAdmin) return `<span style="color: yellow">${username}</span>`;
+function getTypingDisplayName(username, isOwnerFlag, isAdminFlag) {
+  if (isOwnerFlag || isAdminFlag) return `<span style="color: yellow">${username}</span>`;
   return username;
 }
 
 typingRef.on("value", snapshot => {
   const typingUsers = [];
   snapshot.forEach(child => {
-    typingUsers.push({
-      name: child.key,
-      isOwner: child.key === currentUsername ? isOwner : false, // current user owner/admin
-      isAdmin: child.key === currentUsername ? isAdmin : false
-    });
+    // Only add users that aren't the current user
+    if (child.key !== currentUsername) {
+      typingUsers.push({
+        name: child.key,
+        // For now we assume only the owner on this tab knows their owner/admin status
+        isOwnerFlag: false,
+        isAdminFlag: false
+      });
+    }
   });
 
   if (typingUsers.length === 0) {
@@ -479,8 +482,8 @@ typingRef.on("value", snapshot => {
   } else {
     typingIndicator.style.visibility = "visible";
 
-    // Display names with color if owner/admin
-    const displayNames = typingUsers.map(u => getTypingDisplayName(u.name, u.isOwner, u.isAdmin));
+    // Map to colored names
+    const displayNames = typingUsers.map(u => getTypingDisplayName(u.name, u.isOwnerFlag, u.isAdminFlag));
 
     if (displayNames.length === 1) {
       typingText.innerHTML = `${displayNames[0]} is typing...`;
@@ -685,4 +688,5 @@ if (saved) {
 </script>
 </body>
 </html>
+
 
