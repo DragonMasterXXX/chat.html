@@ -187,6 +187,42 @@ button {
   padding: 0 1.2rem;
   font-weight: bold;
   cursor: pointer;
+  color: #fff;
+}
+
+/* --- TYPING INDICATOR STYLES --- */
+#typingIndicator {
+  height: 25px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  font-size: 0.85rem;
+  color: #aaa;
+  font-weight: bold;
+  visibility: hidden; /* Hidden when no one is typing */
+}
+
+.dots-container {
+  display: flex;
+  gap: 3px;
+  padding-left: 5px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  background: #aaa;
+  border-radius: 50%;
+  animation: discordBounce 1.4s infinite ease-in-out;
+}
+
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes discordBounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1.1); opacity: 1; }
 }
 
 footer {
@@ -269,6 +305,15 @@ footer a {
       <input id="messageInput" placeholder="Message" maxlength="200" required />
       <button type="submit">Send</button>
     </form>
+    
+    <div id="typingIndicator">
+      <div class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <span id="typingText"></span>
+    </div>
   </div>
 </main>
 
@@ -307,6 +352,7 @@ const db = firebase.database();
 const messagesRef = db.ref("chatMessages");
 const usersRef = db.ref("chatUsers");
 const mutesRef = db.ref("mutedUsers");
+const typingRef = db.ref("typingStatus");
 
 // ---------------- STATE ----------------
 let isOwner = false;
@@ -316,6 +362,7 @@ let messageToDeleteKey = null;
 let currentUsername = "";
 let mutedUntil = 0;
 let countdownInterval;
+let typingTimeout = null;
 
 // ---------------- HELPERS ----------------
 function cleanText(t) {
@@ -373,6 +420,43 @@ function refreshChatUI() {
   });
 }
 
+// ---------------- TYPING LOGIC ----------------
+function setTyping(status) {
+  if (!currentUsername) return;
+  if (status) {
+    typingRef.child(currentUsername).set(true);
+    // Auto-clear if the user stops typing
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => setTyping(false), 3000);
+  } else {
+    typingRef.child(currentUsername).remove();
+  }
+}
+
+messageInput.addEventListener('input', () => setTyping(true));
+
+typingRef.on('value', (snap) => {
+  const data = snap.val() || {};
+  const typers = Object.keys(data).filter(u => u !== currentUsername);
+  const indicator = document.getElementById('typingIndicator');
+  const text = document.getElementById('typingText');
+
+  if (typers.length === 0) {
+    indicator.style.visibility = 'hidden';
+  } else {
+    indicator.style.visibility = 'visible';
+    if (typers.length === 1) {
+      text.innerText = `${typers[0]} is typing...`;
+    } else if (typers.length === 2) {
+      text.innerText = `${typers[0]} & ${typers[1]} are typing...`;
+    } else if (typers.length === 3) {
+      text.innerText = `${typers[0]} & and 2 more...`;
+    } else {
+      text.innerText = `Several people are typing...`;
+    }
+  }
+});
+
 // ---------------- MESSAGES ----------------
 function addMessage(msg, key) {
   if (!msg || !msg.text) return;
@@ -385,7 +469,6 @@ function addMessage(msg, key) {
     div.classList.add("owner-message");
   }
 
-  // --- TIME & DATE LOGIC ---
   const timeDate = new Date(msg.time);
   const dateStr = timeDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   const timeStr = timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -512,6 +595,10 @@ chatForm.onsubmit = e => {
   const now = Date.now();
   if (!isOwner && !isAdmin && now - lastMessageTime < COOLDOWN_MS)
     return showNotification("Slow down");
+  
+  // Clear typing status when message is sent
+  setTyping(false);
+
   messagesRef.push({
     username: u,
     text: (isOwner || isAdmin) ? t : cleanText(t),
@@ -525,13 +612,11 @@ chatForm.onsubmit = e => {
 
 // ---------------- USER STATE ----------------
 function listenForMute(n) {
-  // This listener stays active and triggers the MOMENT an admin mutes you
   mutesRef.child(n).on("value", snap => {
     mutedUntil = snap.val() || 0;
     if (Date.now() < mutedUntil) {
       startCountdown();
     } else {
-      // If the mute expires or is removed, clear the overlay
       clearInterval(countdownInterval);
       muteOverlay.style.display = "none";
       messageInput.disabled = false;
@@ -544,13 +629,18 @@ username.onchange = () => {
   if (!n) return;
   if (currentUsername) {
     usersRef.child(currentUsername).remove();
-    mutesRef.child(currentUsername).off(); // Stop listening to the old name
+    typingRef.child(currentUsername).remove();
+    mutesRef.child(currentUsername).off();
   }
   currentUsername = n;
   usersRef.child(n).set(true);
-  localStorage.setItem("chatUsername", n);
   
-  listenForMute(n); // Start listening for the new name
+  // Ensure name is removed from typing on disconnect
+  typingRef.child(n).onDisconnect().remove();
+  usersRef.child(n).onDisconnect().remove();
+
+  localStorage.setItem("chatUsername", n);
+  listenForMute(n);
 };
 
 // ---------------- DELETE ----------------
