@@ -340,6 +340,23 @@ const MUTE_DURATION_MS = 30 * 60 * 1000;
 
 const profanity = ["fuck","f*ck","f**k","f***","shit","sh*t","s**t","sh1t","bitch","b*tch","bi**h","b!tch","asshole","a**hole","a**h0le","dick","d!ck","d1ck","cunt","c*nt","c**t","slut","whore","wh0re","bastard","damn","bollocks","bugger","twat","prick","motherfucker","m*therf*cker","m0therfucker","fag","faggot","nigger","n1gger","piss","p*ss","p***","cock","c0ck","pussy","pu55y","tit","t1t","wank","douche","douchebag","skank","slapper","jackass","twunt","arse","arsehole","clit","cum","shag","bollok","tosser","git","slag","nazi","kike"];
 
+// ---------------- DOM ELEMENTS ----------------
+const chatWindow = document.getElementById("chatWindow");
+const muteOverlay = document.getElementById("muteOverlay");
+const countdown = document.getElementById("countdown");
+const deleteModal = document.getElementById("deleteModal");
+const confirmDelete = document.getElementById("confirmDelete");
+const cancelDelete = document.getElementById("cancelDelete");
+const systemMessageInput = document.getElementById("systemMessageInput");
+const systemSendBtn = document.getElementById("systemSendBtn");
+const ownerLoginBtn = document.getElementById("ownerLoginBtn");
+const ownerPassword = document.getElementById("ownerPassword");
+const usernameInput = document.getElementById("username");
+const messageInput = document.getElementById("messageInput");
+const chatForm = document.getElementById("chatForm");
+const typingIndicator = document.getElementById("typingIndicator");
+const typingText = document.getElementById("typingText");
+
 // ---------------- FIREBASE ----------------
 firebase.initializeApp({
   apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
@@ -422,14 +439,11 @@ function refreshChatUI() {
 
 // ---------------- TYPING LOGIC ----------------
 function setTyping(status) {
-  // If no username is set, don't try to sync typing status
   if (!currentUsername) return;
-  
+
   if (status) {
     typingRef.child(currentUsername).set(true);
-    // Ensure it cleans up if they close the tab abruptly
     typingRef.child(currentUsername).onDisconnect().remove();
-    
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => setTyping(false), 3000);
   } else {
@@ -437,30 +451,27 @@ function setTyping(status) {
   }
 }
 
-// Listen for input
-messageInput.addEventListener('input', () => {
-  setTyping(true);
+messageInput.addEventListener("input", () => {
+  if (!currentUsername) return;
+  if (messageInput.value.trim() === "") setTyping(false);
+  else setTyping(true);
 });
 
-// Update the UI when anyone's typing status changes
-typingRef.on('value', (snap) => {
-  const data = snap.val() || {};
-  // Filter out YOURSELF so you don't see "You are typing..."
-  const typers = Object.keys(data).filter(u => u !== currentUsername);
-  const indicator = document.getElementById('typingIndicator');
-  const text = document.getElementById('typingText');
+typingRef.on("value", snapshot => {
+  if (!currentUsername) return;
+  const typingUsers = [];
+  snapshot.forEach(child => {
+    if (child.key !== currentUsername) typingUsers.push(child.key);
+  });
 
-  if (typers.length === 0) {
-    indicator.style.visibility = 'hidden';
+  if (typingUsers.length === 0) {
+    typingIndicator.style.visibility = "hidden";
   } else {
-    indicator.style.visibility = 'visible';
-    if (typers.length === 1) {
-      text.innerText = `${typers[0]} is typing...`;
-    } else if (typers.length === 2) {
-      text.innerText = `${typers[0]} and ${typers[1]} are typing...`;
-    } else {
-      text.innerText = `Several people are typing...`;
-    }
+    typingIndicator.style.visibility = "visible";
+    if (typingUsers.length === 1) typingText.textContent = `${typingUsers[0]} is typing...`;
+    else if (typingUsers.length === 2) typingText.textContent = `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
+    else if (typingUsers.length === 3) typingText.textContent = `${typingUsers[0]} and 2 more are typing...`;
+    else typingText.textContent = "Several people are typing...";
   }
 });
 
@@ -472,9 +483,7 @@ function addMessage(msg, key) {
   div.className = "message";
   div.dataset.key = key;
 
-  if (msg.isOwner && msg.username !== "System") {
-    div.classList.add("owner-message");
-  }
+  if (msg.isOwner && msg.username !== "System") div.classList.add("owner-message");
 
   const timeDate = new Date(msg.time);
   const dateStr = timeDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
@@ -486,13 +495,8 @@ function addMessage(msg, key) {
   let nameStyle = "";
   let textStyle = "";
 
-  if (msg.isOwner) {
-    badge = "👑";
-    textStyle = 'style="color: yellow; font-weight:600"';
-  } else if (msg.isAdmin) {
-    badge = "⭐";
-    nameStyle = 'style="color: yellow"';
-  }
+  if (msg.isOwner) { badge = "👑"; textStyle = 'style="color: yellow; font-weight:600"'; }
+  else if (msg.isAdmin) { badge = "⭐"; nameStyle = 'style="color: yellow"'; }
 
   div.innerHTML = `
     <span class="message-time">${dateStr} • ${timeStr}</span>
@@ -537,10 +541,7 @@ function addMessage(msg, key) {
     const trash = document.createElement("span");
     trash.className = "trash-btn";
     trash.textContent = "🗑️";
-    trash.onclick = () => {
-      messageToDeleteKey = key;
-      deleteModal.style.display = "block";
-    };
+    trash.onclick = () => { messageToDeleteKey = key; deleteModal.style.display = "block"; };
     div.appendChild(trash);
   }
 
@@ -581,29 +582,27 @@ ownerLoginBtn.onclick = () => {
     systemMessageInput.style.display = "none";
     systemSendBtn.style.display = "none";
     refreshChatUI();
-  } else {
-    showNotification("Incorrect password!");
-  }
+  } else showNotification("Incorrect password!");
 };
 
 // ---------------- SEND MESSAGE ----------------
 chatForm.onsubmit = e => {
   e.preventDefault();
-  const u = username.value.trim();
+  const u = usernameInput.value.trim();
   const t = messageInput.value.trim();
   if (!u || !t) return;
+
   if (t === "/clear" && isOwner) {
     messagesRef.remove();
     messageInput.value = "";
     showNotification("Chat Cleared!");
     return;
   }
+
   if (Date.now() < mutedUntil) return showNotification("You are muted");
   const now = Date.now();
-  if (!isOwner && !isAdmin && now - lastMessageTime < COOLDOWN_MS)
-    return showNotification("Slow down");
-  
-  // Clear typing status when message is sent
+  if (!isOwner && !isAdmin && now - lastMessageTime < COOLDOWN_MS) return showNotification("Slow down");
+
   setTyping(false);
 
   messagesRef.push({
@@ -613,6 +612,7 @@ chatForm.onsubmit = e => {
     isAdmin: isAdmin,
     time: now
   });
+
   messageInput.value = "";
   lastMessageTime = now;
 };
@@ -621,18 +621,13 @@ chatForm.onsubmit = e => {
 function listenForMute(n) {
   mutesRef.child(n).on("value", snap => {
     mutedUntil = snap.val() || 0;
-    if (Date.now() < mutedUntil) {
-      startCountdown();
-    } else {
-      clearInterval(countdownInterval);
-      muteOverlay.style.display = "none";
-      messageInput.disabled = false;
-    }
+    if (Date.now() < mutedUntil) startCountdown();
+    else { clearInterval(countdownInterval); muteOverlay.style.display = "none"; messageInput.disabled = false; }
   });
 }
 
-username.onchange = () => {
-  const n = username.value.trim();
+usernameInput.onchange = () => {
+  const n = usernameInput.value.trim();
   if (!n) return;
   if (currentUsername) {
     usersRef.child(currentUsername).remove();
@@ -641,29 +636,20 @@ username.onchange = () => {
   }
   currentUsername = n;
   usersRef.child(n).set(true);
-  
-  // Ensure name is removed from typing on disconnect
   typingRef.child(n).onDisconnect().remove();
   usersRef.child(n).onDisconnect().remove();
-
   localStorage.setItem("chatUsername", n);
   listenForMute(n);
 };
 
 // ---------------- DELETE ----------------
 confirmDelete.onclick = () => {
-  if (messageToDeleteKey) {
-    messagesRef.child(messageToDeleteKey).remove();
-    showNotification("Message deleted");
-  }
+  if (messageToDeleteKey) { messagesRef.child(messageToDeleteKey).remove(); showNotification("Message deleted"); }
   deleteModal.style.display = "none";
   messageToDeleteKey = null;
 };
 
-cancelDelete.onclick = () => {
-  deleteModal.style.display = "none";
-  messageToDeleteKey = null;
-};
+cancelDelete.onclick = () => { deleteModal.style.display = "none"; messageToDeleteKey = null; };
 
 // ---------------- INIT ----------------
 messagesRef.orderByChild("time").on("child_added", snap => addMessage(snap.val(), snap.key));
@@ -674,11 +660,9 @@ messagesRef.on("child_removed", snap => {
 
 const saved = localStorage.getItem("chatUsername");
 if (saved) {
-  username.value = saved;
-  username.dispatchEvent(new Event("change"));
+  usernameInput.value = saved;
+  usernameInput.dispatchEvent(new Event("change"));
 }
 </script>
 </body>
 </html>
-
-
