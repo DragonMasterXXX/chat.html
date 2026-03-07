@@ -448,9 +448,9 @@ typingRef.on('value', (snap) => {
     if (typers.length === 1) {
       text.innerText = `${typers[0]} is typing...`;
     } else if (typers.length === 2) {
-      text.innerText = `${typers[0]} & ${typers[1]} are typing...`;
+      text.innerText = `${typers[0]} and ${typers[1]} are typing...`;
     } else if (typers.length === 3) {
-      text.innerText = `${typers[0]} & and 2 more...`;
+      text.innerText = `${typers[0]} and 2 more...`;
     } else {
       text.innerText = `Several people are typing...`;
     }
@@ -673,3 +673,4 @@ if (saved) {
 </script>
 </body>
 </html>
+
