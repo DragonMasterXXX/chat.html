@@ -442,7 +442,11 @@ function setTyping(status) {
   if (!currentUsername) return;
 
   if (status) {
-    typingRef.child(currentUsername).set(true);
+    // Save both username and role
+    typingRef.child(currentUsername).set({
+      isOwner: isOwner,
+      isAdmin: isAdmin
+    });
     typingRef.child(currentUsername).onDisconnect().remove();
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => setTyping(false), 3000);
@@ -465,13 +469,12 @@ function getTypingDisplayName(username, isOwnerFlag, isAdminFlag) {
 typingRef.on("value", snapshot => {
   const typingUsers = [];
   snapshot.forEach(child => {
-    // Only add users that aren't the current user
-    if (child.key !== currentUsername) {
+    if (child.key !== currentUsername) { // Never show your own typing
+      const data = child.val();
       typingUsers.push({
         name: child.key,
-        // For now we assume only the owner on this tab knows their owner/admin status
-        isOwnerFlag: false,
-        isAdminFlag: false
+        isOwnerFlag: data.isOwner || false,
+        isAdminFlag: data.isAdmin || false
       });
     }
   });
@@ -481,8 +484,6 @@ typingRef.on("value", snapshot => {
     typingText.innerHTML = "";
   } else {
     typingIndicator.style.visibility = "visible";
-
-    // Map to colored names
     const displayNames = typingUsers.map(u => getTypingDisplayName(u.name, u.isOwnerFlag, u.isAdminFlag));
 
     if (displayNames.length === 1) {
@@ -688,5 +689,3 @@ if (saved) {
 </script>
 </body>
 </html>
-
-
