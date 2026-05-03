@@ -975,40 +975,19 @@ function showNotification(text) {
 
 
 // ---------------- MESSAGE RENDER ----------------
-
 function addMessage(msg, key) {
-
   if (!msg || !msg.text) return;
-
-
 
   if (chatWindow.querySelector(`[data-key="${key}"]`)) return;
 
-
-
   const div = document.createElement("div");
-
   div.className = "message";
-
   div.dataset.key = key;
 
-
-
   const role = msg.role || "member";
-
   if (role === "owner") div.classList.add("owner-message");
 
-
-
-  const timeStr = new Date(msg.time).toLocaleString([], {
-
-    hour: "2-digit",
-
-    minute: "2-digit"
-
-  });
-
-  // FIXED: Added year, month, and day options to restore the date display
+  // Keep ONLY this one:
   const timeStr = new Date(msg.time).toLocaleString([], {
     year: 'numeric',
     month: 'short',
