@@ -307,9 +307,8 @@ main {
 
 
   border: 2px solid transparent;
-
-
-
+  contain: content;           /* Prevents layout shifting */
+  overflow-wrap: break-word;  /* Prevents text from breaking layout */
 }
 
 
@@ -458,74 +457,36 @@ main {
 
 
 
-.trash-btn {
-
-
-
+/* 1. Set the default state to hidden */
+.trash-btn,
+.mute-btn {
   position: absolute;
-
-
-
-  right: 10px;
-
-
-
   top: 50%;
-
-
-
   transform: translateY(-50%);
-
-
-
   cursor: pointer;
-
-
-
-  font-size: 1.2rem;
-
-
-
+  z-index: 10;
+  opacity: 0;               /* Hidden by default */
+  visibility: hidden;        /* Prevents clicking while invisible */
+  transition: opacity 0.2s ease;
 }
 
-
-
-
-
-
+.trash-btn {
+  right: 10px;
+  font-size: 1.2rem;
+}
 
 .mute-btn {
-
-
-
-  position: absolute;
-
-
-
   right: 40px;
-
-
-
-  top: 50%;
-
-
-
-  transform: translateY(-50%);
-
-
-
   width: 20px;
-
-
-
   height: 20px;
+}
 
-
-
-  cursor: pointer;
-
-
-
+/* 2. Show ONLY when the parent .message is hovered */
+.message:hover .trash-btn,
+.message:hover .mute-btn {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 
@@ -564,67 +525,7 @@ main {
 
 }
 
-
-
-
-
-
-
-.trash-btn,
-
-
-
-.mute-btn {
-
-
-
-  opacity: 0;
-
-
-
-  pointer-events: none;
-
-
-
-  transition: 0.15s ease;
-
-
-
-}
-
-
-
-
-
-
-
 /* Show icons ONLY when hovering the message */
-
-
-
-.message:hover .trash-btn,
-
-
-
-.message:hover .mute-btn {
-
-
-
-  opacity: 1;
-
-
-
-  pointer-events: auto;
-
-
-
-}
-
-
-
-
-
-
 
 .username {
 
@@ -1993,68 +1894,77 @@ function addMessage(msg, key) {
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  // --- PERMISSION LOGIC ---
+  // --- UPDATED PERMISSION LOGIC ---
   const user = firebase.auth().currentUser;
-  const currentUid = user ? user.uid : "guest";
+  const loggedInEmail = user ? user.email.toLowerCase() : "";
+  
+  const checkOwner = loggedInEmail === "dragonvr@fire-breathing.com";
+  const checkAdmin = ["michael@smj.com", "purple@not-magic.com"].includes(loggedInEmail);
+  
+  // Logic: You can delete if you are Owner, Admin, OR if the message username matches your current session name
+  const isMyMessage = (msg.username === currentUsername && currentUsername !== "");
 
-  // Guests can only delete their own messages if they stay on the page.
-  // Logged-in users compare UIDs.
-  const isMyMessage = (msg.uid === currentUid && currentUid !== "guest");
-
-  const canDelete = isOwner || 
-                    (isAdmin && role !== "system") || 
+  const canDelete = checkOwner || 
+                    (checkAdmin && role !== "system") || 
                     isMyMessage;
 
   if (canDelete) {
     const trash = document.createElement("span");
     trash.className = "trash-btn";
-    trash.textContent = "🗑️";
+    trash.innerHTML = "🗑️"; 
     trash.onclick = () => openDeleteModal(key);
     div.appendChild(trash);
   }
 
-  // --- MUTE BUTTON LOGIC ---
-  // Owner can mute anyone except system. Admin can mute anyone except Owner/System.
-  const canMute = (isOwner && role !== "system") || 
-                  (isAdmin && role !== "owner" && role !== "system");
+  // --- UPDATED MUTE BUTTON LOGIC ---
+  const canMute = (checkOwner && role !== "system") || 
+                  (checkAdmin && role !== "owner" && role !== "system");
 
   if (canMute && msg.username !== currentUsername) {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
     
-    const userMuteRef = mutesRef.child(msg.username);
-
-    // Dynamic Icon Update: Syncs mic icon with DB state
-    userMuteRef.on("value", snap => {
+    // Initial check for mute status
+    mutesRef.child(msg.username).once("value", snap => {
       const until = snap.val() || 0;
       muteBtn.src = (until && Date.now() < until) ? MIC_MUTED : MIC_NORMAL;
     });
 
     muteBtn.onclick = () => {
+      const userMuteRef = mutesRef.child(msg.username);
       userMuteRef.once("value").then(snap => {
         const until = snap.val() || 0;
         const now = Date.now();
 
         if (until && now < until) {
           userMuteRef.remove();
-          showNotification(`${msg.username} has been unmuted.`);
+          muteBtn.src = MIC_NORMAL;
+          showNotification(`${msg.username} unmuted.`);
         } else {
           userMuteRef.set(now + MUTE_DURATION_MS);
+          muteBtn.src = MIC_MUTED;
           showNotification(`${msg.username} put in timeout.`);
         }
       });
     };
     div.appendChild(muteBtn);
   }
-}
+} // Final closing bracket for addMessage
 
 // ---------------- REALTIME LISTENERS ----------------
-
-messagesRef.on("child_added", snap => {
-
+let initialLoad = true;
+messagesRef.limitToLast(50).on("child_added", snap => {
   addMessage(snap.val(), snap.key);
-
+  
+  // Logic to only scroll if user is already at the bottom or it's the first load
+  const isNearBottom = chatWindow.scrollHeight - chatWindow.clientHeight <= chatWindow.scrollTop + 100;
+  if (isNearBottom || initialLoad) {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
 });
+
+// Flip the flag after the first batch of messages is done loading
+messagesRef.once("value", () => { initialLoad = false; });
 
 
 
