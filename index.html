@@ -1871,7 +1871,7 @@ function addMessage(msg, key) {
   const checkAdmin = ["michael@smj.com", "purple@not-magic.com"].includes(loggedInEmail);
   
   // Logic: You can delete if you are Owner, Admin, OR if the message username matches your current session name
-  const isMyMessage = (msg.username === currentUsername && currentUsername !== "");
+  const isMyMessage = (user && msg.uid === user.uid);
 
   if (isOwner || (isAdmin && role !== "system") || isMyMessage) {
     const trash = document.createElement("span");
