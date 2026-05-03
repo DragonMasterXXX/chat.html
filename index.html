@@ -1,14 +1,28 @@
 <!DOCTYPE html>
 
+
+
 <html lang="en">
+
+
 
 <head>
 
+
+
 <meta charset="UTF-8" />
+
+
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+
+
 <title>Public Chat - DragonVR's Realm</title>
+
+
+
+
 
 
 
@@ -16,575 +30,1151 @@
 
 
 
+
+
+
+
 <style>
+
+
 
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;700&display=swap');
 
 
 
+
+
+
+
 body {
 
-  margin: 0;
 
-  background: linear-gradient(180deg, #0b0a0f 0%, #1a120b 80%);
 
-  color: #fff;
+  margin: 0;
 
-  font-family: 'Montserrat', sans-serif;
+
+
+  background: linear-gradient(180deg, #0b0a0f 0%, #1a120b 80%);
+
+
+
+  color: #fff;
+
+
+
+  font-family: 'Montserrat', sans-serif;
+
+
 
 }
+
+
+
+
 
 
 
 header {
 
-  font-family: 'Anton', sans-serif;
 
-  font-size: 2.8rem;
 
-  text-align: center;
+  font-family: 'Anton', sans-serif;
 
-  color: #ff6a00;
 
-  text-shadow: 0 0 3px #ff8c00, 0 0 6px #ff5e00, 0 0 9px #ff3c00;
 
-  margin-bottom: 2rem;
+  font-size: 2.8rem;
+
+
+
+  text-align: center;
+
+
+
+  color: #ff6a00;
+
+
+
+  text-shadow: 0 0 3px #ff8c00, 0 0 6px #ff5e00, 0 0 9px #ff3c00;
+
+
+
+  margin-bottom: 2rem;
+
+
 
 }
+
+
+
+
 
 
 
 main {
 
-  max-width: 900px;
 
-  margin: 1rem auto;
 
-  padding: 1rem;
+  max-width: 900px;
+
+
+
+  margin: 1rem auto;
+
+
+
+  padding: 1rem;
+
+
 
 }
+
+
+
+
 
 
 
 #ownerLogin {
 
-  display: flex;
 
-  gap: 0.5rem;
 
-  margin-bottom: 1rem;
+  display: flex;
+
+
+
+  gap: 0.5rem;
+
+
+
+  margin-bottom: 1rem;
+
+
 
 }
+
+
+
+
 
 
 
 #ownerLogin input {
 
-  flex: 1;
 
-  padding: 0.5rem;
 
-  border-radius: 20px;
+  flex: 1;
 
-  border: 2px solid #ff4500;
 
-  background: #220900;
 
-  color: #fff;
+  padding: 0.5rem;
+
+
+
+  border-radius: 20px;
+
+
+
+  border: 2px solid #ff4500;
+
+
+
+  background: #220900;
+
+
+
+  color: #fff;
+
+
 
 }
+
+
+
+
 
 
 
 #ownerLogin button {
 
-  background: #ff4500;
 
-  border: none;
 
-  border-radius: 20px;
+  background: #ff4500;
 
-  padding: 0 1.2rem;
 
-  font-weight: bold;
 
-  cursor: pointer;
+  border: none;
+
+
+
+  border-radius: 20px;
+
+
+
+  padding: 0 1.2rem;
+
+
+
+  font-weight: bold;
+
+
+
+  cursor: pointer;
+
+
 
 }
+
+
+
+
 
 
 
 #chatWindow {
 
-  background: #1a0b00;
 
-  border: 2px solid #ff4500;
 
-  border-radius: 12px;
+  background: #1a0b00;
 
-  height: 500px;
 
-  padding: 1rem;
 
-  overflow-y: auto;
+  border: 2px solid #ff4500;
+
+
+
+  border-radius: 12px;
+
+
+
+  height: 500px;
+
+
+
+  padding: 1rem;
+
+
+
+  overflow-y: auto;
+
+
 
 }
+
+
+
+
 
 
 
 .message {
 
-  margin-bottom: 0.7rem;
 
-  padding: 0.6rem 0.8rem;
 
-  border-radius: 8px;
+  margin-bottom: 0.7rem;
 
-  background: rgba(255,69,0,0.2);
 
-  display: flex;
 
-  flex-wrap: wrap;
+  padding: 0.6rem 0.8rem;
 
-  align-items: center;
 
-  gap: 0.5rem;
 
-  position: relative;
+  border-radius: 8px;
 
-  border: 2px solid transparent;
+
+
+  background: rgba(255,69,0,0.2);
+
+
+
+  display: flex;
+
+
+
+  flex-wrap: wrap;
+
+
+
+  align-items: center;
+
+
+
+  gap: 0.5rem;
+
+
+
+  position: relative;
+
+
+
+  border: 2px solid transparent;
+
+
 
 }
+
+
+
+
 
 
 
 .message-time {
 
-  display: block;
 
-  width: 100%;
 
-  font-size: 0.7rem;
+  display: block;
 
-  color: #888;
 
-  margin-bottom: 2px;
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
 
-  padding-bottom: 2px;
+
+
+  font-size: 0.7rem;
+
+
+
+  color: #888;
+
+
+
+  margin-bottom: 2px;
+
+
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+
+
+  padding-bottom: 2px;
+
+
 
 }
+
+
+
+
 
 
 
 /* Header Markdown Styles */
 
+
+
 .message h1, .message h2, .message h3 {
 
-  margin: 5px 0;
 
-  color: #ff8c00;
 
-  display: inline-block;
+  margin: 5px 0;
 
-  width: 100%;
+
+
+  color: #ff8c00;
+
+
+
+  display: inline-block;
+
+
+
+  width: 100%;
+
+
 
 }
 
+
+
 .message h1 { font-size: 1.5rem; text-transform: uppercase; }
 
+
+
 .message h2 { font-size: 1.2rem; }
+
+
 
 .message h3 { font-size: 1rem; color: #ffb380; }
 
 
 
+
+
+
+
 .owner-message {
 
-  border: 2px solid gold !important;
 
-  background: rgba(40, 30, 0, 0.75) !important;
 
-  box-shadow:
+  border: 2px solid gold !important;
 
-    0 0 8px rgba(255, 215, 0, 0.6),
 
-    0 0 20px rgba(255, 215, 0, 0.4);
 
-  animation: ownerGlow 2s infinite alternate;
+  background: rgba(40, 30, 0, 0.75) !important;
+
+
+
+  box-shadow:
+
+
+
+    0 0 8px rgba(255, 215, 0, 0.6),
+
+
+
+    0 0 20px rgba(255, 215, 0, 0.4);
+
+
+
+  animation: ownerGlow 2s infinite alternate;
+
+
 
 }
+
+
+
+
 
 
 
 @keyframes ownerGlow {
 
-  from { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
 
-  to { box-shadow: 0 0 18px rgba(255, 215, 0, 0.7); }
+
+  from { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
+
+
+
+  to { box-shadow: 0 0 18px rgba(255, 215, 0, 0.7); }
+
+
 
 }
+
+
+
+
 
 
 
 .trash-btn {
 
-  position: absolute;
 
-  right: 10px;
 
-  top: 50%;
+  position: absolute;
 
-  transform: translateY(-50%);
 
-  cursor: pointer;
 
-  font-size: 1.2rem;
+  right: 10px;
+
+
+
+  top: 50%;
+
+
+
+  transform: translateY(-50%);
+
+
+
+  cursor: pointer;
+
+
+
+  font-size: 1.2rem;
+
+
 
 }
+
+
+
+
 
 
 
 .mute-btn {
 
-  position: absolute;
 
-  right: 40px;
 
-  top: 50%;
+  position: absolute;
 
-  transform: translateY(-50%);
 
-  width: 20px;
 
-  height: 20px;
+  right: 40px;
 
-  cursor: pointer;
+
+
+  top: 50%;
+
+
+
+  transform: translateY(-50%);
+
+
+
+  width: 20px;
+
+
+
+  height: 20px;
+
+
+
+  cursor: pointer;
+
+
 
 }
+
+
+
+
 
 
 
 .message:hover {
 
-  background: rgba(255, 69, 0, 0.35);
+
+
+  background: rgba(255, 69, 0, 0.35);
+
+
 
 }
+
+
+
+
 
 
 
 .trash-btn:hover {
 
-  color: #ff4444;
 
-  transform: translateY(-50%) scale(1.2);
+
+  color: #ff4444;
+
+
+
+  transform: translateY(-50%) scale(1.2);
+
+
 
 }
+
+
+
+
 
 
 
 .trash-btn,
 
+
+
 .mute-btn {
 
-  opacity: 0;
 
-  pointer-events: none;
 
-  transition: 0.15s ease;
+  opacity: 0;
+
+
+
+  pointer-events: none;
+
+
+
+  transition: 0.15s ease;
+
+
 
 }
+
+
+
+
 
 
 
 /* Show icons ONLY when hovering the message */
 
+
+
 .message:hover .trash-btn,
+
+
 
 .message:hover .mute-btn {
 
-  opacity: 1;
 
-  pointer-events: auto;
+
+  opacity: 1;
+
+
+
+  pointer-events: auto;
+
+
 
 }
+
+
+
+
 
 
 
 .username {
 
-  font-weight: 700;
 
-  color: #ff6a00;
+
+  font-weight: 700;
+
+
+
+  color: #ff6a00;
+
+
 
 }
+
+
+
+
 
 
 
 #inputWrapper {
 
-  position: relative;
 
-  margin-top: 1rem;
+
+  position: relative;
+
+
+
+  margin-top: 1rem;
+
+
 
 }
+
+
+
+
 
 
 
 #muteOverlay {
 
-  display: none;
 
-  position: absolute;
 
-  top: 0; left: 0; right: 0; bottom: 0;
+  display: none;
 
-  background: rgba(0,0,0,0.85);
 
-  color: #ff4444;
 
-  font-weight: bold;
+  position: absolute;
 
-  text-align: center;
 
-  padding: 0.5rem;
 
-  border-radius: 20px;
+  top: 0; left: 0; right: 0; bottom: 0;
 
-  z-index: 100;
 
-  line-height: 2;
+
+  background: rgba(0,0,0,0.85);
+
+
+
+  color: #ff4444;
+
+
+
+  font-weight: bold;
+
+
+
+  text-align: center;
+
+
+
+  padding: 0.5rem;
+
+
+
+  border-radius: 20px;
+
+
+
+  z-index: 100;
+
+
+
+  line-height: 2;
+
+
 
 }
+
+
+
+
 
 
 
 form {
 
-  display: flex;
 
-  gap: 0.5rem;
+
+  display: flex;
+
+
+
+  gap: 0.5rem;
+
+
 
 }
+
+
+
+
 
 
 
 input {
 
-  padding: 0.5rem;
 
-  border-radius: 20px;
 
-  border: 2px solid #ff4500;
+  padding: 0.5rem;
 
-  background: #220900;
 
-  color: #fff;
+
+  border-radius: 20px;
+
+
+
+  border: 2px solid #ff4500;
+
+
+
+  background: #220900;
+
+
+
+  color: #fff;
+
+
 
 }
+
+
+
+
 
 
 
 button {
 
-  background: #ff4500;
 
-  border: none;
 
-  border-radius: 20px;
+  background: #ff4500;
 
-  padding: 0 1.2rem;
 
-  font-weight: bold;
 
-  cursor: pointer;
+  border: none;
 
-  color: #fff;
+
+
+  border-radius: 20px;
+
+
+
+  padding: 0 1.2rem;
+
+
+
+  font-weight: bold;
+
+
+
+  cursor: pointer;
+
+
+
+  color: #fff;
+
+
 
 }
+
+
+
+
 
 
 
 /* --- TYPING INDICATOR STYLES --- */
 
+
+
 #typingIndicator {
 
-  height: 25px;
 
-  display: flex;
 
-  align-items: center;
+  height: 25px;
 
-  gap: 10px;
 
-  margin-top: 5px;
 
-  font-size: 0.85rem;
+  display: flex;
 
-  color: #aaa;
 
-  font-weight: bold;
 
-  visibility: hidden; /* Hidden when no one is typing */
+  align-items: center;
+
+
+
+  gap: 10px;
+
+
+
+  margin-top: 5px;
+
+
+
+  font-size: 0.85rem;
+
+
+
+  color: #aaa;
+
+
+
+  font-weight: bold;
+
+
+
+  visibility: hidden; /* Hidden when no one is typing */
+
+
 
 }
+
+
+
+
 
 
 
 .dots-container {
 
-  display: flex;
 
-  gap: 3px;
 
-  padding-left: 5px;
+  display: flex;
+
+
+
+  gap: 3px;
+
+
+
+  padding-left: 5px;
+
+
 
 }
+
+
+
+
 
 
 
 .dot {
 
-  width: 5px;
 
-  height: 5px;
 
-  background: #aaa;
+  width: 5px;
 
-  border-radius: 50%;
 
-  animation: discordBounce 1.4s infinite ease-in-out;
+
+  height: 5px;
+
+
+
+  background: #aaa;
+
+
+
+  border-radius: 50%;
+
+
+
+  animation: discordBounce 1.4s infinite ease-in-out;
+
+
 
 }
+
+
+
+
 
 
 
 .dot:nth-child(2) { animation-delay: 0.2s; }
 
+
+
 .dot:nth-child(3) { animation-delay: 0.4s; }
+
+
+
+
 
 
 
 @keyframes discordBounce {
 
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
 
-  40% { transform: scale(1.1); opacity: 1; }
+
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+
+
+
+  40% { transform: scale(1.1); opacity: 1; }
+
+
 
 }
+
+
+
+
 
 
 
 footer {
 
-  background: #1a0b0b;
 
-  text-align: center;
 
-  padding: 1.5rem 1rem;
+  background: #1a0b0b;
 
-  font-size: 0.9rem;
 
-  color: #aaa;
 
-  box-shadow: inset 0 3px 15px #ff450050;
+  text-align: center;
+
+
+
+  padding: 1.5rem 1rem;
+
+
+
+  font-size: 0.9rem;
+
+
+
+  color: #aaa;
+
+
+
+  box-shadow: inset 0 3px 15px #ff450050;
+
+
 
 }
+
+
 
 footer a {
 
-  color: #ff4500;
 
-  font-weight: 700;
 
-  text-decoration: none;
+  color: #ff4500;
+
+
+
+  font-weight: 700;
+
+
+
+  text-decoration: none;
+
+
 
 }
+
+
+
+
 
 
 
 .notification {
 
-  position: fixed;
 
-  top: 10px;
 
-  left: 50%;
+  position: fixed;
 
-  transform: translateX(-50%);
 
-  background: #220900;
 
-  border: 2px solid #ff4500;
+  top: 10px;
 
-  border-radius: 12px;
 
-  padding: 0.7rem 1rem;
 
-  color: #fff;
+  left: 50%;
 
-  font-weight: bold;
 
-  animation: slideFade 3s forwards;
 
-  z-index: 1000;
+  transform: translateX(-50%);
+
+
+
+  background: #220900;
+
+
+
+  border: 2px solid #ff4500;
+
+
+
+  border-radius: 12px;
+
+
+
+  padding: 0.7rem 1rem;
+
+
+
+  color: #fff;
+
+
+
+  font-weight: bold;
+
+
+
+  animation: slideFade 3s forwards;
+
+
+
+  z-index: 1000;
+
+
 
 }
+
+
 
 @keyframes slideFade {
 
-  0% {opacity: 0; transform: translate(-50%, -20px);}
 
-  10% {opacity: 1; transform: translate(-50%, 0);}
 
-  80% {opacity: 1; transform: translate(-50%, 0);}
+  0% {opacity: 0; transform: translate(-50%, -20px);}
 
-  100% {opacity: 0; transform: translate(-50%, -20px);}
+
+
+  10% {opacity: 1; transform: translate(-50%, 0);}
+
+
+
+  80% {opacity: 1; transform: translate(-50%, 0);}
+
+
+
+  100% {opacity: 0; transform: translate(-50%, -20px);}
+
+
 
 }
+
+
+
+
 
 
 
 #deleteModal {
 
-  display: none;
 
-  position: fixed;
 
-  top: 50%;
+  display: none;
 
-  left: 50%;
 
-  transform: translate(-50%, -50%);
 
-  background: #1a0b00;
+  position: fixed;
 
-  border: 2px solid #ff4500;
 
-  border-radius: 16px;
 
-  padding: 1rem 2rem;
+  top: 50%;
 
-  z-index: 2000;
 
-  width: 300px;
 
-  text-align: center;
+  left: 50%;
+
+
+
+  transform: translate(-50%, -50%);
+
+
+
+  background: #1a0b00;
+
+
+
+  border: 2px solid #ff4500;
+
+
+
+  border-radius: 16px;
+
+
+
+  padding: 1rem 2rem;
+
+
+
+  z-index: 2000;
+
+
+
+  width: 300px;
+
+
+
+  text-align: center;
+
+
 
 }
+
+
 
 </style>
 
 
 
+
+
+
+
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+
+
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
+
+
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
+
+
 </head>
+
+
+
+
 
 
 
@@ -592,113 +1182,227 @@ footer a {
 
 
 
+
+
+
+
 <header>🔥 DragonVR Live Chat 🔥</header>
+
+
+
+
 
 
 
 <main>
 
-  <div id="ownerLogin">
 
-  <input id="ownerEmail" placeholder="Email" type="email" />
 
-  <input id="ownerPassword" placeholder="Password" type="password" />
-
-  <button id="ownerLoginBtn">Login</button>
-
-  <button id="logoutBtn">Logout</button>
-
-    <input id="systemMessageInput" placeholder="System Message" maxlength="200"
-
-      style="display:none; padding:0.4rem 0.6rem; border-radius:20px; border:2px solid #fff; background:#111; color:#fff; outline:none; width:160px;" />
-
-    <button id="systemSendBtn"
-
-      style="display:none; padding:0.4rem 0.8rem; border:none; border-radius:20px; background:#fff; color:#000; font-weight:bold; cursor:pointer;">
-
-      Send
-
-    </button>
-
-  </div>
+  <div id="ownerLogin">
 
 
 
-  <div id="chatWindow"></div>
+  <input id="ownerEmail" placeholder="Email" type="email" />
 
 
 
-  <div id="inputWrapper">
+  <input id="ownerPassword" placeholder="Password" type="password" />
 
-    <div id="muteOverlay">You've been put in timeout, child.. <span id="countdown">00:00</span></div>
 
-    <form id="chatForm">
 
-      <input id="username" placeholder="Name" maxlength="20" required />
+  <button id="ownerLoginBtn">Login</button>
 
-      <input id="messageInput" placeholder="Message" maxlength="200" required />
 
-      <button type="submit">Send</button>
 
-    </form>
+  <button id="logoutBtn">Logout</button>
 
-    
 
-    <div id="typingIndicator">
 
-      <div class="dots-container">
+    <input id="systemMessageInput" placeholder="System Message" maxlength="200"
 
-        <div class="dot"></div>
 
-        <div class="dot"></div>
 
-        <div class="dot"></div>
+      style="display:none; padding:0.4rem 0.6rem; border-radius:20px; border:2px solid #fff; background:#111; color:#fff; outline:none; width:160px;" />
 
-      </div>
 
-      <span id="typingText"></span>
 
-    </div>
+    <button id="systemSendBtn"
 
-  </div>
+
+
+      style="display:none; padding:0.4rem 0.8rem; border:none; border-radius:20px; background:#fff; color:#000; font-weight:bold; cursor:pointer;">
+
+
+
+      Send
+
+
+
+    </button>
+
+
+
+  </div>
+
+
+
+
+
+
+
+  <div id="chatWindow"></div>
+
+
+
+
+
+
+
+  <div id="inputWrapper">
+
+
+
+    <div id="muteOverlay">You've been put in timeout, child.. <span id="countdown">00:00</span></div>
+
+
+
+    <form id="chatForm">
+
+
+
+      <input id="username" placeholder="Name" maxlength="20" required />
+
+
+
+      <input id="messageInput" placeholder="Message" maxlength="200" required />
+
+
+
+      <button type="submit">Send</button>
+
+
+
+    </form>
+
+
+
+    
+
+
+
+    <div id="typingIndicator">
+
+
+
+      <div class="dots-container">
+
+
+
+        <div class="dot"></div>
+
+
+
+        <div class="dot"></div>
+
+
+
+        <div class="dot"></div>
+
+
+
+      </div>
+
+
+
+      <span id="typingText"></span>
+
+
+
+    </div>
+
+
+
+  </div>
+
+
 
 </main>
 
 
 
+
+
+
+
 <div id="deleteModal">
 
-  <p>Are you sure you want to delete this message?</p>
 
-  <button id="cancelDelete">Cancel</button>
 
-  <button id="confirmDelete">Delete</button>
+  <p>Are you sure you want to delete this message?</p>
+
+
+
+  <button id="cancelDelete">Cancel</button>
+
+
+
+  <button id="confirmDelete">Delete</button>
+
+
 
 </div>
 
 
 
+
+
+
+
 <footer>
 
-  © 2026 DragonVR. All rights reserved. <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
+
+
+  © 2026 DragonVR. All rights reserved. <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
+
+
 
 </footer>
 
 
 
+
+
+
+
 <script>
+
+
 
 // ---------------- CONFIG ----------------
 
-const MIC_NORMAL = "https://i.imgur.com/XCFidkl.png"; 
 
-const MIC_MUTED = "https://i.imgur.com/jYohHJ8.png"; 
+
+const MIC_NORMAL = "https://i.imgur.com/XCFidkl.png"; 
+
+
+
+const MIC_MUTED = "https://i.imgur.com/jYohHJ8.png"; 
+
+
+
+
 
 
 
 const COOLDOWN_MS = 3000;
 
+
+
 const MUTE_DURATION_MS = 30 * 60 * 1000;
+
+
+
+
 
 
 
@@ -706,93 +1410,187 @@ let profanity = [];
 
 
 
+
+
+
+
 // ---------------- PROFANITY LOAD ----------------
+
+
 
 fetch('profanity.json')
 
-  .then(res => res.json())
 
-  .then(data => profanity = data)
 
-  .catch(err => console.error("Failed to load profanity list", err));
+  .then(res => res.json())
+
+
+
+  .then(data => profanity = data)
+
+
+
+  .catch(err => console.error("Failed to load profanity list", err));
+
+
+
+
 
 
 
 // ---------------- DOM ----------------
 
+
+
 const chatWindow = document.getElementById("chatWindow");
+
+
 
 const deleteModal = document.getElementById("deleteModal");
 
+
+
 const confirmDelete = document.getElementById("confirmDelete");
+
+
 
 const cancelDelete = document.getElementById("cancelDelete");
 
+
+
 const systemMessageInput = document.getElementById("systemMessageInput");
+
+
 
 const systemSendBtn = document.getElementById("systemSendBtn");
 
+
+
 const ownerLoginBtn = document.getElementById("ownerLoginBtn");
+
+
 
 const logoutBtn = document.getElementById("logoutBtn");
 
+
+
 const ownerPassword = document.getElementById("ownerPassword");
+
+
 
 const ownerEmail = document.getElementById("ownerEmail");
 
+
+
 const usernameInput = document.getElementById("username");
+
+
 
 const messageInput = document.getElementById("messageInput");
 
+
+
 const chatForm = document.getElementById("chatForm");
 
+
+
 const typingIndicator = document.getElementById("typingIndicator");
+
+
 
 const typingText = document.getElementById("typingText");
 
 
 
+
+
+
+
 // ---------------- STATE ----------------
+
+
 
 let isOwner = false;
 
+
+
 let isAdmin = false;
+
+
 
 let lastMessageTime = 0;
 
+
+
 let messageToDeleteKey = null;
+
+
 
 let currentUsername = "";
 
+
+
 let mutedUntil = 0;
 
+
+
 let countdownInterval;
+
+
 
 let typingTimeout = null;
 
 
 
+
+
+
+
 // ---------------- FIREBASE ----------------
+
+
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
 
-  authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
 
-  databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
+  apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
 
-  projectId: "dragonvr-s-realm-d91d0",
 
-  storageBucket: "dragonvr-s-realm-d91d0.firebasestorage.app",
 
-  messagingSenderId: "469303383863",
+  authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
 
-  appId: "1:469303383863:web:fe9a8e946fe81458a86cb2",
 
-  measurementId: "G-FLTP7DK55E"
+
+  databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
+
+
+
+  projectId: "dragonvr-s-realm-d91d0",
+
+
+
+  storageBucket: "dragonvr-s-realm-d91d0.firebasestorage.app",
+
+
+
+  messagingSenderId: "469303383863",
+
+
+
+  appId: "1:469303383863:web:fe9a8e946fe81458a86cb2",
+
+
+
+  measurementId: "G-FLTP7DK55E"
+
+
 
 };
+
+
+
+
 
 
 
@@ -800,409 +1598,819 @@ firebase.initializeApp(firebaseConfig);
 
 
 
+
+
+
+
 const db = firebase.database();
+
+
 
 const auth = firebase.auth();
 
 
 
+
+
+
+
 const messagesRef = db.ref("chatMessages");
 
+
+
 const typingRef = db.ref("typingStatus");
+
+
 
 const mutesRef = db.ref("mutedUsers");
 
 
 
+
+
+
+
 const muteOverlay = document.getElementById("muteOverlay");
+
+
 
 const countdown = document.getElementById("countdown");
 
 
 
+
+
+
+
 // ---------------- MUTES ----------------
+
 function checkMuteStatus(snapshot) {
-  const data = snapshot.val() || {};
-  const now = Date.now();
 
-  // If we don't have a username yet, we can't check if they are muted
-  if (!currentUsername) return;
+  const data = snapshot.val() || {};
 
-  const userMute = data[currentUsername] || 0;
+  const now = Date.now();
 
-  if (userMute && now < userMute) {
-    mutedUntil = userMute;
-    messageInput.disabled = true;
-    muteOverlay.style.display = "block";
 
-    const tick = () => {
-      const remaining = mutedUntil - Date.now();
-      if (remaining <= 0) {
-        muteOverlay.style.display = "none";
-        messageInput.disabled = false;
-        clearInterval(countdownInterval);
-        return;
-      }
-      const m = Math.floor(remaining / 60000);
-      const s = Math.floor((remaining % 60000) / 1000);
-      countdown.textContent = `${m}:${s < 10 ? "0" : ""}${s}`;
-    };
 
-    clearInterval(countdownInterval);
-    tick();
-    countdownInterval = setInterval(tick, 1000);
-  } else {
-    mutedUntil = 0;
-    muteOverlay.style.display = "none";
-    messageInput.disabled = false;
-    clearInterval(countdownInterval);
-  }
+  // If we don't have a username yet, we can't check if they are muted
+
+  if (!currentUsername) return;
+
+
+
+  const userMute = data[currentUsername] || 0;
+
+
+
+  if (userMute && now < userMute) {
+
+    mutedUntil = userMute;
+
+    messageInput.disabled = true;
+
+    muteOverlay.style.display = "block";
+
+
+
+    const tick = () => {
+
+      const remaining = mutedUntil - Date.now();
+
+      if (remaining <= 0) {
+
+        muteOverlay.style.display = "none";
+
+        messageInput.disabled = false;
+
+        clearInterval(countdownInterval);
+
+        return;
+
+      }
+
+      const m = Math.floor(remaining / 60000);
+
+      const s = Math.floor((remaining % 60000) / 1000);
+
+      countdown.textContent = `${m}:${s < 10 ? "0" : ""}${s}`;
+
+    };
+
+
+
+    clearInterval(countdownInterval);
+
+    tick();
+
+    countdownInterval = setInterval(tick, 1000);
+
+  } else {
+
+    mutedUntil = 0;
+
+    muteOverlay.style.display = "none";
+
+    messageInput.disabled = false;
+
+    clearInterval(countdownInterval);
+
+  }
+
 }
 
+
+
 // Start the listener
+
 mutesRef.on("value", checkMuteStatus);
+
+
+
+
 
 
 
 // ---------------- HELPERS ----------------
 
+
+
 function escapeHTML(str = "") {
 
-  return str.replace(/[&<>"']/g, m => ({
 
-    "&":"&amp;",
 
-    "<":"&lt;",
+  return str.replace(/[&<>"']/g, m => ({
 
-    ">":"&gt;",
 
-    '"':"&quot;",
 
-    "'":"&#039;"
+    "&":"&amp;",
 
-  }[m]));
+
+
+    "<":"&lt;",
+
+
+
+    ">":"&gt;",
+
+
+
+    '"':"&quot;",
+
+
+
+    "'":"&#039;"
+
+
+
+  }[m]));
+
+
 
 }
+
+
+
+
 
 
 
 function formatMarkdown(text = "") {
 
-  if (text.startsWith("### ")) text = `<h3>${text.slice(4)}</h3>`;
 
-  else if (text.startsWith("## ")) text = `<h2>${text.slice(3)}</h2>`;
 
-  else if (text.startsWith("# ")) text = `<h1>${text.slice(2)}</h1>`;
+  if (text.startsWith("### ")) text = `<h3>${text.slice(4)}</h3>`;
 
 
 
-  text = text.replace(/\*\*\*(.*?)\*\*\*/g, "<b><i>$1</i></b>");
+  else if (text.startsWith("## ")) text = `<h2>${text.slice(3)}</h2>`;
 
-  text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
 
-  text = text.replace(/\*(.*?)\*/g, "<i>$1</i>");
 
-  text = text.replace(/~~(.*?)~~/g, "<strike>$1</strike>");
+  else if (text.startsWith("# ")) text = `<h1>${text.slice(2)}</h1>`;
 
-  return text;
+
+
+
+
+
+
+  text = text.replace(/\*\*\*(.*?)\*\*\*/g, "<b><i>$1</i></b>");
+
+
+
+  text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+
+
+
+  text = text.replace(/\*(.*?)\*/g, "<i>$1</i>");
+
+
+
+  text = text.replace(/~~(.*?)~~/g, "<strike>$1</strike>");
+
+
+
+  return text;
+
+
 
 }
+
+
+
+
 
 
 
 function cleanText(t = "") {
 
-  profanity.forEach(w => {
 
-    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    t = t.replace(new RegExp(escaped, "gi"), "****");
+  profanity.forEach(w => {
 
-  });
 
-  return t;
+
+    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+
+
+    t = t.replace(new RegExp(escaped, "gi"), "****");
+
+
+
+  });
+
+
+
+  return t;
+
+
 
 }
+
+
+
+
 
 
 
 function showNotification(text) {
 
-  const n = document.createElement("div");
 
-  n.className = "notification";
 
-  n.textContent = text;
+  const n = document.createElement("div");
 
-  document.body.appendChild(n);
 
-  setTimeout(() => n.remove(), 3000);
+
+  n.className = "notification";
+
+
+
+  n.textContent = text;
+
+
+
+  document.body.appendChild(n);
+
+
+
+  setTimeout(() => n.remove(), 3000);
+
+
 
 }
+
+
+
+
 
 
 
 // ---------------- MESSAGE RENDER ----------------
+
 function addMessage(msg, key) {
-  if (!msg || !msg.text) return;
 
-  if (chatWindow.querySelector(`[data-key="${key}"]`)) return;
+  if (!msg || !msg.text) return;
 
-  const div = document.createElement("div");
-  div.className = "message";
-  div.dataset.key = key;
 
-  const role = msg.role || "member";
-  if (role === "owner") div.classList.add("owner-message");
 
-  // Keep ONLY this one:
-  const timeStr = new Date(msg.time).toLocaleString([], {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  if (chatWindow.querySelector(`[data-key="${key}"]`)) return;
 
-  let badge = "";
 
-  let nameStyle = "";
 
-  let textStyle = "";
+  const div = document.createElement("div");
 
+  div.className = "message";
 
+  div.dataset.key = key;
 
-  if (role === "owner") {
 
-    badge = "👑";
 
-    nameStyle = 'style="color: gold; font-weight: 900"';
+  const role = msg.role || "member";
 
-    textStyle = 'style="color: gold; font-weight: 600"';
+  if (role === "owner") div.classList.add("owner-message");
 
-  } else if (role === "admin") {
 
-    badge = "⭐";
 
-    nameStyle = 'style="color: gold; font-weight: 800"';
+  // Keep ONLY this one:
 
-  } else if (role === "system") {
+  const timeStr = new Date(msg.time).toLocaleString([], {
 
-    badge = "⚙️";
+    year: 'numeric',
 
-    nameStyle = 'style="color: white; font-weight: 900"';
+    month: 'short',
 
-  }
+    day: 'numeric',
 
+    hour: '2-digit',
 
+    minute: '2-digit'
 
-  const formattedText = formatMarkdown(escapeHTML(msg.text));
+  });
 
 
 
-  div.innerHTML = `
+  let badge = "";
 
-    <span class="message-time">${timeStr}</span>
 
-    ${badge ? `<span>${badge}</span>` : ""}
 
-    <span class="username" ${nameStyle}>${msg.username}:</span>
+  let nameStyle = "";
 
-    <span ${textStyle}>${formattedText}</span>
 
-  `;
 
+  let textStyle = "";
 
 
-  chatWindow.appendChild(div);
 
-  chatWindow.scrollTop = chatWindow.scrollHeight;
 
 
 
-  // --- PERMISSION LOGIC ---
-  const user = firebase.auth().currentUser;
-  const currentUid = user ? user.uid : "guest";
 
-  const isMyMessage = (msg.uid !== "guest" && msg.uid === currentUid);
+  if (role === "owner") {
 
-  const canDelete = isOwner || 
-                    (isAdmin && role !== "system") || 
-                    isMyMessage;
 
 
-  if (canDelete) {
+    badge = "👑";
 
-    const trash = document.createElement("span");
 
-    trash.className = "trash-btn";
 
-    trash.textContent = "🗑️";
+    nameStyle = 'style="color: gold; font-weight: 900"';
 
-    trash.onclick = () => openDeleteModal(key);
 
-    div.appendChild(trash);
 
-  }
+    textStyle = 'style="color: gold; font-weight: 600"';
 
 
 
-  // --- MUTE BUTTON LOGIC ---
+  } else if (role === "admin") {
 
-  // Owner can mute anyone except system. Admin can mute anyone except Owner/System.
 
-  const canMute = (isOwner && role !== "system") || 
 
-                  (isAdmin && role !== "owner" && role !== "system");
+    badge = "⭐";
 
 
 
-  if (canMute && msg.username !== currentUsername) {
+    nameStyle = 'style="color: gold; font-weight: 800"';
 
-    const muteBtn = document.createElement("img");
 
-    muteBtn.className = "mute-btn";
 
-    
+  } else if (role === "system") {
 
-    const userMuteRef = mutesRef.child(msg.username);
 
 
+    badge = "⚙️";
 
-    // Initial icon state
 
-    userMuteRef.on("value", snap => {
 
-      const until = snap.val() || 0;
+    nameStyle = 'style="color: white; font-weight: 900"';
 
-      muteBtn.src = (until && Date.now() < until) ? MIC_MUTED : MIC_NORMAL;
 
-    });
 
+  }
 
 
-    muteBtn.onclick = () => {
 
-      userMuteRef.once("value").then(snap => {
 
-        const until = snap.val();
 
-        const now = Date.now();
 
 
+  const formattedText = formatMarkdown(escapeHTML(msg.text));
 
-        if (until && now < until) {
 
-          userMuteRef.remove();
 
-          showNotification(`${msg.username} was unmuted`);
 
-        } else {
 
-          userMuteRef.set(now + MUTE_DURATION_MS);
 
-          showNotification(`${msg.username} was muted`);
 
-        }
+  div.innerHTML = `
 
-      });
 
-    };
 
-    div.appendChild(muteBtn);
+    <span class="message-time">${timeStr}</span>
 
-  }
+
+
+    ${badge ? `<span>${badge}</span>` : ""}
+
+
+
+    <span class="username" ${nameStyle}>${msg.username}:</span>
+
+
+
+    <span ${textStyle}>${formattedText}</span>
+
+
+
+  `;
+
+
+
+
+
+
+
+  chatWindow.appendChild(div);
+
+
+
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+
+
+
+
+
+
+
+  // --- PERMISSION LOGIC ---
+
+  const user = firebase.auth().currentUser;
+
+  const currentUid = user ? user.uid : "guest";
+
+
+
+  const isMyMessage = (msg.uid !== "guest" && msg.uid === currentUid);
+
+
+
+  const canDelete = isOwner || 
+
+                    (isAdmin && role !== "system") || 
+
+                    isMyMessage;
+
+
+
+
+
+  if (canDelete) {
+
+
+
+    const trash = document.createElement("span");
+
+
+
+    trash.className = "trash-btn";
+
+
+
+    trash.textContent = "🗑️";
+
+
+
+    trash.onclick = () => openDeleteModal(key);
+
+
+
+    div.appendChild(trash);
+
+
+
+  }
+
+
+
+
+
+
+
+  // --- MUTE BUTTON LOGIC ---
+
+
+
+  // Owner can mute anyone except system. Admin can mute anyone except Owner/System.
+
+
+
+  const canMute = (isOwner && role !== "system") || 
+
+
+
+                  (isAdmin && role !== "owner" && role !== "system");
+
+
+
+
+
+
+
+  if (canMute && msg.username !== currentUsername) {
+
+
+
+    const muteBtn = document.createElement("img");
+
+
+
+    muteBtn.className = "mute-btn";
+
+
+
+    
+
+
+
+    const userMuteRef = mutesRef.child(msg.username);
+
+
+
+
+
+
+
+    // Initial icon state
+
+
+
+    userMuteRef.on("value", snap => {
+
+
+
+      const until = snap.val() || 0;
+
+
+
+      muteBtn.src = (until && Date.now() < until) ? MIC_MUTED : MIC_NORMAL;
+
+
+
+    });
+
+
+
+
+
+
+
+    muteBtn.onclick = () => {
+
+
+
+      userMuteRef.once("value").then(snap => {
+
+
+
+        const until = snap.val();
+
+
+
+        const now = Date.now();
+
+
+
+
+
+
+
+        if (until && now < until) {
+
+
+
+          userMuteRef.remove();
+
+
+
+          showNotification(`${msg.username} was unmuted`);
+
+
+
+        } else {
+
+
+
+          userMuteRef.set(now + MUTE_DURATION_MS);
+
+
+
+          showNotification(`${msg.username} was muted`);
+
+
+
+        }
+
+
+
+      });
+
+
+
+    };
+
+
+
+    div.appendChild(muteBtn);
+
+
+
+  }
+
+
 
 }
 
 
 
+
+
+
+
 // ---------------- REALTIME LISTENERS ----------------
+
 messagesRef.on("child_added", snap => {
-  addMessage(snap.val(), snap.key);
+
+  addMessage(snap.val(), snap.key);
+
 });
+
+
 
 messagesRef.on("child_removed", snap => {
-  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
-  if (el) el.remove();
+
+  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
+
+  if (el) el.remove();
+
 }); // <--- THIS WAS MISSING IN YOUR VERSION
 
+
+
 messagesRef.on("child_changed", snap => {
-  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
-  if (el) {
-    const msg = snap.val();
-    // We look for the 4th span because of the Time, Badge, and Username spans before it
-    const spans = el.querySelectorAll("span");
-    const textSpan = spans[spans.length - 1]; 
-    if (textSpan) textSpan.innerHTML = formatMarkdown(escapeHTML(msg.text));
-  }
+
+  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
+
+  if (el) {
+
+    const msg = snap.val();
+
+    // We look for the 4th span because of the Time, Badge, and Username spans before it
+
+    const spans = el.querySelectorAll("span");
+
+    const textSpan = spans[spans.length - 1]; 
+
+    if (textSpan) textSpan.innerHTML = formatMarkdown(escapeHTML(msg.text));
+
+  }
+
 });
+
+
 
 // ---------------- AUTH ----------------
 
+
+
 let liveEmail = "";
 
+
+
 let liveIsOwner = false;
+
+
 
 let liveIsAdmin = false;
 
 
 
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    liveEmail = user.email.toLowerCase();
-    isOwner = liveEmail === "dragonvr@fire-breathing.com";
-    isAdmin = ["michael@smj.com", "purple@not-magic.com"].includes(liveEmail);
-    currentUsername = user.email.split('@')[0]; 
-    usernameInput.value = currentUsername;
-    mutesRef.once("value", checkMuteStatus);
-  } else {
-    // RESET EVERYTHING when no one is logged in
-    isOwner = false;
-    isAdmin = false;
-    currentUsername = "";
-    usernameInput.value = "";
-  }
 
-  // System UI visibility
-  const showSystem = isOwner && user;
-  systemMessageInput.style.display = showSystem ? "inline-block" : "none";
-  systemSendBtn.style.display = showSystem ? "inline-block" : "none";
+
+
+
+firebase.auth().onAuthStateChanged(user => {
+
+  if (user) {
+
+    liveEmail = user.email.toLowerCase();
+
+    isOwner = liveEmail === "dragonvr@fire-breathing.com";
+
+    isAdmin = ["michael@smj.com", "purple@not-magic.com"].includes(liveEmail);
+
+    currentUsername = user.email.split('@')[0]; 
+
+    usernameInput.value = currentUsername;
+
+    mutesRef.once("value", checkMuteStatus);
+
+  } else {
+
+    // RESET EVERYTHING when no one is logged in
+
+    isOwner = false;
+
+    isAdmin = false;
+
+    currentUsername = "";
+
+    usernameInput.value = "";
+
+  }
+
+
+
+  // System UI visibility
+
+  const showSystem = isOwner && user;
+
+  systemMessageInput.style.display = showSystem ? "inline-block" : "none";
+
+  systemSendBtn.style.display = showSystem ? "inline-block" : "none";
+
 });
+
+
 
 // ---------------- DELETE MODAL ----------------
 
+
+
 function openDeleteModal(key) {
 
-  messageToDeleteKey = key;
 
-  deleteModal.style.display = "block";
+
+  messageToDeleteKey = key;
+
+
+
+  deleteModal.style.display = "block";
+
+
 
 }
+
+
+
+
 
 
 
 function closeDeleteModal() {
 
-  deleteModal.style.display = "none";
 
-  messageToDeleteKey = null;
+
+  deleteModal.style.display = "none";
+
+
+
+  messageToDeleteKey = null;
+
+
 
 }
 
 
 
+
+
+
+
 confirmDelete.onclick = () => {
 
-  if (!messageToDeleteKey) return;
 
-  messagesRef.child(messageToDeleteKey).remove();
 
-  showNotification("Message deleted");
+  if (!messageToDeleteKey) return;
 
-  closeDeleteModal();
+
+
+  messagesRef.child(messageToDeleteKey).remove();
+
+
+
+  showNotification("Message deleted");
+
+
+
+  closeDeleteModal();
+
+
 
 };
+
+
+
+
 
 
 
@@ -1210,119 +2418,239 @@ cancelDelete.onclick = closeDeleteModal;
 
 
 
+
+
+
+
 window.addEventListener("click", e => {
 
-  if (e.target === deleteModal) closeDeleteModal();
+
+
+  if (e.target === deleteModal) closeDeleteModal();
+
+
 
 });
 
 
 
+
+
+
+
 // ---------------- SEND MESSAGE ----------------
+
+
 
 chatForm.onsubmit = e => {
 
-  e.preventDefault();
+
+
+  e.preventDefault();
 
 
 
-  const user = auth.currentUser;
 
 
 
-  const uid = user?.uid || "guest";
 
-  const email = user?.email?.toLowerCase() || "";
-
-
-
-  const name = usernameInput.value.trim();
-
-  const text = messageInput.value.trim();
+  const user = auth.currentUser;
 
 
 
-  const now = Date.now();
-
-  currentUsername = name;
 
 
 
-  let role = "member";
+
+  const uid = user?.uid || "guest";
 
 
 
-  if (email === "dragonvr@fire-breathing.com") role = "owner";
-
-  else if (["michael@smj.com", "purple@not-magic.com"].includes(email)) role = "admin";
+  const email = user?.email?.toLowerCase() || "";
 
 
 
-  if (now < mutedUntil) return showNotification("You are muted");
 
 
 
-  if (role === "member" && now - lastMessageTime < COOLDOWN_MS)
 
-    return showNotification("Slow down");
-
-
-
-  messagesRef.push({
-
-    uid,
-
-    username: name,
-
-    text: role === "member" ? cleanText(text) : text,
-
-    role,
-
-    time: now
-
-  });
+  const name = usernameInput.value.trim();
 
 
 
-  messageInput.value = "";
+  const text = messageInput.value.trim();
 
-  lastMessageTime = now;
+
+
+
+
+
+
+  const now = Date.now();
+
+
+
+  currentUsername = name;
+
+
+
+
+
+
+
+  let role = "member";
+
+
+
+
+
+
+
+  if (email === "dragonvr@fire-breathing.com") role = "owner";
+
+
+
+  else if (["michael@smj.com", "purple@not-magic.com"].includes(email)) role = "admin";
+
+
+
+
+
+
+
+  if (now < mutedUntil) return showNotification("You are muted");
+
+
+
+
+
+
+
+  if (role === "member" && now - lastMessageTime < COOLDOWN_MS)
+
+
+
+    return showNotification("Slow down");
+
+
+
+
+
+
+
+  messagesRef.push({
+
+
+
+    uid,
+
+
+
+    username: name,
+
+
+
+    text: role === "member" ? cleanText(text) : text,
+
+
+
+    role,
+
+
+
+    time: now
+
+
+
+  });
+
+
+
+
+
+
+
+  messageInput.value = "";
+
+
+
+  lastMessageTime = now;
+
+
 
 };
 
 
 
+
+
+
+
 // ---------------- TYPING ----------------
+
+
 
 function setTyping(state) {
 
-  if (!currentUsername) return;
+
+
+  if (!currentUsername) return;
 
 
 
-  const typingId = auth.currentUser?.uid || `guest_${currentUsername}`;
-
-  const ref = typingRef.child(typingId);
 
 
 
-  if (state) {
 
-    ref.set({ username: currentUsername, time: Date.now() });
-
+  const typingId = auth.currentUser?.uid || `guest_${currentUsername}`;
 
 
-    if (typingTimeout) clearTimeout(typingTimeout);
 
-    typingTimeout = setTimeout(() => setTyping(false), 3000);
+  const ref = typingRef.child(typingId);
 
-  } else {
 
-    ref.remove();
 
-  }
+
+
+
+
+  if (state) {
+
+
+
+    ref.set({ username: currentUsername, time: Date.now() });
+
+
+
+
+
+
+
+    if (typingTimeout) clearTimeout(typingTimeout);
+
+
+
+    typingTimeout = setTimeout(() => setTyping(false), 3000);
+
+
+
+  } else {
+
+
+
+    ref.remove();
+
+
+
+  }
+
+
 
 }
+
+
+
+
 
 
 
@@ -1330,25 +2658,51 @@ let typingThrottle = false;
 
 
 
+
+
+
+
 messageInput.addEventListener("input", () => {
 
-  if (typingThrottle) return;
-
-  typingThrottle = true;
 
 
-
-  setTyping(true);
+  if (typingThrottle) return;
 
 
 
-  setTimeout(() => {
+  typingThrottle = true;
 
-    typingThrottle = false;
 
-  }, 1500);
+
+
+
+
+
+  setTyping(true);
+
+
+
+
+
+
+
+  setTimeout(() => {
+
+
+
+    typingThrottle = false;
+
+
+
+  }, 1500);
+
+
 
 });
+
+
+
+
 
 
 
@@ -1356,110 +2710,220 @@ systemSendBtn.onclick = sendSystemMessage;
 
 
 
+
+
+
+
 systemMessageInput.addEventListener("keydown", e => {
 
-  if (e.key === "Enter") {
 
-    e.preventDefault();
 
-    sendSystemMessage();
+  if (e.key === "Enter") {
 
-  }
+
+
+    e.preventDefault();
+
+
+
+    sendSystemMessage();
+
+
+
+  }
+
+
 
 });
+
+
+
+
 
 
 
 messageInput.addEventListener("blur", () => setTyping(false));
 
-// --- ADD THE NEW CODE HERE --- 
+
+
+// --- ADD THE NEW CODE HERE --- 
+
 usernameInput.addEventListener("blur", () => {
-  const newName = usernameInput.value.trim();
-  if (newName && newName !== currentUsername) {
-    currentUsername = newName;
-    // Check if this new name is on the mute list
-    mutesRef.once("value", checkMuteStatus);
-  }
+
+  const newName = usernameInput.value.trim();
+
+  if (newName && newName !== currentUsername) {
+
+    currentUsername = newName;
+
+    // Check if this new name is on the mute list
+
+    mutesRef.once("value", checkMuteStatus);
+
+  }
+
 });
+
+
 
 // typing listener
 
+
+
 typingRef.on("value", snap => {
 
-  const data = snap.val() || {};
-
-  const now = Date.now();
 
 
-
-  const users = Object.values(data)
-
-    .filter(u => u.time && now - u.time < 5000)
-
-    .map(u => u.username);
+  const data = snap.val() || {};
 
 
 
-  if (!users.length) {
-
-    typingIndicator.style.visibility = "hidden";
-
-    return;
-
-  }
+  const now = Date.now();
 
 
 
-  typingIndicator.style.visibility = "visible";
 
-  typingText.textContent =
 
-    users.join(", ") + (users.length === 1 ? " is typing..." : " are typing...");
+
+
+  const users = Object.values(data)
+
+
+
+    .filter(u => u.time && now - u.time < 5000)
+
+
+
+    .map(u => u.username);
+
+
+
+
+
+
+
+  if (!users.length) {
+
+
+
+    typingIndicator.style.visibility = "hidden";
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  typingIndicator.style.visibility = "visible";
+
+
+
+  typingText.textContent =
+
+
+
+    users.join(", ") + (users.length === 1 ? " is typing..." : " are typing...");
+
+
 
 });
+
+
+
+
 
 
 
 // ---------------- SYSTEM MESSAGE ----------------
 
+
+
 function sendSystemMessage() {
 
-  if (!isOwner) return;
+
+
+  if (!isOwner) return;
 
 
 
-  const text = systemMessageInput.value.trim();
 
-  if (!text) return;
 
-  messagesRef.push({
-    uid: "system",
-    username: "System",
-    text,
-    role: "system",
-    time: Date.now()
-  });
 
-  systemMessageInput.value = "";
+
+  const text = systemMessageInput.value.trim();
+
+
+
+  if (!text) return;
+
+
+
+  messagesRef.push({
+
+    uid: "system",
+
+    username: "System",
+
+    text,
+
+    role: "system",
+
+    time: Date.now()
+
+  });
+
+
+
+  systemMessageInput.value = "";
+
 }
 
+
+
 // ---------------- LOGIN ----------------
+
 ownerLoginBtn.onclick = () => {
-  auth.signInWithEmailAndPassword(ownerEmail.value, ownerPassword.value)
-    .catch(err => showNotification(err.message));
+
+  auth.signInWithEmailAndPassword(ownerEmail.value, ownerPassword.value)
+
+    .catch(err => showNotification(err.message));
+
 };
 
+
+
 // ---------------- LOGOUT ----------------
+
 logoutBtn.onclick = () => {
-  auth.signOut().then(() => {
-    // Manually reset permissions so the UI updates without a refresh
-    isOwner = false;
-    isAdmin = false;
-    currentUsername = "";
-    usernameInput.value = "";
-    showNotification("Logged out successfully");
-  });
+
+  auth.signOut().then(() => {
+
+    // Manually reset permissions so the UI updates without a refresh
+
+    isOwner = false;
+
+    isAdmin = false;
+
+    currentUsername = "";
+
+    usernameInput.value = "";
+
+    showNotification("Logged out successfully");
+
+  });
+
 };
+
 </script>
+
 </body>
+
 </html>
