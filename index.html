@@ -1725,7 +1725,7 @@ if (!sessionGuestId) {
     localStorage.setItem("chat_guest_id", sessionGuestId);
 }
 
-// --- UPDATED: Message Rendering ---
+// --- FIXED: Message Rendering with Role memory ---
 function addMessage(msg, key) {
   if (!msg || !msg.text || chatWindow.querySelector(`[data-key="${key}"]`)) return;
 
@@ -1733,6 +1733,7 @@ function addMessage(msg, key) {
   div.className = "message";
   div.dataset.key = key;
   div.dataset.authorUid = msg.uid; 
+  div.dataset.role = msg.role || "member"; // STORE THE ROLE HERE
 
   const role = msg.role || "member";
   if (role === "owner") div.classList.add("owner-message");
@@ -1757,23 +1758,20 @@ function addMessage(msg, key) {
   `;
 
   chatWindow.appendChild(div);
-  
-  // Attach the trash can if permissions allow
   injectTrashIcon(div, msg.uid, role);
 }
 
-// --- NEW: Dedicated Permission Logic ---
+// --- FIXED: Permission Logic for Members ---
 function injectTrashIcon(messageDiv, authorUid, role) {
   const user = firebase.auth().currentUser;
   const key = messageDiv.dataset.key;
 
-  // Logic: 
-  // 1. You are the Owner
-  // 2. You are an Admin (and target isn't system)
-  // 3. You are the author (Logged in UID match OR Guest ID match)
+  // Check if it's the user's own message (Logged in OR Guest ID)
   const isMyMessage = (user && authorUid === user.uid) || (authorUid === sessionGuestId);
   
+  // Logic: Owner sees all, Admin sees all but System, Members see only their own.
   if (isOwner || (isAdmin && role !== "system") || isMyMessage) {
+    if (messageDiv.querySelector('.trash-btn')) return; // Don't add double icons
     const trash = document.createElement("span");
     trash.className = "trash-btn";
     trash.innerHTML = "🗑️"; 
@@ -1782,20 +1780,59 @@ function injectTrashIcon(messageDiv, authorUid, role) {
   }
 }
 
-// --- UPDATED: UI Refresh on Login/Logout ---
+// --- FIXED: UI Refresh using stored data attributes ---
 function refreshPermissionsUI() {
   const messages = chatWindow.querySelectorAll('.message');
   messages.forEach(div => {
-    const existingTrash = div.querySelector('.trash-btn');
-    if (existingTrash) existingTrash.remove();
-    
-    // Re-check permissions for every message
     const authorUid = div.dataset.authorUid;
-    // Note: We'd need to store the role in a data-attribute to be 100% accurate here
-    // For now, it will work for Owner/Self matches
-    injectTrashIcon(div, authorUid, "member"); 
+    const role = div.dataset.role; // Pull the real role from the attribute
+    injectTrashIcon(div, authorUid, role);
   });
 }
+
+// --- FIXED: Active Mute Listener ---
+function checkMuteStatus() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    // Get the current user's UID (Firebase Auth UID or the Guest Session ID)
+    const myUid = firebase.auth().currentUser?.uid || sessionGuestId;
+    
+    mutesRef.child(myUid).on("value", snapshot => {
+        const muteTime = snapshot.val();
+        const now = Date.now();
+
+        if (muteTime && now < muteTime) {
+            mutedUntil = muteTime;
+            muteOverlay.style.setProperty('display', 'flex', 'important');
+            messageInput.disabled = true;
+            messageInput.blur();
+
+            countdownInterval = setInterval(() => {
+                const currentTime = Date.now();
+                const remaining = Math.max(0, Math.floor((mutedUntil - currentTime) / 1000));
+                
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    muteOverlay.style.setProperty('display', 'none', 'important');
+                    messageInput.disabled = false;
+                    mutedUntil = 0;
+                    mutesRef.child(myUid).remove(); // Cleanup DB
+                } else {
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                }
+            }, 1000);
+        } else {
+            muteOverlay.style.setProperty('display', 'none', 'important');
+            messageInput.disabled = false;
+            mutedUntil = 0;
+        }
+    });
+}
+
+// Re-run mute check whenever the database updates
+mutesRef.on("value", checkMuteStatus);
   
 // ---------------- REALTIME LISTENERS ----------------
 let initialLoad = true;
@@ -1995,18 +2032,30 @@ chatForm.onsubmit = e => {
 
     if (!targetUser || !durationArg) {
       showNotification("Usage: /timeout (user) (minutes/cancel)");
-    } else if (durationArg === "cancel") {
-      mutesRef.child(targetUser.toLowerCase()).remove();
-      showNotification(`${targetUser} has been unmuted.`);
     } else {
-      const minutes = parseInt(durationArg);
-      if (isNaN(minutes)) {
-        showNotification("Last part must be minutes or 'cancel'.");
-      } else {
-        const until = now + (minutes * 60 * 1000);
-        mutesRef.child(targetUser.toLowerCase()).set(until);
-        showNotification(`${targetUser} timed out for ${minutes}m.`);
-      }
+      // Find the most recent message from this username to get their UID
+      messagesRef.orderByChild("username").equalTo(targetUser).limitToLast(1).once("value", snap => {
+        const data = snap.val();
+        if (data) {
+          const targetUid = Object.values(data)[0].uid;
+          
+          if (durationArg === "cancel") {
+            mutesRef.child(targetUid).remove();
+            showNotification(`${targetUser} has been unmuted.`);
+          } else {
+            const minutes = parseInt(durationArg);
+            if (isNaN(minutes)) {
+              showNotification("Last part must be minutes or 'cancel'.");
+            } else {
+              const until = now + (minutes * 60 * 1000);
+              mutesRef.child(targetUid).set(until);
+              showNotification(`${targetUser} timed out for ${minutes}m.`);
+            }
+          }
+        } else {
+          showNotification("User not found in recent history.");
+        }
+      });
     }
     messageInput.value = ""; 
     return; 
