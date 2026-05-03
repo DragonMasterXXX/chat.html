@@ -1718,161 +1718,57 @@ function showNotification(text) {
 
 
 // ---------------- MESSAGE RENDER ----------------
-
 function addMessage(msg, key) {
-
-  if (!msg || !msg.text) return;
-
-
-
-  if (chatWindow.querySelector(`[data-key="${key}"]`)) return;
-
-
+  if (!msg || !msg.text || chatWindow.querySelector(`[data-key="${key}"]`)) return;
 
   const div = document.createElement("div");
-
   div.className = "message";
-
   div.dataset.key = key;
-
-
+  div.dataset.authorUid = msg.uid; // Critical for secure identification
 
   const role = msg.role || "member";
-
   if (role === "owner") div.classList.add("owner-message");
 
-
-
-  // Keep ONLY this one:
-
   const timeStr = new Date(msg.time).toLocaleString([], {
-
     year: 'numeric',
-
     month: 'short',
-
     day: 'numeric',
-
-    hour: '2-digit',
-
+    hour: '2-digit', 
     minute: '2-digit'
-
   });
-
-
-
+  
   let badge = "";
-
-
-
   let nameStyle = "";
-
-
-
   let textStyle = "";
 
-
-
-
-
-
-
   if (role === "owner") {
-
-
-
     badge = "👑";
-
-
-
     nameStyle = 'style="color: gold; font-weight: 900"';
-
-
-
     textStyle = 'style="color: gold; font-weight: 600"';
-
-
-
   } else if (role === "admin") {
-
-
-
     badge = "⭐";
-
-
-
     nameStyle = 'style="color: gold; font-weight: 800"';
-
-
-
   } else if (role === "system") {
-
-
-
     badge = "⚙️";
-
-
-
     nameStyle = 'style="color: white; font-weight: 900"';
-
-
-
   }
-
-
-
-
-
-
 
   const formattedText = formatMarkdown(escapeHTML(msg.text));
 
-
-
-
-
-
-
   div.innerHTML = `
-
-
-
     <span class="message-time">${timeStr}</span>
-
-
-
     ${badge ? `<span>${badge}</span>` : ""}
-
-
-
     <span class="username" ${nameStyle}>${msg.username}:</span>
-
-
-
     <span ${textStyle}>${formattedText}</span>
-
-
-
   `;
-
-
-
-
-
-
 
   chatWindow.appendChild(div);
 
-  // --- UPDATED PERMISSION LOGIC ---
+  // SECURE PERMISSION CHECK
   const user = firebase.auth().currentUser;
-  const loggedInEmail = user ? user.email.toLowerCase() : "";
-  
-  const checkOwner = loggedInEmail === "dragonvr@fire-breathing.com";
-  const checkAdmin = ["michael@smj.com", "purple@not-magic.com"].includes(loggedInEmail);
-  
-  // Logic: You can delete if you are Owner, Admin, OR if the message username matches your current session name
   const isMyMessage = (user && msg.uid === user.uid);
 
+  // Owners and Admins can delete anything; Members can delete their own UID matches
   if (isOwner || (isAdmin && role !== "system") || isMyMessage) {
     const trash = document.createElement("span");
     trash.className = "trash-btn";
@@ -1982,20 +1878,18 @@ firebase.auth().onAuthStateChanged(user => {
 // ---------------- DYNAMIC PERMISSIONS ----------------
 function refreshPermissionsUI() {
   const messages = chatWindow.querySelectorAll('.message');
+  const user = firebase.auth().currentUser;
   
   messages.forEach(div => {
     const key = div.dataset.key;
-    const usernameSpan = div.querySelector('.username');
-    const msgUsername = usernameSpan ? usernameSpan.textContent.replace(':', '').trim() : "";
+    const authorUid = div.dataset.authorUid;
     
-    // Clear existing trash button to prevent duplicates
     const existingTrash = div.querySelector('.trash-btn');
     if (existingTrash) existingTrash.remove();
 
-    const isMyMessage = (msgUsername === currentUsername && currentUsername !== "");
+    const isMyMessage = (user && authorUid === user.uid);
 
-    // Add trash button if user has permission (Owner, Admin, or Author)
-    if (isOwner || isAdmin || isMyMessage) {
+    if (isOwner || (isAdmin && authorUid !== "system") || isMyMessage) {
       const trash = document.createElement("span");
       trash.className = "trash-btn";
       trash.innerHTML = "🗑️"; 
@@ -2424,25 +2318,15 @@ ownerLoginBtn.onclick = () => {
 
 
 // ---------------- LOGOUT ----------------
-
 logoutBtn.onclick = () => {
-
   auth.signOut().then(() => {
-
-    // Manually reset permissions so the UI updates without a refresh
-
     isOwner = false;
-
     isAdmin = false;
-
     currentUsername = "";
-
     usernameInput.value = "";
-
+    refreshPermissionsUI(); // Hides trash cans you no longer have access to
     showNotification("Logged out successfully");
-
   });
-
 };
 
 </script>
