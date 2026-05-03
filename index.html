@@ -1643,82 +1643,39 @@ const countdown = document.getElementById("countdown");
 
 
 // ---------------- MUTES ----------------
-
 function checkMuteStatus(snapshot) {
-
   const data = snapshot.val() || {};
-
   const now = Date.now();
-
-
-
-  // If we don't have a username yet, we can't check if they are muted
-
   if (!currentUsername) return;
 
+  const until = (typeof data === 'object') ? (data[currentUsername] || 0) : data;
 
-
-  const userMute = data[currentUsername] || 0;
-
-
-
-  if (userMute && now < userMute) {
-
-    mutedUntil = userMute;
-
+  if (until && now < until) {
+    mutedUntil = until;
+    muteOverlay.style.display = "block";
     messageInput.disabled = true;
 
-    muteOverlay.style.display = "block";
-
-
-
-    const tick = () => {
-
-      const remaining = mutedUntil - Date.now();
-
+    clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((mutedUntil - Date.now()) / 1000));
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      
       if (remaining <= 0) {
-
-        muteOverlay.style.display = "none";
-
-        messageInput.disabled = false;
-
         clearInterval(countdownInterval);
-
-        return;
-
+        muteOverlay.style.display = "none";
+        messageInput.disabled = false;
+        mutedUntil = 0;
       }
-
-      const m = Math.floor(remaining / 60000);
-
-      const s = Math.floor((remaining % 60000) / 1000);
-
-      countdown.textContent = `${m}:${s < 10 ? "0" : ""}${s}`;
-
-    };
-
-
-
-    clearInterval(countdownInterval);
-
-    tick();
-
-    countdownInterval = setInterval(tick, 1000);
-
+    }, 1000);
   } else {
-
     mutedUntil = 0;
-
     muteOverlay.style.display = "none";
-
     messageInput.disabled = false;
-
     clearInterval(countdownInterval);
-
   }
-
 }
-
-
 
 // Start the listener
 
@@ -2036,205 +1993,60 @@ function addMessage(msg, key) {
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
-
-
-
-
-
-
   // --- PERMISSION LOGIC ---
-
   const user = firebase.auth().currentUser;
-
   const currentUid = user ? user.uid : "guest";
 
-
-
-  const isMyMessage = (msg.uid !== "guest" && msg.uid === currentUid);
-
-
+  // Guests can only delete their own messages if they stay on the page.
+  // Logged-in users compare UIDs.
+  const isMyMessage = (msg.uid === currentUid && currentUid !== "guest");
 
   const canDelete = isOwner || 
-
                     (isAdmin && role !== "system") || 
-
                     isMyMessage;
 
-
-
-
-
   if (canDelete) {
-
-
-
     const trash = document.createElement("span");
-
-
-
     trash.className = "trash-btn";
-
-
-
     trash.textContent = "🗑️";
-
-
-
     trash.onclick = () => openDeleteModal(key);
-
-
-
     div.appendChild(trash);
-
-
-
   }
-
-
-
-
-
-
 
   // --- MUTE BUTTON LOGIC ---
-
-
-
   // Owner can mute anyone except system. Admin can mute anyone except Owner/System.
-
-
-
   const canMute = (isOwner && role !== "system") || 
-
-
-
                   (isAdmin && role !== "owner" && role !== "system");
 
-
-
-
-
-
-
   if (canMute && msg.username !== currentUsername) {
-
-
-
     const muteBtn = document.createElement("img");
-
-
-
     muteBtn.className = "mute-btn";
-
-
-
     
-
-
-
     const userMuteRef = mutesRef.child(msg.username);
 
-
-
-
-
-
-
-    // Initial icon state
-
-
-
+    // Dynamic Icon Update: Syncs mic icon with DB state
     userMuteRef.on("value", snap => {
-
-
-
       const until = snap.val() || 0;
-
-
-
       muteBtn.src = (until && Date.now() < until) ? MIC_MUTED : MIC_NORMAL;
-
-
-
     });
 
-
-
-
-
-
-
     muteBtn.onclick = () => {
-
-
-
       userMuteRef.once("value").then(snap => {
-
-
-
-        const until = snap.val();
-
-
-
+        const until = snap.val() || 0;
         const now = Date.now();
 
-
-
-
-
-
-
         if (until && now < until) {
-
-
-
           userMuteRef.remove();
-
-
-
-          showNotification(`${msg.username} was unmuted`);
-
-
-
+          showNotification(`${msg.username} has been unmuted.`);
         } else {
-
-
-
           userMuteRef.set(now + MUTE_DURATION_MS);
-
-
-
-          showNotification(`${msg.username} was muted`);
-
-
-
+          showNotification(`${msg.username} put in timeout.`);
         }
-
-
-
       });
-
-
-
     };
-
-
-
     div.appendChild(muteBtn);
-
-
-
   }
-
-
-
 }
-
-
-
-
-
-
 
 // ---------------- REALTIME LISTENERS ----------------
 
