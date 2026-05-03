@@ -1510,26 +1510,34 @@ const countdown = document.getElementById("countdown");
 
 
 
-// ---------------- MUTES ----------------
+// --- UPDATED MUTE CHECK WITH CLEANUP ---
 function checkMuteStatus(snapshot) {
+  if (countdownInterval) clearInterval(countdownInterval);
+  
   const data = snapshot.val() || {};
   const now = Date.now();
   
-  // Update the current session name from the input field
+  // Ensure we always have the freshest name
   currentUsername = usernameInput.value.trim();
-  if (!currentUsername) return;
+  
+  // If name is empty, just reset UI and stop
+  if (!currentUsername) {
+    muteOverlay.style.display = "none";
+    messageInput.disabled = false;
+    return;
+  }
 
-  // Get the timestamp for the current user
-  const until = (typeof data === 'object') ? (data[currentUsername] || 0) : 0;
+  const until = data[currentUsername] || 0;
 
   if (until && now < until) {
     mutedUntil = until;
-    muteOverlay.style.display = "flex"; // Changed from 'block' to 'flex'
+    muteOverlay.style.display = "flex"; 
     messageInput.disabled = true;
 
-    clearInterval(countdownInterval);
     countdownInterval = setInterval(() => {
-      const remaining = Math.max(0, Math.floor((mutedUntil - Date.now()) / 1000));
+      const currentTime = Date.now();
+      const remaining = Math.max(0, Math.floor((mutedUntil - currentTime) / 1000));
+      
       if (remaining <= 0) {
         clearInterval(countdownInterval);
         muteOverlay.style.display = "none";
@@ -1542,11 +1550,10 @@ function checkMuteStatus(snapshot) {
       }
     }, 1000);
   } else {
-    // Hide if not muted or time expired
-    mutedUntil = 0;
+    // If they aren't muted, make sure the UI is cleared
     muteOverlay.style.display = "none";
     messageInput.disabled = false;
-    clearInterval(countdownInterval);
+    mutedUntil = 0;
   }
 }
   
@@ -1888,7 +1895,7 @@ function addMessage(msg, key) {
     div.appendChild(trash);
   }
 
-  // --- UPDATED MUTE BUTTON LOGIC ---
+  // --- LIVE SYNC MUTE BUTTON LOGIC ---
   const canMute = (checkOwner && role !== "system") || 
                   (checkAdmin && role !== "owner" && role !== "system");
 
@@ -1896,33 +1903,29 @@ function addMessage(msg, key) {
     const muteBtn = document.createElement("img");
     muteBtn.className = "mute-btn";
     
-    // Initial check for mute status
-    mutesRef.child(msg.username).once("value", snap => {
+    // Use .on instead of .once so the icon changes LIVE for all admins
+    mutesRef.child(msg.username).on("value", snap => {
       const until = snap.val() || 0;
       muteBtn.src = (until && Date.now() < until) ? MIC_MUTED : MIC_NORMAL;
     });
 
     muteBtn.onclick = () => {
-      const userMuteRef = mutesRef.child(msg.username);
-      userMuteRef.once("value").then(snap => {
+      mutesRef.child(msg.username).once("value").then(snap => {
         const until = snap.val() || 0;
         const now = Date.now();
 
         if (until && now < until) {
-          userMuteRef.remove();
-          muteBtn.src = MIC_NORMAL;
+          mutesRef.child(msg.username).remove();
           showNotification(`${msg.username} unmuted.`);
         } else {
-          userMuteRef.set(now + MUTE_DURATION_MS);
-          muteBtn.src = MIC_MUTED;
+          mutesRef.child(msg.username).set(now + MUTE_DURATION_MS);
           showNotification(`${msg.username} put in timeout.`);
         }
       });
     };
     div.appendChild(muteBtn);
   }
-} // Final closing bracket for addMessage
-
+}
 // ---------------- REALTIME LISTENERS ----------------
 let initialLoad = true;
 messagesRef.limitToLast(50).on("child_added", snap => {
@@ -2440,101 +2443,43 @@ messageInput.addEventListener("blur", () => setTyping(false));
 
 
 
-// --- ADD THE NEW CODE HERE --- 
-
-usernameInput.addEventListener("blur", () => {
-
+// --- FIXED USERNAME & MUTE LOGIC --- 
+usernameInput.addEventListener("change", () => {
   const newName = usernameInput.value.trim();
-
-  if (newName && newName !== currentUsername) {
-
+  if (newName !== currentUsername) {
     currentUsername = newName;
-
-    // Check if this new name is on the mute list
-
+    // Trigger a re-check of the mute list for the new name
     mutesRef.once("value", checkMuteStatus);
-
   }
-
 });
 
+// Trigger check if they press enter in the name box
+usernameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const newName = usernameInput.value.trim();
+    currentUsername = newName;
+    mutesRef.once("value", checkMuteStatus);
+  }
+});
 
-
-// typing listener
-
-
-
+// Typing listener (Existing)
 typingRef.on("value", snap => {
-
-
-
   const data = snap.val() || {};
-
-
-
   const now = Date.now();
 
-
-
-
-
-
-
   const users = Object.values(data)
-
-
-
-    .filter(u => u.time && now - u.time < 5000)
-
-
-
+    .filter(u => u.time && now - u.time < 5000 && u.username !== currentUsername)
     .map(u => u.username);
 
-
-
-
-
-
-
   if (!users.length) {
-
-
-
     typingIndicator.style.visibility = "hidden";
-
-
-
     return;
-
-
-
   }
 
-
-
-
-
-
-
   typingIndicator.style.visibility = "visible";
-
-
-
   typingText.textContent =
-
-
-
     users.join(", ") + (users.length === 1 ? " is typing..." : " are typing...");
-
-
-
 });
-
-
-
-
-
-
 
 // ---------------- SYSTEM MESSAGE ----------------
 
