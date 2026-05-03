@@ -267,49 +267,22 @@ main {
 
 
 .message {
-
-
-
   margin-bottom: 0.7rem;
-
-
-
   padding: 0.6rem 0.8rem;
-
-
-
   border-radius: 8px;
-
-
-
   background: rgba(255,69,0,0.2);
-
-
-
-  display: flex;
-
-
-
-  flex-wrap: wrap;
-
-
-
-  align-items: center;
-
-
-
-  gap: 0.5rem;
-
-
-
+  
+  /* The Fix: Change flex to block or adjust flex-direction */
+  display: block; 
   position: relative;
-
-
-
   border: 2px solid transparent;
   contain: layout style;
   will-change: transform, opacity;
-  overflow-wrap: break-word;  /* Prevents text from breaking layout */
+  
+  /* Ensures long links or words break instead of stretching the box */
+  overflow-wrap: break-word; 
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 
@@ -1753,11 +1726,13 @@ function addMessage(msg, key) {
 
   div.innerHTML = `
     <span class="message-time">${timeStr}</span>
-    ${badge ? `<span>${badge}</span>` : ""}
-    <span class="username" ${nameStyle}>${msg.username}:</span>
-    <span>${formatMarkdown(escapeHTML(msg.text))}</span>
+    <div style="display: inline-block; width: 100%;">
+      ${badge ? `<span style="display: inline; margin-right: 5px;">${badge}</span>` : ""}
+      <span class="username" ${nameStyle}>${msg.username}:</span>
+      <span style="white-space: pre-wrap;">${formatMarkdown(escapeHTML(msg.text))}</span>
+    </div>
   `;
-
+  
   chatWindow.appendChild(div);
   injectTrashIcon(div, msg.uid, role);
 }
