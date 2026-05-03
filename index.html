@@ -570,8 +570,9 @@ main {
 #muteOverlay {
   display: none;
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.95); /* Slightly darker to be sure */
+  top: 0; left: 0; 
+  width: 100%; height: 100%; /* Ensure full coverage */
+  background: rgba(0,0,0,0.9);
   color: #ff4444;
   font-weight: bold;
   text-align: center;
@@ -1516,28 +1517,22 @@ function checkMuteStatus(snapshot) {
     
     const data = snapshot.val() || {};
     const now = Date.now();
-    
-    // Convert current input to lowercase for comparison
     const nameToCheck = usernameInput.value.trim().toLowerCase();
     
     if (!nameToCheck) {
-        muteOverlay.style.display = "none";
+        muteOverlay.style.setProperty('display', 'none', 'important');
         messageInput.disabled = false;
         return;
     }
 
-    // Search the database keys using lowercase
-    let muteTime = 0;
-    Object.keys(data).forEach(key => {
-        if (key.toLowerCase() === nameToCheck) {
-            muteTime = data[key];
-        }
-    });
+    // Direct check since we are now saving everything as lowercase
+    const muteTime = data[nameToCheck];
 
     if (muteTime && now < muteTime) {
         mutedUntil = muteTime;
-        muteOverlay.style.display = "flex"; 
+        muteOverlay.style.setProperty('display', 'flex', 'important'); // FORCE display
         messageInput.disabled = true;
+        messageInput.blur(); // Remove focus so they can't try to type
 
         countdownInterval = setInterval(() => {
             const currentTime = Date.now();
@@ -1545,9 +1540,10 @@ function checkMuteStatus(snapshot) {
             
             if (remaining <= 0) {
                 clearInterval(countdownInterval);
-                muteOverlay.style.display = "none";
+                muteOverlay.style.setProperty('display', 'none', 'important');
                 messageInput.disabled = false;
                 mutedUntil = 0;
+                // Cleanup DB
                 mutesRef.child(nameToCheck).remove();
             } else {
                 const mins = Math.floor(remaining / 60);
@@ -1556,7 +1552,7 @@ function checkMuteStatus(snapshot) {
             }
         }, 1000);
     } else {
-        muteOverlay.style.display = "none";
+        muteOverlay.style.setProperty('display', 'none', 'important');
         messageInput.disabled = false;
         mutedUntil = 0;
     }
@@ -2124,29 +2120,30 @@ chatForm.onsubmit = e => {
 
   // --- COMMAND PARSER (Discord Style) ---
   if (text.startsWith("/timeout") && (role === "owner" || role === "admin")) {
-    const parts = text.split(" "); 
-    // Format: /timeout username duration (or 'cancel')
-    const targetUser = parts[1];
-    const durationArg = parts[2];
+    const rawContent = text.replace("/timeout", "").trim(); // Remove the command name
+    const lastSpaceIndex = rawContent.lastIndexOf(" "); // Find the last space (duration is after this)
+    
+    const targetUser = rawContent.slice(0, lastSpaceIndex).trim();
+    const durationArg = rawContent.slice(lastSpaceIndex).trim();
 
-    if (!targetUser) {
+    if (!targetUser || !durationArg) {
       showNotification("Usage: /timeout (user) (minutes/cancel)");
     } else if (durationArg === "cancel") {
-      mutesRef.child(targetUser).remove();
+      mutesRef.child(targetUser.toLowerCase()).remove(); // Normalize to lowercase for DB
       showNotification(`${targetUser} has been unmuted.`);
     } else {
       const minutes = parseInt(durationArg);
       if (isNaN(minutes)) {
-        showNotification("Please provide a valid number of minutes.");
+        showNotification("Last part must be minutes or 'cancel'.");
       } else {
         const until = now + (minutes * 60 * 1000);
-        mutesRef.child(targetUser).set(until);
+        // Store in DB as lowercase so the listener always finds it
+        mutesRef.child(targetUser.toLowerCase()).set(until);
         showNotification(`${targetUser} timed out for ${minutes}m.`);
       }
     }
-    
-    messageInput.value = ""; // Clear input without sending to chat
-    return; // STOP HERE so command doesn't show in chatbox
+    messageInput.value = ""; 
+    return; 
   }
 
   // --- REGULAR MESSAGE LOGIC ---
