@@ -568,53 +568,20 @@ main {
 
 
 #muteOverlay {
-
-
-
-  display: none;
-
-
-
+  display: none; /* This is the default state */
   position: absolute;
-
-
-
   top: 0; left: 0; right: 0; bottom: 0;
-
-
-
-  background: rgba(0,0,0,0.85);
-
-
-
+  background: rgba(0,0,0,0.9); 
   color: #ff4444;
-
-
-
   font-weight: bold;
-
-
-
   text-align: center;
-
-
-
   padding: 0.5rem;
-
-
-
   border-radius: 20px;
-
-
-
   z-index: 100;
-
-
-
-  line-height: 2;
-
-
-
+  /* Use flex properties, but only when display is set to flex by JS */
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 
@@ -1547,37 +1514,42 @@ const countdown = document.getElementById("countdown");
 function checkMuteStatus(snapshot) {
   const data = snapshot.val() || {};
   const now = Date.now();
+  
+  // Update the current session name from the input field
+  currentUsername = usernameInput.value.trim();
   if (!currentUsername) return;
 
-  const until = (typeof data === 'object') ? (data[currentUsername] || 0) : data;
+  // Get the timestamp for the current user
+  const until = (typeof data === 'object') ? (data[currentUsername] || 0) : 0;
 
   if (until && now < until) {
     mutedUntil = until;
-    muteOverlay.style.display = "block";
+    muteOverlay.style.display = "flex"; // Changed from 'block' to 'flex'
     messageInput.disabled = true;
 
     clearInterval(countdownInterval);
     countdownInterval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((mutedUntil - Date.now()) / 1000));
-      const mins = Math.floor(remaining / 60);
-      const secs = remaining % 60;
-      countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-      
       if (remaining <= 0) {
         clearInterval(countdownInterval);
         muteOverlay.style.display = "none";
         messageInput.disabled = false;
         mutedUntil = 0;
+      } else {
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
       }
     }, 1000);
   } else {
+    // Hide if not muted or time expired
     mutedUntil = 0;
     muteOverlay.style.display = "none";
     messageInput.disabled = false;
     clearInterval(countdownInterval);
   }
 }
-
+  
 // Start the listener
 
 mutesRef.on("value", checkMuteStatus);
