@@ -307,7 +307,8 @@ main {
 
 
   border: 2px solid transparent;
-  contain: content;           /* Prevents layout shifting */
+  contain: layout style;
+  will-change: transform, opacity;
   overflow-wrap: break-word;  /* Prevents text from breaking layout */
 }
 
@@ -1836,28 +1837,42 @@ mutesRef.on("value", checkMuteStatus);
   
 // ---------------- REALTIME LISTENERS ----------------
 let initialLoad = true;
-messagesRef.limitToLast(50).on("child_added", snap => {
-  addMessage(snap.val(), snap.key);
-  
-  // Logic to only scroll if user is already at the bottom or it's the first load
-  const isNearBottom = chatWindow.scrollHeight - chatWindow.clientHeight <= chatWindow.scrollTop + 100;
-  if (isNearBottom || initialLoad) {
-    chatWindow.scrollTop = chatWindow.scrollHeight; // <--- ADD THIS LINE BACK
-  }
+const messagesQuery = messagesRef.limitToLast(50);
+
+// Fetch the initial batch first to avoid the "jumping" during load
+messagesQuery.once("value", () => {
+  initialLoad = false;
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 });
 
-// Flip the flag after the first batch of messages is done loading
-messagesRef.once("value", () => { initialLoad = false; });
+messagesQuery.on("child_added", snap => {
+  addMessage(snap.val(), snap.key);
+  
+  // Only auto-scroll if the user is already at the bottom 
+  // (Prevents jumping while they are reading older messages)
+  if (!initialLoad) {
+    const isNearBottom = chatWindow.scrollHeight - chatWindow.clientHeight <= chatWindow.scrollTop + 150;
+    if (isNearBottom) {
+      setTimeout(() => {
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+      }, 50);
+    }
+  }
+});
 
 
 
 messagesRef.on("child_removed", snap => {
-  // Use a template literal to ensure the selector is clean
-  const el = document.querySelector(`.message[data-key="${snap.key}"]`);
+  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
   if (el) {
-    // Add a small fade-out effect if you want, or just remove it immediately
-    el.style.opacity = '0';
-    setTimeout(() => el.remove(), 50); 
+    el.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+    el.style.opacity = "0";
+    el.style.transform = "scale(0.95)";
+    
+    // Remove from DOM after the quick animation
+    setTimeout(() => {
+      el.remove();
+    }, 200);
   }
 });
 
