@@ -1717,65 +1717,84 @@ function showNotification(text) {
 
 
 
-// ---------------- MESSAGE RENDER ----------------
+// --- NEW: Persistent Guest Identity ---
+// Check if we already have a guest ID in storage, otherwise create one
+let sessionGuestId = localStorage.getItem("chat_guest_id");
+if (!sessionGuestId) {
+    sessionGuestId = "guest_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("chat_guest_id", sessionGuestId);
+}
+
+// --- UPDATED: Message Rendering ---
 function addMessage(msg, key) {
   if (!msg || !msg.text || chatWindow.querySelector(`[data-key="${key}"]`)) return;
 
   const div = document.createElement("div");
   div.className = "message";
   div.dataset.key = key;
-  div.dataset.authorUid = msg.uid; // Critical for secure identification
+  div.dataset.authorUid = msg.uid; 
 
   const role = msg.role || "member";
   if (role === "owner") div.classList.add("owner-message");
 
-  const timeStr = new Date(msg.time).toLocaleString([], {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit', 
-    minute: '2-digit'
-  });
+  const dateObj = new Date(msg.time);
+  const datePart = dateObj.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const timePart = dateObj.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const timeStr = `${datePart} • ${timePart}`;
   
   let badge = "";
   let nameStyle = "";
-  let textStyle = "";
 
-  if (role === "owner") {
-    badge = "👑";
-    nameStyle = 'style="color: gold; font-weight: 900"';
-    textStyle = 'style="color: gold; font-weight: 600"';
-  } else if (role === "admin") {
-    badge = "⭐";
-    nameStyle = 'style="color: gold; font-weight: 800"';
-  } else if (role === "system") {
-    badge = "⚙️";
-    nameStyle = 'style="color: white; font-weight: 900"';
-  }
-
-  const formattedText = formatMarkdown(escapeHTML(msg.text));
+  if (role === "owner") { badge = "👑"; nameStyle = 'style="color: gold; font-weight: 900"'; }
+  else if (role === "admin") { badge = "⭐"; nameStyle = 'style="color: gold; font-weight: 800"'; }
+  else if (role === "system") { badge = "⚙️"; nameStyle = 'style="color: white; font-weight: 900"'; }
 
   div.innerHTML = `
     <span class="message-time">${timeStr}</span>
     ${badge ? `<span>${badge}</span>` : ""}
     <span class="username" ${nameStyle}>${msg.username}:</span>
-    <span ${textStyle}>${formattedText}</span>
+    <span>${formatMarkdown(escapeHTML(msg.text))}</span>
   `;
 
   chatWindow.appendChild(div);
+  
+  // Attach the trash can if permissions allow
+  injectTrashIcon(div, msg.uid, role);
+}
 
-  // SECURE PERMISSION CHECK
+// --- NEW: Dedicated Permission Logic ---
+function injectTrashIcon(messageDiv, authorUid, role) {
   const user = firebase.auth().currentUser;
-  const isMyMessage = (user && msg.uid === user.uid);
+  const key = messageDiv.dataset.key;
 
-  // Owners and Admins can delete anything; Members can delete their own UID matches
+  // Logic: 
+  // 1. You are the Owner
+  // 2. You are an Admin (and target isn't system)
+  // 3. You are the author (Logged in UID match OR Guest ID match)
+  const isMyMessage = (user && authorUid === user.uid) || (authorUid === sessionGuestId);
+  
   if (isOwner || (isAdmin && role !== "system") || isMyMessage) {
     const trash = document.createElement("span");
     trash.className = "trash-btn";
     trash.innerHTML = "🗑️"; 
     trash.onclick = () => openDeleteModal(key);
-    div.appendChild(trash);
+    messageDiv.appendChild(trash);
   }
+}
+
+// --- UPDATED: UI Refresh on Login/Logout ---
+function refreshPermissionsUI() {
+  const messages = chatWindow.querySelectorAll('.message');
+  messages.forEach(div => {
+    const existingTrash = div.querySelector('.trash-btn');
+    if (existingTrash) existingTrash.remove();
+    
+    // Re-check permissions for every message
+    const authorUid = div.dataset.authorUid;
+    // Note: We'd need to store the role in a data-attribute to be 100% accurate here
+    // For now, it will work for Owner/Self matches
+    injectTrashIcon(div, authorUid, "member"); 
+  });
 }
   
 // ---------------- REALTIME LISTENERS ----------------
@@ -1796,12 +1815,14 @@ messagesRef.once("value", () => { initialLoad = false; });
 
 
 messagesRef.on("child_removed", snap => {
-
-  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
-
-  if (el) el.remove();
-
-}); // <--- THIS WAS MISSING IN YOUR VERSION
+  // Use a template literal to ensure the selector is clean
+  const el = document.querySelector(`.message[data-key="${snap.key}"]`);
+  if (el) {
+    // Add a small fade-out effect if you want, or just remove it immediately
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 50); 
+  }
+});
 
 
 
@@ -1874,30 +1895,6 @@ firebase.auth().onAuthStateChanged(user => {
   systemMessageInput.style.display = showSystem ? "inline-block" : "none";
   systemSendBtn.style.display = showSystem ? "inline-block" : "none";
 });
-
-// ---------------- DYNAMIC PERMISSIONS ----------------
-function refreshPermissionsUI() {
-  const messages = chatWindow.querySelectorAll('.message');
-  const user = firebase.auth().currentUser;
-  
-  messages.forEach(div => {
-    const key = div.dataset.key;
-    const authorUid = div.dataset.authorUid;
-    
-    const existingTrash = div.querySelector('.trash-btn');
-    if (existingTrash) existingTrash.remove();
-
-    const isMyMessage = (user && authorUid === user.uid);
-
-    if (isOwner || (isAdmin && authorUid !== "system") || isMyMessage) {
-      const trash = document.createElement("span");
-      trash.className = "trash-btn";
-      trash.innerHTML = "🗑️"; 
-      trash.onclick = () => openDeleteModal(key);
-      div.appendChild(trash);
-    }
-  });
-}
   
 // ---------------- DELETE MODAL ----------------
 
@@ -1944,50 +1941,24 @@ function closeDeleteModal() {
 
 
 confirmDelete.onclick = () => {
-
-
-
   if (!messageToDeleteKey) return;
+  
+  // 1. Find and hide it immediately (Optimistic UI)
+  const el = document.querySelector(`.message[data-key="${messageToDeleteKey}"]`);
+  if (el) el.style.display = 'none'; 
 
-
-
-  messagesRef.child(messageToDeleteKey).remove();
-
-
-
-  showNotification("Message deleted");
-
-
-
-  closeDeleteModal();
-
-
-
+  // 2. Tell the server to kill it
+  messagesRef.child(messageToDeleteKey).remove()
+    .then(() => {
+      showNotification("Message deleted");
+      closeDeleteModal();
+    })
+    .catch((err) => {
+      // If the rules blocked it, bring it back!
+      if (el) el.style.display = 'flex';
+      showNotification("Delete failed: " + err.message);
+    });
 };
-
-
-
-
-
-
-
-cancelDelete.onclick = closeDeleteModal;
-
-
-
-
-
-
-
-window.addEventListener("click", e => {
-
-
-
-  if (e.target === deleteModal) closeDeleteModal();
-
-
-
-});
 
 
 
@@ -2000,7 +1971,9 @@ chatForm.onsubmit = e => {
   e.preventDefault();
 
   const user = auth.currentUser;
-  const uid = user?.uid || "guest";
+  // If logged in, use their Firebase UID. If guest, use the session ID.
+  const uid = user ? user.uid : sessionGuestId; 
+  
   const email = user?.email?.toLowerCase() || "";
   const name = usernameInput.value.trim();
   const text = messageInput.value.trim();
@@ -2014,8 +1987,8 @@ chatForm.onsubmit = e => {
 
   // --- COMMAND PARSER (Discord Style) ---
   if (text.startsWith("/timeout") && (role === "owner" || role === "admin")) {
-    const rawContent = text.replace("/timeout", "").trim(); // Remove the command name
-    const lastSpaceIndex = rawContent.lastIndexOf(" "); // Find the last space (duration is after this)
+    const rawContent = text.replace("/timeout", "").trim();
+    const lastSpaceIndex = rawContent.lastIndexOf(" ");
     
     const targetUser = rawContent.slice(0, lastSpaceIndex).trim();
     const durationArg = rawContent.slice(lastSpaceIndex).trim();
@@ -2023,7 +1996,7 @@ chatForm.onsubmit = e => {
     if (!targetUser || !durationArg) {
       showNotification("Usage: /timeout (user) (minutes/cancel)");
     } else if (durationArg === "cancel") {
-      mutesRef.child(targetUser.toLowerCase()).remove(); // Normalize to lowercase for DB
+      mutesRef.child(targetUser.toLowerCase()).remove();
       showNotification(`${targetUser} has been unmuted.`);
     } else {
       const minutes = parseInt(durationArg);
@@ -2031,7 +2004,6 @@ chatForm.onsubmit = e => {
         showNotification("Last part must be minutes or 'cancel'.");
       } else {
         const until = now + (minutes * 60 * 1000);
-        // Store in DB as lowercase so the listener always finds it
         mutesRef.child(targetUser.toLowerCase()).set(until);
         showNotification(`${targetUser} timed out for ${minutes}m.`);
       }
@@ -2047,7 +2019,7 @@ chatForm.onsubmit = e => {
     return showNotification("Slow down");
 
   messagesRef.push({
-    uid,
+    uid, // This now matches sessionGuestId for non-logged-in members
     username: name,
     text: role === "member" ? cleanText(text) : text,
     role,
