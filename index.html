@@ -568,20 +568,20 @@ main {
 
 
 #muteOverlay {
-  display: none; /* This is the default state */
+  display: none;
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.9); 
+  background: rgba(0,0,0,0.95); /* Slightly darker to be sure */
   color: #ff4444;
   font-weight: bold;
   text-align: center;
   padding: 0.5rem;
   border-radius: 20px;
-  z-index: 100;
-  /* Use flex properties, but only when display is set to flex by JS */
+  z-index: 9999; /* Boost this to the max */
   align-items: center;
   justify-content: center;
   gap: 10px;
+  pointer-events: all; /* Ensure it blocks clicks */
 }
 
 
@@ -1512,51 +1512,54 @@ const countdown = document.getElementById("countdown");
 
 // --- IMPROVED ACTIVE MUTE LISTENER ---
 function checkMuteStatus(snapshot) {
-  if (countdownInterval) clearInterval(countdownInterval);
-  
-  const data = snapshot.val() || {};
-  const now = Date.now();
-  
-  // Get the name currently typed in their box
-  const nameToCheck = usernameInput.value.trim();
-  
-  if (!nameToCheck) {
-    muteOverlay.style.display = "none";
-    messageInput.disabled = false;
-    return;
-  }
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    const data = snapshot.val() || {};
+    const now = Date.now();
+    
+    // Convert current input to lowercase for comparison
+    const nameToCheck = usernameInput.value.trim().toLowerCase();
+    
+    if (!nameToCheck) {
+        muteOverlay.style.display = "none";
+        messageInput.disabled = false;
+        return;
+    }
 
-  // Look for their name in the database list
-  const until = data[nameToCheck] || 0;
+    // Search the database keys using lowercase
+    let muteTime = 0;
+    Object.keys(data).forEach(key => {
+        if (key.toLowerCase() === nameToCheck) {
+            muteTime = data[key];
+        }
+    });
 
-  if (until && now < until) {
-    mutedUntil = until;
-    muteOverlay.style.display = "flex"; // Show the red screen
-    messageInput.disabled = true;       // Block typing
+    if (muteTime && now < muteTime) {
+        mutedUntil = muteTime;
+        muteOverlay.style.display = "flex"; 
+        messageInput.disabled = true;
 
-    countdownInterval = setInterval(() => {
-      const currentTime = Date.now();
-      const remaining = Math.max(0, Math.floor((mutedUntil - currentTime) / 1000));
-      
-      if (remaining <= 0) {
-        clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
+            const currentTime = Date.now();
+            const remaining = Math.max(0, Math.floor((mutedUntil - currentTime) / 1000));
+            
+            if (remaining <= 0) {
+                clearInterval(countdownInterval);
+                muteOverlay.style.display = "none";
+                messageInput.disabled = false;
+                mutedUntil = 0;
+                mutesRef.child(nameToCheck).remove();
+            } else {
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+        }, 1000);
+    } else {
         muteOverlay.style.display = "none";
         messageInput.disabled = false;
         mutedUntil = 0;
-        // Clean up the database once the time expires
-        mutesRef.child(nameToCheck).remove();
-      } else {
-        const mins = Math.floor(remaining / 60);
-        const secs = remaining % 60;
-        countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-      }
-    }, 1000);
-  } else {
-    // If they aren't in the list, make sure the overlay is gone
-    muteOverlay.style.display = "none";
-    messageInput.disabled = false;
-    mutedUntil = 0;
-  }
+    }
 }
 
 // Keep this listener active so it catches changes instantly
@@ -1864,10 +1867,6 @@ function addMessage(msg, key) {
 
   chatWindow.appendChild(div);
 
-
-
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-
   // --- UPDATED PERMISSION LOGIC ---
   const user = firebase.auth().currentUser;
   const loggedInEmail = user ? user.email.toLowerCase() : "";
@@ -1878,11 +1877,7 @@ function addMessage(msg, key) {
   // Logic: You can delete if you are Owner, Admin, OR if the message username matches your current session name
   const isMyMessage = (msg.username === currentUsername && currentUsername !== "");
 
-  const canDelete = checkOwner || 
-                    (checkAdmin && role !== "system") || 
-                    isMyMessage;
-
-  if (canDelete) {
+  if (isOwner || (isAdmin && role !== "system") || isMyMessage) {
     const trash = document.createElement("span");
     trash.className = "trash-btn";
     trash.innerHTML = "🗑️"; 
@@ -1899,7 +1894,7 @@ messagesRef.limitToLast(50).on("child_added", snap => {
   // Logic to only scroll if user is already at the bottom or it's the first load
   const isNearBottom = chatWindow.scrollHeight - chatWindow.clientHeight <= chatWindow.scrollTop + 100;
   if (isNearBottom || initialLoad) {
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+    chatWindow.scrollTop = chatWindow.scrollHeight; // <--- ADD THIS LINE BACK
   }
 });
 
@@ -1961,49 +1956,59 @@ let liveIsAdmin = false;
 
 
 firebase.auth().onAuthStateChanged(user => {
-
   if (user) {
-
     liveEmail = user.email.toLowerCase();
-
     isOwner = liveEmail === "dragonvr@fire-breathing.com";
-
     isAdmin = ["michael@smj.com", "purple@not-magic.com"].includes(liveEmail);
-
-    currentUsername = user.email.split('@')[0]; 
-
-    usernameInput.value = currentUsername;
+    
+    // Fix: Only set default name if the input is currently empty
+    if (!usernameInput.value.trim()) {
+      currentUsername = user.email.split('@')[0];
+      usernameInput.value = currentUsername;
+    }
 
     mutesRef.once("value", checkMuteStatus);
-
   } else {
-
-    // RESET EVERYTHING when no one is logged in
-
     isOwner = false;
-
     isAdmin = false;
-
     currentUsername = "";
-
     usernameInput.value = "";
-
   }
 
-
-
-  // System UI visibility
+  // Refresh trash icons for existing messages upon login/logout
+  refreshPermissionsUI();
 
   const showSystem = isOwner && user;
-
   systemMessageInput.style.display = showSystem ? "inline-block" : "none";
-
   systemSendBtn.style.display = showSystem ? "inline-block" : "none";
-
 });
 
+// ---------------- DYNAMIC PERMISSIONS ----------------
+function refreshPermissionsUI() {
+  const messages = chatWindow.querySelectorAll('.message');
+  
+  messages.forEach(div => {
+    const key = div.dataset.key;
+    const usernameSpan = div.querySelector('.username');
+    const msgUsername = usernameSpan ? usernameSpan.textContent.replace(':', '').trim() : "";
+    
+    // Clear existing trash button to prevent duplicates
+    const existingTrash = div.querySelector('.trash-btn');
+    if (existingTrash) existingTrash.remove();
 
+    const isMyMessage = (msgUsername === currentUsername && currentUsername !== "");
 
+    // Add trash button if user has permission (Owner, Admin, or Author)
+    if (isOwner || isAdmin || isMyMessage) {
+      const trash = document.createElement("span");
+      trash.className = "trash-btn";
+      trash.innerHTML = "🗑️"; 
+      trash.onclick = () => openDeleteModal(key);
+      div.appendChild(trash);
+    }
+  });
+}
+  
 // ---------------- DELETE MODAL ----------------
 
 
@@ -2322,42 +2327,45 @@ messageInput.addEventListener("blur", () => setTyping(false));
 
 
 
-// --- FIXED USERNAME & MUTE LOGIC --- 
-usernameInput.addEventListener("change", () => {
-  const newName = usernameInput.value.trim();
-  if (newName !== currentUsername) {
-    currentUsername = newName;
-    // Trigger a re-check of the mute list for the new name
-    mutesRef.once("value", checkMuteStatus);
-  }
-});
-
-// Trigger check if they press enter in the name box
-usernameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
+// --- CONSOLIDATED USERNAME & MUTE LOGIC --- 
+const handleUsernameChange = () => {
     const newName = usernameInput.value.trim();
-    currentUsername = newName;
-    mutesRef.once("value", checkMuteStatus);
-  }
+    if (newName !== currentUsername) {
+        currentUsername = newName;
+        // Only ping the database once the user stops typing for 500ms
+        clearTimeout(window.muteCheckTimeout);
+        window.muteCheckTimeout = setTimeout(() => {
+            mutesRef.once("value", checkMuteStatus);
+        }, 500);
+    }
+};
+
+usernameInput.addEventListener("input", handleUsernameChange);
+
+usernameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        handleUsernameChange();
+    }
 });
 
-// Typing listener (Existing)
+// Typing listener (Corrected to avoid self-detection)
 typingRef.on("value", snap => {
-  const data = snap.val() || {};
-  const now = Date.now();
+    const data = snap.val() || {};
+    const now = Date.now();
+    const myUid = auth.currentUser?.uid || `guest_${currentUsername}`;
 
-  const users = Object.values(data)
-    .filter(u => u.time && now - u.time < 5000 && u.username !== currentUsername)
-    .map(u => u.username);
+    const users = Object.entries(data)
+        .filter(([id, u]) => id !== myUid && u.time && now - u.time < 5000)
+        .map(([id, u]) => u.username);
 
-  if (!users.length) {
-    typingIndicator.style.visibility = "hidden";
-    return;
-  }
+    if (!users.length) {
+        typingIndicator.style.visibility = "hidden";
+        return;
+    }
 
-  typingIndicator.style.visibility = "visible";
-  typingText.textContent =
-    users.join(", ") + (users.length === 1 ? " is typing..." : " are typing...");
+    typingIndicator.style.visibility = "visible";
+    typingText.textContent =
+        users.join(", ") + (users.length === 1 ? " is typing..." : " are typing...");
 });
 
 // ---------------- SYSTEM MESSAGE ----------------
