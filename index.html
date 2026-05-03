@@ -1008,7 +1008,14 @@ function addMessage(msg, key) {
 
   });
 
-
+  // FIXED: Added year, month, and day options to restore the date display
+  const timeStr = new Date(msg.time).toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
   let badge = "";
 
