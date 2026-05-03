@@ -1510,29 +1510,29 @@ const countdown = document.getElementById("countdown");
 
 
 
-// --- UPDATED MUTE CHECK WITH CLEANUP ---
+// --- IMPROVED ACTIVE MUTE LISTENER ---
 function checkMuteStatus(snapshot) {
   if (countdownInterval) clearInterval(countdownInterval);
   
   const data = snapshot.val() || {};
   const now = Date.now();
   
-  // Ensure we always have the freshest name
-  currentUsername = usernameInput.value.trim();
+  // Get the name currently typed in their box
+  const nameToCheck = usernameInput.value.trim();
   
-  // If name is empty, just reset UI and stop
-  if (!currentUsername) {
+  if (!nameToCheck) {
     muteOverlay.style.display = "none";
     messageInput.disabled = false;
     return;
   }
 
-  const until = data[currentUsername] || 0;
+  // Look for their name in the database list
+  const until = data[nameToCheck] || 0;
 
   if (until && now < until) {
     mutedUntil = until;
-    muteOverlay.style.display = "flex"; 
-    messageInput.disabled = true;
+    muteOverlay.style.display = "flex"; // Show the red screen
+    messageInput.disabled = true;       // Block typing
 
     countdownInterval = setInterval(() => {
       const currentTime = Date.now();
@@ -1543,6 +1543,8 @@ function checkMuteStatus(snapshot) {
         muteOverlay.style.display = "none";
         messageInput.disabled = false;
         mutedUntil = 0;
+        // Clean up the database once the time expires
+        mutesRef.child(nameToCheck).remove();
       } else {
         const mins = Math.floor(remaining / 60);
         const secs = remaining % 60;
@@ -1550,23 +1552,16 @@ function checkMuteStatus(snapshot) {
       }
     }, 1000);
   } else {
-    // If they aren't muted, make sure the UI is cleared
+    // If they aren't in the list, make sure the overlay is gone
     muteOverlay.style.display = "none";
     messageInput.disabled = false;
     mutedUntil = 0;
   }
 }
-  
-// Start the listener
 
+// Keep this listener active so it catches changes instantly
 mutesRef.on("value", checkMuteStatus);
-
-
-
-
-
-
-
+  
 // ---------------- HELPERS ----------------
 
 
