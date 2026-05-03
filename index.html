@@ -1894,38 +1894,8 @@ function addMessage(msg, key) {
     trash.onclick = () => openDeleteModal(key);
     div.appendChild(trash);
   }
-
-  // --- LIVE SYNC MUTE BUTTON LOGIC ---
-  const canMute = (checkOwner && role !== "system") || 
-                  (checkAdmin && role !== "owner" && role !== "system");
-
-  if (canMute && msg.username !== currentUsername) {
-    const muteBtn = document.createElement("img");
-    muteBtn.className = "mute-btn";
-    
-    // Use .on instead of .once so the icon changes LIVE for all admins
-    mutesRef.child(msg.username).on("value", snap => {
-      const until = snap.val() || 0;
-      muteBtn.src = (until && Date.now() < until) ? MIC_MUTED : MIC_NORMAL;
-    });
-
-    muteBtn.onclick = () => {
-      mutesRef.child(msg.username).once("value").then(snap => {
-        const until = snap.val() || 0;
-        const now = Date.now();
-
-        if (until && now < until) {
-          mutesRef.child(msg.username).remove();
-          showNotification(`${msg.username} unmuted.`);
-        } else {
-          mutesRef.child(msg.username).set(now + MUTE_DURATION_MS);
-          showNotification(`${msg.username} put in timeout.`);
-        }
-      });
-    };
-    div.appendChild(muteBtn);
-  }
 }
+  
 // ---------------- REALTIME LISTENERS ----------------
 let initialLoad = true;
 messagesRef.limitToLast(50).on("child_added", snap => {
@@ -2136,153 +2106,67 @@ window.addEventListener("click", e => {
 
 
 // ---------------- SEND MESSAGE ----------------
-
-
-
 chatForm.onsubmit = e => {
-
-
-
   e.preventDefault();
 
-
-
-
-
-
-
   const user = auth.currentUser;
-
-
-
-
-
-
-
   const uid = user?.uid || "guest";
-
-
-
   const email = user?.email?.toLowerCase() || "";
-
-
-
-
-
-
-
   const name = usernameInput.value.trim();
-
-
-
   const text = messageInput.value.trim();
-
-
-
-
-
-
-
   const now = Date.now();
-
-
-
+  
   currentUsername = name;
 
-
-
-
-
-
-
   let role = "member";
-
-
-
-
-
-
-
   if (email === "dragonvr@fire-breathing.com") role = "owner";
-
-
-
   else if (["michael@smj.com", "purple@not-magic.com"].includes(email)) role = "admin";
 
+  // --- COMMAND PARSER (Discord Style) ---
+  if (text.startsWith("/timeout") && (role === "owner" || role === "admin")) {
+    const parts = text.split(" "); 
+    // Format: /timeout username duration (or 'cancel')
+    const targetUser = parts[1];
+    const durationArg = parts[2];
 
+    if (!targetUser) {
+      showNotification("Usage: /timeout (user) (minutes/cancel)");
+    } else if (durationArg === "cancel") {
+      mutesRef.child(targetUser).remove();
+      showNotification(`${targetUser} has been unmuted.`);
+    } else {
+      const minutes = parseInt(durationArg);
+      if (isNaN(minutes)) {
+        showNotification("Please provide a valid number of minutes.");
+      } else {
+        const until = now + (minutes * 60 * 1000);
+        mutesRef.child(targetUser).set(until);
+        showNotification(`${targetUser} timed out for ${minutes}m.`);
+      }
+    }
+    
+    messageInput.value = ""; // Clear input without sending to chat
+    return; // STOP HERE so command doesn't show in chatbox
+  }
 
-
-
-
-
+  // --- REGULAR MESSAGE LOGIC ---
   if (now < mutedUntil) return showNotification("You are muted");
 
-
-
-
-
-
-
   if (role === "member" && now - lastMessageTime < COOLDOWN_MS)
-
-
-
     return showNotification("Slow down");
 
-
-
-
-
-
-
   messagesRef.push({
-
-
-
     uid,
-
-
-
     username: name,
-
-
-
     text: role === "member" ? cleanText(text) : text,
-
-
-
     role,
-
-
-
     time: now
-
-
-
   });
 
-
-
-
-
-
-
   messageInput.value = "";
-
-
-
   lastMessageTime = now;
-
-
-
 };
-
-
-
-
-
-
-
+  
 // ---------------- TYPING ----------------
 
 
