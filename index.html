@@ -2016,30 +2016,38 @@ chatForm.onsubmit = e => {
     const rawContent = text.replace("/timeout", "").trim();
     const lastSpaceIndex = rawContent.lastIndexOf(" ");
     
-    const targetUser = rawContent.slice(0, lastSpaceIndex).trim();
-    const durationArg = rawContent.slice(lastSpaceIndex).trim();
-
-    if (!targetUser || !durationArg) {
+    // Check if the user provided enough arguments
+    if (lastSpaceIndex === -1) {
       showNotification("Usage: /timeout (user) (minutes/cancel)");
     } else {
+      const targetUser = rawContent.slice(0, lastSpaceIndex).trim();
+      const durationArg = rawContent.slice(lastSpaceIndex).trim().toLowerCase();
+
       // Find the most recent message from this username to get their UID
       messagesRef.orderByChild("username").equalTo(targetUser).limitToLast(1).once("value", snap => {
         const data = snap.val();
         if (data) {
           const targetKey = Object.keys(data)[0];
-          const targetUid = data[targetKey].uid; // Get the specific UID/SessionID
+          const targetUid = data[targetKey].uid; // Get the UID or SessionID
           
           if (durationArg === "cancel") {
-            mutesRef.child(targetUid).remove();
-            showNotification(`${targetUser} has been unmuted.`);
+            // REMOVE the mute entry from Firebase
+            mutesRef.child(targetUid).remove()
+              .then(() => showNotification(`${targetUser} has been unmuted.`))
+              .catch(err => showNotification("Error: " + err.message));
           } else {
             const minutes = parseInt(durationArg);
-            const until = now + (minutes * 60 * 1000);
-            mutesRef.child(targetUid).set(until);
-            showNotification(`${targetUser} timed out for ${minutes}m.`); //
+            if (isNaN(minutes)) {
+              showNotification("Please provide a number of minutes or 'cancel'.");
+            } else {
+              const until = Date.now() + (minutes * 60 * 1000);
+              mutesRef.child(targetUid).set(until)
+                .then(() => showNotification(`${targetUser} timed out for ${minutes}m.`))
+                .catch(err => showNotification("Mute failed: " + err.message));
+            }
           }
         } else {
-          showNotification("User not found in recent history.");
+          showNotification(`User '${targetUser}' not found in recent history.`);
         }
       });
     }
