@@ -1770,7 +1770,7 @@ function refreshPermissionsUI() {
 function checkMuteStatus() {
     if (countdownInterval) clearInterval(countdownInterval);
     
-    // Get the current user's UID (Firebase Auth UID or the Guest Session ID)
+    // Check if current user (Auth or Guest) is in the mute list
     const myUid = firebase.auth().currentUser?.uid || sessionGuestId;
     
     mutesRef.child(myUid).on("value", snapshot => {
@@ -1779,7 +1779,7 @@ function checkMuteStatus() {
 
         if (muteTime && now < muteTime) {
             mutedUntil = muteTime;
-            muteOverlay.style.setProperty('display', 'flex', 'important');
+            muteOverlay.style.setProperty('display', 'flex', 'important'); //
             messageInput.disabled = true;
             messageInput.blur();
 
@@ -1792,7 +1792,7 @@ function checkMuteStatus() {
                     muteOverlay.style.setProperty('display', 'none', 'important');
                     messageInput.disabled = false;
                     mutedUntil = 0;
-                    mutesRef.child(myUid).remove(); // Cleanup DB
+                    mutesRef.child(myUid).remove();
                 } else {
                     const mins = Math.floor(remaining / 60);
                     const secs = remaining % 60;
@@ -1806,7 +1806,7 @@ function checkMuteStatus() {
         }
     });
 }
-
+  
 // Re-run mute check whenever the database updates
 mutesRef.on("value", checkMuteStatus);
   
@@ -2012,7 +2012,7 @@ chatForm.onsubmit = e => {
   if (email === "dragonvr@fire-breathing.com") role = "owner";
   else if (["michael@smj.com", "purple@not-magic.com"].includes(email)) role = "admin";
 
-  // --- COMMAND PARSER (Discord Style) ---
+  // --- COMMAND PARSER (Fixed for UID targeting) ---
   if (text.startsWith("/timeout") && (role === "owner" || role === "admin")) {
     const rawContent = text.replace("/timeout", "").trim();
     const lastSpaceIndex = rawContent.lastIndexOf(" ");
@@ -2027,20 +2027,17 @@ chatForm.onsubmit = e => {
       messagesRef.orderByChild("username").equalTo(targetUser).limitToLast(1).once("value", snap => {
         const data = snap.val();
         if (data) {
-          const targetUid = Object.values(data)[0].uid;
+          const targetKey = Object.keys(data)[0];
+          const targetUid = data[targetKey].uid; // Get the specific UID/SessionID
           
           if (durationArg === "cancel") {
             mutesRef.child(targetUid).remove();
             showNotification(`${targetUser} has been unmuted.`);
           } else {
             const minutes = parseInt(durationArg);
-            if (isNaN(minutes)) {
-              showNotification("Last part must be minutes or 'cancel'.");
-            } else {
-              const until = now + (minutes * 60 * 1000);
-              mutesRef.child(targetUid).set(until);
-              showNotification(`${targetUser} timed out for ${minutes}m.`);
-            }
+            const until = now + (minutes * 60 * 1000);
+            mutesRef.child(targetUid).set(until);
+            showNotification(`${targetUser} timed out for ${minutes}m.`); //
           }
         } else {
           showNotification("User not found in recent history.");
