@@ -1899,7 +1899,7 @@ firebase.auth().onAuthStateChanged(user => {
   if (user) {
     liveEmail = user.email.toLowerCase();
     isOwner = liveEmail === "dragonvr@fire-breathing.com";
-    isAdmin = ["michael@smj.com", "purple@not-magic.com"].includes(liveEmail);
+    isAdmin = ["michael@smj.com", "purple@not-magic.com", "kizzy$$$@dabest.com"].includes(liveEmail);
     
     // Fix: Only set default name if the input is currently empty
     if (!usernameInput.value.trim()) {
