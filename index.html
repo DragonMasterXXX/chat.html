@@ -1998,21 +1998,20 @@ chatForm.onsubmit = e => {
   e.preventDefault();
 
   const user = auth.currentUser;
-  // If logged in, use their Firebase UID. If guest, use the session ID.
   const uid = user ? user.uid : sessionGuestId; 
   
-  const email = user?.email?.toLowerCase() || "";
   const name = usernameInput.value.trim();
   const text = messageInput.value.trim();
   const now = Date.now();
   
   currentUsername = name;
 
+  // FIX: Use the globally updated state variables
   let role = "member";
-  if (email === "dragonvr@fire-breathing.com") role = "owner";
-  else if (["michael@smj.com", "purple@not-magic.com"].includes(email)) role = "admin";
+  if (isOwner) role = "owner";
+  else if (isAdmin) role = "admin";
 
-  // --- COMMAND PARSER (Fixed for UID targeting) ---
+  // --- COMMAND PARSER ---
   if (text.startsWith("/timeout") && (role === "owner" || role === "admin")) {
     const rawContent = text.replace("/timeout", "").trim();
     const lastSpaceIndex = rawContent.lastIndexOf(" ");
