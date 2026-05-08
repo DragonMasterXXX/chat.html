@@ -444,6 +444,34 @@ main {
   transition: opacity 0.2s ease;
 }
 
+.reply-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 40px;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s;
+
+  width: 32px;
+  height: 32px; /* bigger container */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reply-btn img {
+  width: 28px;   /* bigger icon */
+  height: 28px;
+  object-fit: contain;
+}
+
+.message:hover .reply-btn {
+  opacity: 1;
+  visibility: visible;
+}
+
 .trash-btn {
   right: 10px;
   font-size: 1.2rem;
@@ -1102,6 +1130,20 @@ footer a {
 
 
   <div id="inputWrapper">
+      
+      <div id="replyPreview" style="
+  display:none;
+  background:#220900;
+  border:1px solid #ff4500;
+  padding:6px 10px;
+  border-radius:10px;
+  margin-bottom:8px;
+  font-size:0.85rem;
+  color:#fff;
+">
+  Replying to: <span id="replyText"></span>
+  <button id="cancelReply" style="float:right; background:none; border:none; color:#ff4444; cursor:pointer;">✖</button>
+</div>
 
 
 
@@ -1385,7 +1427,7 @@ let typingTimeout = null;
 
 
 
-
+let replyTarget = null;
 
 
 
@@ -1478,62 +1520,6 @@ const muteOverlay = document.getElementById("muteOverlay");
 
 
 const countdown = document.getElementById("countdown");
-
-
-
-
-
-
-
-// --- IMPROVED ACTIVE MUTE LISTENER ---
-function checkMuteStatus(snapshot) {
-    if (countdownInterval) clearInterval(countdownInterval);
-    
-    const data = snapshot.val() || {};
-    const now = Date.now();
-    const nameToCheck = usernameInput.value.trim().toLowerCase();
-    
-    if (!nameToCheck) {
-        muteOverlay.style.setProperty('display', 'none', 'important');
-        messageInput.disabled = false;
-        return;
-    }
-
-    // Direct check since we are now saving everything as lowercase
-    const muteTime = data[nameToCheck];
-
-    if (muteTime && now < muteTime) {
-        mutedUntil = muteTime;
-        muteOverlay.style.setProperty('display', 'flex', 'important'); // FORCE display
-        messageInput.disabled = true;
-        messageInput.blur(); // Remove focus so they can't try to type
-
-        countdownInterval = setInterval(() => {
-            const currentTime = Date.now();
-            const remaining = Math.max(0, Math.floor((mutedUntil - currentTime) / 1000));
-            
-            if (remaining <= 0) {
-                clearInterval(countdownInterval);
-                muteOverlay.style.setProperty('display', 'none', 'important');
-                messageInput.disabled = false;
-                mutedUntil = 0;
-                // Cleanup DB
-                mutesRef.child(nameToCheck).remove();
-            } else {
-                const mins = Math.floor(remaining / 60);
-                const secs = remaining % 60;
-                countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-            }
-        }, 1000);
-    } else {
-        muteOverlay.style.setProperty('display', 'none', 'important');
-        messageInput.disabled = false;
-        mutedUntil = 0;
-    }
-}
-
-// Keep this listener active so it catches changes instantly
-mutesRef.on("value", checkMuteStatus);
   
 // ---------------- HELPERS ----------------
 
@@ -1704,6 +1690,21 @@ function addMessage(msg, key) {
   if (!msg || !msg.text || chatWindow.querySelector(`[data-key="${key}"]`)) return;
 
   const div = document.createElement("div");
+  let replyHTML = "";
+
+if (msg.reply) {
+  replyHTML = `
+    <div style="
+      border-left: 3px solid #ff4500;
+      padding-left: 6px;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+      color: #ccc;
+    ">
+      ↪ ${msg.reply.username}: ${msg.reply.text}
+    </div>
+  `;
+}
   div.className = "message";
   div.dataset.key = key;
   div.dataset.authorUid = msg.uid; 
@@ -1726,6 +1727,7 @@ function addMessage(msg, key) {
 
   div.innerHTML = `
     <span class="message-time">${timeStr}</span>
+    ${replyHTML}
     <div style="display: inline-block; width: 100%;">
       ${badge ? `<span style="display: inline; margin-right: 5px;">${badge}</span>` : ""}
       <span class="username" ${nameStyle}>${msg.username}:</span>
@@ -1746,14 +1748,44 @@ function injectTrashIcon(messageDiv, authorUid, role) {
   const isMyMessage = (user && authorUid === user.uid) || (authorUid === sessionGuestId);
   
   // Logic: Owner sees all, Admin sees all but System, Members see only their own.
-  if (isOwner || (isAdmin && role !== "system") || isMyMessage) {
     if (messageDiv.querySelector('.trash-btn')) return; // Don't add double icons
-    const trash = document.createElement("span");
-    trash.className = "trash-btn";
-    trash.innerHTML = "🗑️"; 
-    trash.onclick = () => openDeleteModal(key);
-    messageDiv.appendChild(trash);
-  }
+    const reply = document.createElement("span");
+reply.className = "reply-btn";
+reply.innerHTML = `<img src="https://i.imgur.com/tUveWHG.png" width="18">`;
+
+reply.onclick = () => {
+  replyTarget = {
+  key,
+  username: messageDiv.querySelector(".username")?.innerText || "Unknown",
+  text: messageDiv.querySelector("span[style*='white-space']")?.innerText.slice(0, 80) || ""
+};
+
+  document.getElementById("replyPreview").style.display = "block";
+  document.getElementById("replyText").innerText =
+    `${replyTarget.username}: ${replyTarget.text}`;
+};
+
+messageDiv.appendChild(reply);
+
+let canDelete = false;
+
+if (role === "owner") {
+  canDelete = true; // owner can delete anyone
+} 
+else if (role === "admin") {
+  canDelete = true; // admin can delete anyone (you said this is allowed)
+} 
+else {
+  canDelete = isMyMessage; // members/guests only their own
+}
+
+if (canDelete) {
+  const trash = document.createElement("span");
+  trash.className = "trash-btn";
+  trash.innerHTML = "🗑️";
+  trash.onclick = () => openDeleteModal(key);
+  messageDiv.appendChild(trash);
+}
 }
 
 // --- FIXED: UI Refresh using stored data attributes ---
@@ -1873,6 +1905,10 @@ messagesRef.on("child_changed", snap => {
 
 });
 
+document.getElementById("cancelReply").onclick = () => {
+  replyTarget = null;
+  document.getElementById("replyPreview").style.display = "none";
+};
 
 
 // ---------------- AUTH ----------------
@@ -2062,14 +2098,17 @@ chatForm.onsubmit = e => {
     return showNotification("Slow down");
 
   messagesRef.push({
-    uid, // This now matches sessionGuestId for non-logged-in members
-    username: name,
-    text: role === "member" ? cleanText(text) : text,
-    role,
-    time: now
-  });
+  uid,
+  username: name,
+  text: role === "member" ? cleanText(text) : text,
+  role,
+  time: now,
+  reply: replyTarget || null
+});
 
   messageInput.value = "";
+  replyTarget = null;
+document.getElementById("replyPreview").style.display = "none";
   lastMessageTime = now;
 };
   
