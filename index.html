@@ -1769,14 +1769,17 @@ messageDiv.appendChild(reply);
 
 let canDelete = false;
 
-if (role === "owner") {
-  canDelete = true; // owner can delete anyone
+if (role === "system") {
+  canDelete = isOwner; // ONLY owner can delete system messages
+} 
+else if (role === "owner") {
+  canDelete = true;
 } 
 else if (role === "admin") {
-  canDelete = true; // admin can delete anyone (you said this is allowed)
+  canDelete = true;
 } 
 else {
-  canDelete = isMyMessage; // members/guests only their own
+  canDelete = isMyMessage;
 }
 
 if (canDelete) {
