@@ -1744,51 +1744,47 @@ function injectTrashIcon(messageDiv, authorUid, role) {
   const user = firebase.auth().currentUser;
   const key = messageDiv.dataset.key;
 
-  // Check if it's the user's own message (Logged in OR Guest ID)
-  const isMyMessage = (user && authorUid === user.uid) || (authorUid === sessionGuestId);
-  
-  // Logic: Owner sees all, Admin sees all but System, Members see only their own.
-    if (messageDiv.querySelector('.trash-btn')) return; // Don't add double icons
-    const reply = document.createElement("span");
-reply.className = "reply-btn";
-reply.innerHTML = `<img src="https://i.imgur.com/tUveWHG.png" width="18">`;
+  const isMyMessage =
+    (user && authorUid === user.uid) ||
+    (authorUid === sessionGuestId);
 
-reply.onclick = () => {
-  replyTarget = {
-  key,
-  username: messageDiv.querySelector(".username")?.innerText || "Unknown",
-  text: messageDiv.querySelector("span[style*='white-space']")?.innerText.slice(0, 80) || ""
-};
+  if (messageDiv.querySelector('.trash-btn')) return;
 
-  document.getElementById("replyPreview").style.display = "block";
-  document.getElementById("replyText").innerText =
-    `${replyTarget.username}: ${replyTarget.text}`;
-};
+  const reply = document.createElement("span");
+  reply.className = "reply-btn";
+  reply.innerHTML = `<img src="https://i.imgur.com/tUveWHG.png" width="18">`;
 
-messageDiv.appendChild(reply);
+  reply.onclick = () => {
+    replyTarget = {
+      key,
+      username: messageDiv.querySelector(".username")?.innerText || "Unknown",
+      text: messageDiv.querySelector("span[style*='white-space']")?.innerText.slice(0, 80) || ""
+    };
 
-let canDelete = false;
+    document.getElementById("replyPreview").style.display = "block";
+    document.getElementById("replyText").innerText =
+      `${replyTarget.username}: ${replyTarget.text}`;
+  };
 
-if (role === "system") {
-  canDelete = isOwner; // ONLY owner can delete system messages
-} 
-else if (role === "owner") {
-  canDelete = true;
-} 
-else if (role === "admin") {
-  canDelete = true;
+  messageDiv.appendChild(reply);
+
+  let canDelete = false;
+
+if (role === "owner") {
+  canDelete = isOwner;
 } 
 else {
+  // members + guests only their own messages
   canDelete = isMyMessage;
 }
 
-if (canDelete) {
-  const trash = document.createElement("span");
-  trash.className = "trash-btn";
-  trash.innerHTML = "🗑️";
-  trash.onclick = () => openDeleteModal(key);
-  messageDiv.appendChild(trash);
-}
+  if (canDelete) {
+    const trash = document.createElement("span");
+    trash.className = "trash-btn";
+    trash.innerHTML = "🗑️";
+    trash.onclick = () => openDeleteModal(key);
+    messageDiv.appendChild(trash);
+  }
 }
 
 // --- FIXED: UI Refresh using stored data attributes ---
@@ -1967,24 +1963,20 @@ firebase.auth().onAuthStateChanged(user => {
 
 
 function openDeleteModal(key) {
+  const user = firebase.auth().currentUser;
+  const email = user?.email?.toLowerCase();
 
+  const isOwner = email === "dragonvr@fire-breathing.com";
+  const isAdmin = ["michael@smj.com", "purple@not-magic.com", "kizzy$$$@dabest.com"].includes(email);
 
+  if (!user || (!isOwner && !isAdmin)) {
+    showNotification("You don't have permission to delete messages.");
+    return;
+  }
 
   messageToDeleteKey = key;
-
-
-
   deleteModal.style.display = "block";
-
-
-
 }
-
-
-
-
-
-
 
 function closeDeleteModal() {
 
@@ -2000,37 +1992,27 @@ function closeDeleteModal() {
 
 }
 
-
-
-
-
-
-
 confirmDelete.onclick = () => {
-  if (!messageToDeleteKey) return;
-  
-  // 1. Find and hide it immediately (Optimistic UI)
-  const el = document.querySelector(`.message[data-key="${messageToDeleteKey}"]`);
-  if (el) el.style.display = 'none'; 
+  const user = firebase.auth().currentUser;
+  const email = user?.email?.toLowerCase();
 
-  // 2. Tell the server to kill it
+  const isOwner = email === "dragonvr@fire-breathing.com";
+  const isAdmin = ["michael@smj.com", "purple@not-magic.com", "kizzy$$$@dabest.com"].includes(email);
+
+  if (!user || (!isOwner && !isAdmin)) {
+    showNotification("Permission denied.");
+    return;
+  }
+
+  if (!messageToDeleteKey) return;
+
   messagesRef.child(messageToDeleteKey).remove()
     .then(() => {
       showNotification("Message deleted");
       closeDeleteModal();
     })
-    .catch((err) => {
-      // If the rules blocked it, bring it back!
-      if (el) el.style.display = 'flex';
-      showNotification("Delete failed: " + err.message);
-    });
+    .catch(err => showNotification("Delete failed: " + err.message));
 };
-
-
-
-
-
-
 
 // ---------------- SEND MESSAGE ----------------
 chatForm.onsubmit = e => {
@@ -2381,7 +2363,9 @@ logoutBtn.onclick = () => {
     isAdmin = false;
     currentUsername = "";
     usernameInput.value = "";
-    refreshPermissionsUI(); // Hides trash cans you no longer have access to
+
+    chatWindow.innerHTML = ""; // 🔥 important fix
+
     showNotification("Logged out successfully");
   });
 };
