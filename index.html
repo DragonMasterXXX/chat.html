@@ -1904,9 +1904,13 @@ messagesRef.on("child_changed", snap => {
 
 });
 
-document.getElementById("cancelReply").onclick = () => {
+const cancelReplyBtn = document.getElementById("cancelReply");
+const replyPreview = document.getElementById("replyPreview");
+
+cancelReplyBtn.onclick = () => {
   replyTarget = null;
-  document.getElementById("replyPreview").style.display = "none";
+  replyPreview.style.display = "none";
+  document.getElementById("replyText").innerText = "";
 };
 
 
@@ -2049,7 +2053,8 @@ chatForm.onsubmit = e => {
         const data = snap.val();
         if (data) {
           const targetKey = Object.keys(data)[0];
-          const targetUid = data[targetKey].uid; // Get the UID or SessionID
+          const entry = Object.values(data)[0];
+          const targetUid = entry?.uid;
           
           if (durationArg === "cancel") {
             // REMOVE the mute entry from Firebase
@@ -2088,13 +2093,16 @@ chatForm.onsubmit = e => {
   text: role === "member" ? cleanText(text) : text,
   role,
   time: now,
-  reply: replyTarget || null
+  reply: replyTarget ? { ...replyTarget } : null
 });
 
   messageInput.value = "";
-  replyTarget = null;
-document.getElementById("replyPreview").style.display = "none";
-  lastMessageTime = now;
+lastMessageTime = now;
+
+// ALWAYS fully reset reply state
+replyTarget = null;
+const preview = document.getElementById("replyPreview");
+if (preview) preview.style.display = "none";
 };
   
 // ---------------- TYPING ----------------
@@ -2358,13 +2366,16 @@ ownerLoginBtn.onclick = () => {
 
 // ---------------- LOGOUT ----------------
 logoutBtn.onclick = () => {
+  if (!auth.currentUser) {
+    showNotification("You're already logged out, dum–dum.");
+    return;
+  }
+
   auth.signOut().then(() => {
     isOwner = false;
     isAdmin = false;
     currentUsername = "";
     usernameInput.value = "";
-
-    chatWindow.innerHTML = ""; // 🔥 important fix
 
     showNotification("Logged out successfully");
   });
