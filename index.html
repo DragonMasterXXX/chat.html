@@ -1756,11 +1756,13 @@ function injectTrashIcon(messageDiv, authorUid, role) {
 
   reply.onclick = () => {
     replyTarget = {
-      key,
-      username: messageDiv.querySelector(".username")?.innerText || "Unknown",
-      text: messageDiv.querySelector("span[style*='white-space']")?.innerText.slice(0, 80) || ""
-    };
-
+    key,
+    username: (
+      messageDiv.querySelector(".username")?.innerText || "Unknown"
+    ).replace(/:$/, ""),
+    text: messageDiv.querySelector("span[style*='white-space']")?.innerText.slice(0, 80) || ""
+  };
+    
     document.getElementById("replyPreview").style.display = "block";
     document.getElementById("replyText").innerText =
       `${replyTarget.username}: ${replyTarget.text}`;
@@ -1770,11 +1772,13 @@ function injectTrashIcon(messageDiv, authorUid, role) {
 
   let canDelete = false;
 
-if (role === "owner") {
-  canDelete = isOwner;
-} 
+// Owner can delete EVERYTHING
+if (isOwner) {
+  canDelete = true;
+}
+
+// Everyone else only deletes their own
 else {
-  // members + guests only their own messages
   canDelete = isMyMessage;
 }
 
@@ -1967,17 +1971,6 @@ firebase.auth().onAuthStateChanged(user => {
 
 
 function openDeleteModal(key) {
-  const user = firebase.auth().currentUser;
-  const email = user?.email?.toLowerCase();
-
-  const isOwner = email === "dragonvr@fire-breathing.com";
-  const isAdmin = ["michael@smj.com", "purple@not-magic.com", "kizzy$$$@dabest.com"].includes(email);
-
-  if (!user || (!isOwner && !isAdmin)) {
-    showNotification("You don't have permission to delete messages.");
-    return;
-  }
-
   messageToDeleteKey = key;
   deleteModal.style.display = "block";
 }
@@ -1997,25 +1990,51 @@ function closeDeleteModal() {
 }
 
 confirmDelete.onclick = () => {
-  const user = firebase.auth().currentUser;
-  const email = user?.email?.toLowerCase();
+  if (!messageToDeleteKey) return;
 
-  const isOwner = email === "dragonvr@fire-breathing.com";
-  const isAdmin = ["michael@smj.com", "purple@not-magic.com", "kizzy$$$@dabest.com"].includes(email);
+  const messageEl = document.querySelector(
+    `[data-key="${messageToDeleteKey}"]`
+  );
 
-  if (!user || (!isOwner && !isAdmin)) {
-    showNotification("Permission denied.");
+  if (!messageEl) {
+    showNotification("Message not found.");
+    closeDeleteModal();
     return;
   }
 
-  if (!messageToDeleteKey) return;
+  const authorUid = messageEl.dataset.authorUid;
+  const role = messageEl.dataset.role;
+
+  const user = firebase.auth().currentUser;
+
+  const myUid = user?.uid || sessionGuestId;
+
+  let allowed = false;
+
+// Owner can delete everything
+if (isOwner) {
+  allowed = true;
+}
+
+// Everyone else only their own
+else if (authorUid === myUid) {
+  allowed = true;
+}
+
+  if (!allowed) {
+    showNotification("Permission denied.");
+    closeDeleteModal();
+    return;
+  }
 
   messagesRef.child(messageToDeleteKey).remove()
     .then(() => {
       showNotification("Message deleted");
       closeDeleteModal();
     })
-    .catch(err => showNotification("Delete failed: " + err.message));
+    .catch(err => {
+      showNotification("Delete failed: " + err.message);
+    });
 };
 
 // ---------------- SEND MESSAGE ----------------
@@ -2054,7 +2073,14 @@ chatForm.onsubmit = e => {
         if (data) {
           const targetKey = Object.keys(data)[0];
           const entry = Object.values(data)[0];
-          const targetUid = entry?.uid;
+          
+          const targetRole = entry?.role || "member";
+
+      // Admins can ONLY timeout members
+        if (isAdmin && targetRole !== "member") {
+        showNotification("Admins can only timeout members.");
+        return;
+      }
           
           if (durationArg === "cancel") {
             // REMOVE the mute entry from Firebase
