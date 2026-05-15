@@ -276,76 +276,8 @@ main {
 
 
   padding-bottom: 2px;
-}
 
-#privatePromo {
-  margin-top: 12px;
-  font-family: 'Montserrat', sans-serif;
-}
 
-#privatePromo p {
-  font-size: 0.9rem;
-  color: #ddd;
-  margin-bottom: 8px;
-}
-
-#privatePromo button {
-  background: linear-gradient(45deg, #ff4500, #ff9900);
-  border: none;
-  padding: 10px 18px;
-  border-radius: 20px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-#privatePromo button:hover {
-  transform: scale(1.05);
-}
-
-#privateMenu {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  z-index: 5000;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.private-box {
-  background: rgba(26,11,0,0.9);
-  border: 2px solid #ff4500;
-  border-radius: 20px;
-  padding: 30px;
-  width: 400px;
-  text-align: center;
-
-  backdrop-filter: blur(10px);
-}
-
-.private-box h1 {
-  color: #ff6a00;
-  margin-bottom: 20px;
-}
-
-.private-box input {
-  width: 100%;
-  margin-top: 12px;
-  box-sizing: border-box;
-}
-
-.private-box button {
-  margin-top: 12px;
-  width: 100%;
-}
-
-.codeRow {
-  display: flex;
-  gap: 10px;
-}
 
 }
 
@@ -371,7 +303,7 @@ main {
 
 
 
-  display: block;
+  display: inline-block;
 
 
 
@@ -1075,14 +1007,19 @@ footer a {
 
 <body>
 
-<header>
-  🔥 DragonVR Live Chat 🔥
 
-  <div id="privatePromo">
-    <p>Don't like the public chat? Try private!</p>
-    <button id="openPrivateMenu">Private Chat</button>
-  </div>
-</header>
+
+
+
+
+
+<header>🔥 DragonVR Live Chat 🔥</header>
+
+
+
+
+
+
 
 <main>
 
@@ -1256,39 +1193,11 @@ footer a {
 
 </div>
 
-<div id="privateMenu" style="display:none;">
 
-  <div class="private-box">
 
-    <h1>Private Chat</h1>
 
-    <button id="hostChatBtn">Host Chat</button>
-    <button id="joinChatBtn">Join Code</button>
 
-    <div id="hostOptions" style="display:none;">
 
-      <input id="privateName" placeholder="Chat Name">
-
-      <div class="codeRow">
-        <input id="privateCode" placeholder="Room Code">
-
-        <button id="generateCodeBtn">🎲</button>
-      </div>
-
-      <input id="privateLimit" type="number" placeholder="Max People">
-
-      <button id="confirmHostBtn">Host Chat</button>
-
-    </div>
-
-    <div id="joinOptions" style="display:none;">
-      <input id="joinCodeInput" placeholder="Enter Code">
-      <button id="confirmJoinBtn">Join Chat</button>
-    </div>
-
-  </div>
-
-</div>
 
 <footer>
 
@@ -1476,11 +1385,12 @@ let typingTimeout = null;
 
 let replyTarget = null;
 
-let currentRoom = "public";
-let currentRoomCode = null;
-let isPrivateHost = false;
+
 
 // ---------------- FIREBASE ----------------
+
+
+
 const firebaseConfig = {
 
 
@@ -1545,9 +1455,15 @@ const auth = firebase.auth();
 
 
 
-let messagesRef = db.ref("chatMessages");
-let typingRef = db.ref("typingStatus");
-let mutesRef = db.ref("mutedUsers");
+const messagesRef = db.ref("chatMessages");
+
+
+
+const typingRef = db.ref("typingStatus");
+
+
+
+const mutesRef = db.ref("mutedUsers");
 
 
 
@@ -1763,7 +1679,6 @@ if (msg.reply) {
 
   if (role === "owner") { badge = "👑"; nameStyle = 'style="color: gold; font-weight: 900"'; }
   else if (role === "admin") { badge = "⭐"; nameStyle = 'style="color: gold; font-weight: 800"'; }
-  else if (role === "host") { badge = "🛠️"; nameStyle = 'style="color:#00d9ff;font-weight:900"'; }
   else if (role === "system") { badge = "⚙️"; nameStyle = 'style="color: white; font-weight: 900"'; }
 
   div.innerHTML = `
@@ -1838,7 +1753,6 @@ function refreshPermissionsUI() {
   messages.forEach(div => {
     const authorUid = div.dataset.authorUid;
     const role = div.dataset.role; // Pull the real role from the attribute
-    div.querySelectorAll(".trash-btn, .reply-btn").forEach(el => el.remove());
     injectTrashIcon(div, authorUid, role);
   });
 }
@@ -1886,95 +1800,79 @@ function checkMuteStatus() {
   
 // Re-run mute check whenever the database updates
 mutesRef.on("value", checkMuteStatus);
-
-function switchToPrivateRoom(code, roomData, host = false) {
-
-  currentRoom = "private";
-  currentRoomCode = code;
-  isPrivateHost = host;
-
-  messagesRef = db.ref(`privateChats/${code}/messages`);
-  typingRef = db.ref(`privateChats/${code}/typing`);
-  mutesRef = db.ref(`privateChats/${code}/mutes`);
-
-  chatWindow.innerHTML = "";
-
-  document.querySelector("header").innerHTML = `
-    🔥 DragonVR Live Chat (Private) 🔥
-    <div style="font-size:1rem; margin-top:10px; color:#fff;">
-      Code: ${code}
-    </div>
-  `;
-
-  setupListeners();
-}
   
 // ---------------- REALTIME LISTENERS ----------------
-function setupListeners() {
-  messagesRef.off();
-  typingRef.off();
-  mutesRef.off();
+let initialLoad = true;
+const messagesQuery = messagesRef.limitToLast(50);
 
-  chatWindow.innerHTML = ""; // optional but cleaner when switching rooms
+// Fetch the initial batch first to avoid the "jumping" during load
+messagesQuery.once("value", () => {
+  initialLoad = false;
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+});
 
-  let initialLoad = true;
-
-  const messagesQuery = messagesRef.limitToLast(50);
-
-  messagesQuery.once("value", () => {
-    initialLoad = false;
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  });
-
-  messagesQuery.on("child_added", snap => {
-    addMessage(snap.val(), snap.key);
-
-    if (!initialLoad) {
+messagesQuery.on("child_added", snap => {
+  addMessage(snap.val(), snap.key);
+  
+  // Only auto-scroll if the user is already at the bottom 
+  // (Prevents jumping while they are reading older messages)
+  if (!initialLoad) {
+    const isNearBottom = chatWindow.scrollHeight - chatWindow.clientHeight <= chatWindow.scrollTop + 150;
+    if (isNearBottom) {
       setTimeout(() => {
-        chatWindow.scrollTo({
-          top: chatWindow.scrollHeight,
-          behavior: "smooth"
-        });
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
       }, 50);
     }
-  });
+  }
+});
 
-  messagesRef.on("child_removed", snap => {
-    const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
-    if (el) el.remove();
-  });
 
-  typingRef.on("value", snap => {
-    const data = snap.val() || {};
-    const now = Date.now();
 
-    const myUid = auth.currentUser?.uid || sessionGuestId;
+messagesRef.on("child_removed", snap => {
+  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
+  if (el) {
+    el.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+    el.style.opacity = "0";
+    el.style.transform = "scale(0.95)";
     
-    const users = Object.entries(data)
-      .filter(([id, u]) =>
-        id !== myUid &&
-        u.time &&
-        now - u.time < 5000
-      )
-      .map(([id, u]) => u.username);
+    // Remove from DOM after the quick animation
+    setTimeout(() => {
+      el.remove();
+    }, 200);
+  }
+});
 
-    if (!users.length) {
-      typingIndicator.style.visibility = "hidden";
-      return;
-    }
 
-    typingIndicator.style.visibility = "visible";
 
-    typingText.textContent =
-      users.join(", ") +
-      (users.length === 1
-        ? " is typing..."
-        : " are typing...");
-  });
+messagesRef.on("child_changed", snap => {
 
-}
+  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
 
-setupListeners();
+  if (el) {
+
+    const msg = snap.val();
+
+    // We look for the 4th span because of the Time, Badge, and Username spans before it
+
+    const spans = el.querySelectorAll("span");
+
+    const textSpan = spans[spans.length - 1]; 
+
+    if (textSpan) textSpan.innerHTML = formatMarkdown(escapeHTML(msg.text));
+
+  }
+
+});
+
+const cancelReplyBtn = document.getElementById("cancelReply");
+const replyPreview = document.getElementById("replyPreview");
+
+cancelReplyBtn.onclick = () => {
+  replyTarget = null;
+  replyPreview.style.display = "none";
+  document.getElementById("replyText").innerText = "";
+};
+
 
 // ---------------- AUTH ----------------
 
@@ -2110,10 +2008,8 @@ chatForm.onsubmit = e => {
 
   // FIX: Use the globally updated state variables
   let role = "member";
-
-if (isOwner) role = "owner";
-else if (isAdmin) role = "admin";
-else if (isPrivateHost) role = "host";
+  if (isOwner) role = "owner";
+  else if (isAdmin) role = "admin";
 
   // --- COMMAND PARSER ---
   if (text.startsWith("/timeout") && (role === "owner" || role === "admin")) {
@@ -2131,8 +2027,8 @@ else if (isPrivateHost) role = "host";
       messagesRef.orderByChild("username").equalTo(targetUser).limitToLast(1).once("value", snap => {
         const data = snap.val();
         if (data) {
+          const targetKey = Object.keys(data)[0];
           const entry = Object.values(data)[0];
-          const targetUid = entry.uid || entry.authorUid || entry.userId;
           
           const targetRole = entry?.role || "member";
 
@@ -2372,6 +2268,26 @@ usernameInput.addEventListener("keydown", (e) => {
     }
 });
 
+// Typing listener (Corrected to avoid self-detection)
+typingRef.on("value", snap => {
+    const data = snap.val() || {};
+    const now = Date.now();
+    const myUid = auth.currentUser?.uid || `guest_${currentUsername}`;
+
+    const users = Object.entries(data)
+        .filter(([id, u]) => id !== myUid && u.time && now - u.time < 5000)
+        .map(([id, u]) => u.username);
+
+    if (!users.length) {
+        typingIndicator.style.visibility = "hidden";
+        return;
+    }
+
+    typingIndicator.style.visibility = "visible";
+    typingText.textContent =
+        users.join(", ") + (users.length === 1 ? " is typing..." : " are typing...");
+});
+
 // ---------------- SYSTEM MESSAGE ----------------
 
 
@@ -2463,86 +2379,6 @@ logoutBtn.onclick = () => {
 
     showNotification("Logged out successfully");
   });
-};
-
-const privateMenu = document.getElementById("privateMenu");
-
-document.getElementById("openPrivateMenu").onclick = () => {
-  privateMenu.style.display = "flex";
-};
-
-document.getElementById("hostChatBtn").onclick = () => {
-  document.getElementById("hostOptions").style.display = "block";
-};
-
-document.getElementById("joinChatBtn").onclick = () => {
-  document.getElementById("joinOptions").style.display = "block";
-};
-
-document.getElementById("generateCodeBtn").onclick = () => {
-
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-  let code = "";
-
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-
-  document.getElementById("privateCode").value = code;
-};
-
-document.getElementById("confirmHostBtn").onclick = () => {
-
-  const name =
-    document.getElementById("privateName").value.trim();
-
-  const code =
-    document.getElementById("privateCode").value.trim();
-
-  const limit =
-    parseInt(document.getElementById("privateLimit").value);
-
-  if (!name || !code || !limit)
-    return showNotification("Fill everything");
-
-  db.ref(`privateChats/${code}`).set({
-    name,
-    limit,
-    createdAt: Date.now()
-  });
-
-  privateMenu.style.display = "none";
-
-  switchToPrivateRoom(code, {
-    name,
-    limit
-  }, true);
-};
-
-document.getElementById("confirmJoinBtn").onclick = () => {
-
-  const code =
-    document.getElementById("joinCodeInput").value.trim();
-
-  db.ref(`privateChats/${code}`)
-    .once("value")
-    .then(snap => {
-
-      if (!snap.exists()) {
-        showNotification("Room not found");
-        return;
-      }
-
-      privateMenu.style.display = "none";
-
-      switchToPrivateRoom(
-        code,
-        snap.val(),
-        false
-      );
-    });
 };
 
 </script>
