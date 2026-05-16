@@ -2368,12 +2368,6 @@ systemMessageInput.addEventListener("keydown", e => {
 
 messageInput.addEventListener("blur", () => {
   setTyping(false);
-
-  if (editTarget && messageInput.value.trim()) {
-    editTarget = null;
-    messageInput.value = "";
-    showNotification("Edit cancelled (focus lost)");
-  }
 });
 
 // --- CONSOLIDATED USERNAME & MUTE LOGIC --- 
