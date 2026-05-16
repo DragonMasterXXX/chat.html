@@ -2035,18 +2035,11 @@ function openDeleteModal(key) {
 }
 
 function closeDeleteModal() {
-
-
-
   deleteModal.style.display = "none";
-
-
-
   messageToDeleteKey = null;
-
-
-
 }
+
+cancelDelete.onclick = closeDeleteModal;
 
 confirmDelete.onclick = () => {
   if (!messageToDeleteKey) return;
