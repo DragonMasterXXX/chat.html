@@ -241,11 +241,16 @@ main {
   word-break: break-word;
 }
 
+.msg-text {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 
-
-
-
-
+.message {
+  line-height: 1.4;
+}
 
 .message-time {
 
@@ -389,15 +394,18 @@ main {
 
 /* 1. Set the default state to hidden */
 .trash-btn,
-.mute-btn {
+.mute-btn,
+.reply-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
   z-index: 10;
-  opacity: 0;               /* Hidden by default */
-  visibility: hidden;        /* Prevents clicking while invisible */
-  transition: opacity 0.2s ease;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 0.15s ease;
 }
 
 .reply-btn {
@@ -428,6 +436,10 @@ main {
   visibility: visible;
 }
 
+.edited-tag {
+  display: block;
+}
+
 .trash-btn {
   right: 10px;
   font-size: 1.2rem;
@@ -439,14 +451,27 @@ main {
   height: 20px;
 }
 
-/* 2. Show ONLY when the parent .message is hovered */
-.message:hover .trash-btn,
-.message:hover .mute-btn {
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
+.username {
+  display: inline;
+  margin-right: 4px;
+  font-weight: 700;
+  color: #ff6a00;
 }
 
+.msg-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+}
+  
+/* 2. Show ONLY when the parent .message is hovered */
+.message:hover .trash-btn,
+.message:hover .mute-btn,
+.message:hover .reply-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 
 
@@ -484,27 +509,6 @@ main {
 }
 
 /* Show icons ONLY when hovering the message */
-
-.username {
-
-
-
-  font-weight: 700;
-
-
-
-  color: #ff6a00;
-
-
-
-}
-
-
-
-
-
-
-
 #inputWrapper {
 
 
@@ -1343,7 +1347,11 @@ const typingText = document.getElementById("typingText");
 
 
 
+const cancelReplyBtn = document.getElementById("cancelReply");
 
+  
+  
+const replyPreview = document.getElementById("replyPreview");
 
 
 
@@ -1387,6 +1395,34 @@ let replyTarget = null;
 
 
 
+let editTarget = null;
+
+  
+
+let liveEditThrottle = null;
+
+
+  
+function getMyUid() {
+  return firebase.auth().currentUser?.uid || sessionGuestId;
+}
+
+function isMyMessage(msgUid) {
+  return msgUid === getMyUid();
+}
+
+function canEditMessage(msgUid) {
+  return isMyMessage(msgUid); // STRICT RULE: only own messages
+}
+
+function canDeleteMessage(msgUid) {
+  return isOwner || isMyMessage(msgUid);
+}
+
+function canTimeout() {
+  return isOwner || isAdmin;
+}
+  
 // ---------------- FIREBASE ----------------
 
 
@@ -1643,8 +1679,8 @@ if (!sessionGuestId) {
 
 // --- FIXED: Message Rendering with Role memory ---
 function addMessage(msg, key) {
-  if (!msg || !msg.text || chatWindow.querySelector(`[data-key="${key}"]`)) return;
-
+  if (!msg || msg.text === undefined || chatWindow.querySelector(`[data-key="${key}"]`)) return;
+  
   const div = document.createElement("div");
   let replyHTML = "";
 
@@ -1684,11 +1720,13 @@ if (msg.reply) {
   div.innerHTML = `
     <span class="message-time">${timeStr}</span>
     ${replyHTML}
-    <div style="display: inline-block; width: 100%;">
-      ${badge ? `<span style="display: inline; margin-right: 5px;">${badge}</span>` : ""}
-      <span class="username" ${nameStyle}>${msg.username}:</span>
-      <span style="white-space: pre-wrap;">${formatMarkdown(escapeHTML(msg.text))}</span>
-    </div>
+    <div class="msg-line">
+  ${badge ? `<span class="badge">${badge}</span>` : ""}
+  <span class="username" ${nameStyle}>${msg.username}:</span>
+  <span class="msg-text">
+    ${formatMarkdown(escapeHTML(msg.text))}
+  </span>
+</div>
   `;
   
   chatWindow.appendChild(div);
@@ -1704,7 +1742,8 @@ function injectTrashIcon(messageDiv, authorUid, role) {
     (user && authorUid === user.uid) ||
     (authorUid === sessionGuestId);
 
-  if (messageDiv.querySelector('.trash-btn')) return;
+  // always clear old buttons first
+messageDiv.querySelectorAll(".trash-btn, .reply-btn, .edit-btn").forEach(el => el.remove());
 
   const reply = document.createElement("span");
   reply.className = "reply-btn";
@@ -1716,7 +1755,7 @@ function injectTrashIcon(messageDiv, authorUid, role) {
     username: (
       messageDiv.querySelector(".username")?.innerText || "Unknown"
     ).replace(/:$/, ""),
-    text: messageDiv.querySelector("span[style*='white-space']")?.innerText.slice(0, 80) || ""
+    text: (messageDiv.querySelector(".msg-text")?.innerText || "").slice(0, 80) || ""
   };
     
     document.getElementById("replyPreview").style.display = "block";
@@ -1725,6 +1764,35 @@ function injectTrashIcon(messageDiv, authorUid, role) {
   };
 
   messageDiv.appendChild(reply);
+
+  const edit = document.createElement("span");
+edit.className = "reply-btn";
+edit.style.right = "70px"; // pushes it left of reply
+
+edit.innerHTML = `✏️`;
+
+edit.onclick = () => {
+  const authorUid = messageDiv.dataset.authorUid;
+
+  if (authorUid !== getMyUid()) {
+    showNotification("You can only edit your own messages.");
+    return;
+  }
+
+  const text = messageDiv.querySelector(".msg-text")?.innerText || "";
+
+  editTarget = {
+    key,
+    originalText: text
+  };
+
+  messageInput.value = text;
+  messageInput.focus();
+
+  showNotification("Editing message...");
+};
+
+messageDiv.appendChild(edit);
 
   let canDelete = false;
 
@@ -1811,7 +1879,8 @@ messagesQuery.once("value", () => {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 });
 
-messagesQuery.on("child_added", snap => {
+  messagesQuery.on("child_added", snap => {
+  console.log("NEW MSG:", snap.val());
   addMessage(snap.val(), snap.key);
   
   // Only auto-scroll if the user is already at the bottom 
@@ -1842,35 +1911,69 @@ messagesRef.on("child_removed", snap => {
   }
 });
 
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
 
+  // Only cancel if editing
+  if (!editTarget) return;
+
+  e.preventDefault();
+
+  // Cancel edit state
+  editTarget = null;
+  messageInput.value = "";
+
+  // Clear reply state too
+  replyTarget = null;
+
+  const preview = document.getElementById("replyPreview");
+  if (preview) preview.style.display = "none";
+
+  showNotification("Edit cancelled");
+  messageInput.focus();
+});  
 
 messagesRef.on("child_changed", snap => {
-
   const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
+  if (!el) return;
 
-  if (el) {
+  const msg = snap.val();
 
-    const msg = snap.val();
-
-    // We look for the 4th span because of the Time, Badge, and Username spans before it
-
-    const spans = el.querySelectorAll("span");
-
-    const textSpan = spans[spans.length - 1]; 
-
-    if (textSpan) textSpan.innerHTML = formatMarkdown(escapeHTML(msg.text));
-
+  // update text
+  const textSpan = el.querySelector(".msg-text");
+  if (textSpan) {
+    textSpan.innerHTML = formatMarkdown(escapeHTML(msg.text));
   }
 
-});
+  // store updated data
+  el.dataset.authorUid = msg.uid;
+  el.dataset.role = msg.role || "member";
 
-const cancelReplyBtn = document.getElementById("cancelReply");
-const replyPreview = document.getElementById("replyPreview");
+  // force refresh buttons (IMPORTANT)
+  el.dataset.iconsInjected = "false";
+
+  // re-inject controls cleanly
+  injectTrashIcon(el, msg.uid, msg.role);
+
+  // edited tag
+  let editedTag = el.querySelector(".edited-tag");
+
+  if (msg.edited) {
+    if (!editedTag) {
+      editedTag = document.createElement("div");
+      editedTag.className = "edited-tag";
+      editedTag.textContent = "(edited)";
+      editedTag.style.cssText = "font-size:0.7rem;color:#999;margin-top:3px;";
+      el.appendChild(editedTag);
+    }
+  }
+});
 
 cancelReplyBtn.onclick = () => {
   replyTarget = null;
+  editTarget = null;
   replyPreview.style.display = "none";
-  document.getElementById("replyText").innerText = "";
+  replyText.innerText = "";
 };
 
 
@@ -2027,8 +2130,8 @@ chatForm.onsubmit = e => {
       messagesRef.orderByChild("username").equalTo(targetUser).limitToLast(1).once("value", snap => {
         const data = snap.val();
         if (data) {
-          const targetKey = Object.keys(data)[0];
-          const entry = Object.values(data)[0];
+          const [key, entry] = Object.entries(data)[0];
+          const targetUid = entry.uid;
           
           const targetRole = entry?.role || "member";
 
@@ -2069,7 +2172,34 @@ chatForm.onsubmit = e => {
   if (role === "member" && now - lastMessageTime < COOLDOWN_MS)
     return showNotification("Slow down");
 
-  messagesRef.push({
+  // ---------------- EDIT MODE ----------------
+if (editTarget) {
+  const newText = messageInput.value.trim();
+
+  // Safety check: prevent empty edits
+  if (!newText) {
+    showNotification("Cannot send empty edit");
+    return;
+  }
+
+  messagesRef.child(editTarget.key).update({
+    text: newText,
+    edited: true,
+    editTime: Date.now()
+  });
+
+  showNotification("Message updated");
+
+  // 🔥 HARD RESET (IMPORTANT)
+  editTarget = null;
+  messageInput.value = "";
+
+  replyTarget = null;
+
+  return;
+}
+// NORMAL MESSAGE SEND SHOULD ALWAYS BE HERE
+messagesRef.push({
   uid,
   username: name,
   text: role === "member" ? cleanText(text) : text,
@@ -2078,13 +2208,19 @@ chatForm.onsubmit = e => {
   reply: replyTarget ? { ...replyTarget } : null
 });
 
+// ---------------- FORCE CLEAN RESET AFTER SEND ----------------
+messageInput.value = "";
+lastMessageTime = now;
+
+// 🔥 CRITICAL: prevents "stuck edit mode"
+editTarget = null;
+replyTarget = null;
+
   messageInput.value = "";
 lastMessageTime = now;
 
 // ALWAYS fully reset reply state
 replyTarget = null;
-const preview = document.getElementById("replyPreview");
-if (preview) preview.style.display = "none";
 };
   
 // ---------------- TYPING ----------------
@@ -2201,12 +2337,6 @@ messageInput.addEventListener("input", () => {
 
 });
 
-
-
-
-
-
-
 systemSendBtn.onclick = sendSystemMessage;
 
 
@@ -2243,9 +2373,15 @@ systemMessageInput.addEventListener("keydown", e => {
 
 
 
-messageInput.addEventListener("blur", () => setTyping(false));
+messageInput.addEventListener("blur", () => {
+  setTyping(false);
 
-
+  if (editTarget && messageInput.value.trim()) {
+    editTarget = null;
+    messageInput.value = "";
+    showNotification("Edit cancelled (focus lost)");
+  }
+});
 
 // --- CONSOLIDATED USERNAME & MUTE LOGIC --- 
 const handleUsernameChange = () => {
