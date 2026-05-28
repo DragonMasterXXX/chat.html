@@ -59,6 +59,18 @@ body {
   position: relative;
 }
 
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -197,30 +209,21 @@ main {
 
 }
 
-
-
-
-
-
-
 #chatWindow {
-  background: rgba(26, 11, 0, 0.55); /* semi-transparent instead of solid */
+  background: rgba(26, 11, 0, 0.55);
   border: 2px solid rgba(255, 69, 0, 0.8);
   border-radius: 12px;
-  height: 500px;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
   padding: 1rem;
   overflow-y: auto;
 
-  /* optional: makes background look more "anime glass panel" */
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* DESKTOP DEFAULT */
+  height: 500px;
+  max-height: 500px;
 }
-
-
-
-
-
-
 
 .message {
   margin-bottom: 0.7rem;
@@ -510,24 +513,13 @@ main {
 
 /* Show icons ONLY when hovering the message */
 #inputWrapper {
-
-
-
-  position: relative;
-
-
-
-  margin-top: 1rem;
-
-
-
+  position: sticky;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem;
+  border-top: 1px solid rgba(255, 69, 0, 0.3);
 }
-
-
-
-
-
-
 
 #muteOverlay {
   display: none;
@@ -919,68 +911,97 @@ footer a {
 
 }
 
-
-
-
-
-
-
 #deleteModal {
-
-
 
   display: none;
 
-
-
   position: fixed;
-
-
 
   top: 50%;
 
-
-
   left: 50%;
-
-
 
   transform: translate(-50%, -50%);
 
-
-
   background: #1a0b00;
-
-
 
   border: 2px solid #ff4500;
 
-
-
   border-radius: 16px;
-
-
 
   padding: 1rem 2rem;
 
-
-
   z-index: 2000;
-
-
 
   width: 300px;
 
-
-
   text-align: center;
-
-
 
 }
 
+/* ---------------- MOBILE FIXES ---------------- */
+@media (max-width: 768px) {
 
+  body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
 
+  header {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    text-align: center;
+  }
+
+  main {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  #ownerLogin {
+    flex-wrap: wrap;
+  }
+
+  #ownerLogin input,
+  #ownerLogin button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  #chatWindow {
+  border-radius: 10px;
+  padding: 0.7rem;
+
+  height: auto;
+  max-height: none;
+  min-height: 60vh;
+}
+
+  .message {
+    padding-right: 90px;
+  }
+
+  #chatForm {
+    flex-wrap: wrap;
+  }
+
+  #username,
+  #messageInput,
+  #chatForm button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  footer {
+    font-size: 0.8rem;
+    padding: 1rem;
+  }
+
+}
 </style>
 
 
@@ -1879,23 +1900,40 @@ messagesQuery.once("value", () => {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 });
 
-  messagesQuery.on("child_added", snap => {
+  function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+messagesQuery.on("child_added", snap => {
   console.log("NEW MSG:", snap.val());
+
   addMessage(snap.val(), snap.key);
-  
-  // Only auto-scroll if the user is already at the bottom 
-  // (Prevents jumping while they are reading older messages)
-  if (!initialLoad) {
-    const isNearBottom = chatWindow.scrollHeight - chatWindow.clientHeight <= chatWindow.scrollTop + 150;
-    if (isNearBottom) {
-      setTimeout(() => {
-        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
-      }, 50);
+
+  setTimeout(() => {
+
+    const isNearBottom =
+      chatWindow.scrollHeight - chatWindow.clientHeight
+      <= chatWindow.scrollTop + 200;
+
+    // Desktop smooth auto-scroll
+    if (!isMobile() && isNearBottom) {
+
+      chatWindow.scrollTo({
+        top: chatWindow.scrollHeight,
+        behavior: 'smooth'
+      });
+
     }
-  }
+
+    // Mobile: only scroll if already near bottom
+    else if (isMobile() && isNearBottom) {
+
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    }
+
+  }, 50);
 });
-
-
 
 messagesRef.on("child_removed", snap => {
   const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
@@ -2503,6 +2541,8 @@ logoutBtn.onclick = () => {
     showNotification("Logged out successfully");
   });
 };
+
+
 
 </script>
 
