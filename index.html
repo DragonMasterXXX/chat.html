@@ -2581,6 +2581,39 @@ logoutBtn.onclick = () => {
 
 </script>
 
+<script>
+// 1. Disable Right-Click
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+  triggerAntiPiracy();
+});
+
+// 2. Disable Common DevTools Keyboard Shortcuts
+document.addEventListener('keydown', function(e) {
+  // F12
+  if (e.key === "F12" || e.keyCode === 123) {
+    e.preventDefault();
+    triggerAntiPiracy();
+  }
+  // Ctrl + Shift + I (Inspect) or Ctrl + Shift + J (Console) or Ctrl + Shift + C (Element Selector)
+  if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+    e.preventDefault();
+    triggerAntiPiracy();
+  }
+  // Ctrl + U (View Source)
+  if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.keyCode === 85)) {
+    e.preventDefault();
+    triggerAntiPiracy();
+  }
+});
+
+// 3. Redirect to your Anti-Piracy Page
+function triggerAntiPiracy() {
+  // Replace this with the actual URL path to your anti-piracy page
+  window.location.href = "anti-piracy.html"; 
+}
+</script>
+
 </body>
 
 </html>
