@@ -1339,7 +1339,7 @@ footer a {
 
 
 
-  © 2026 DragonVR. All rights reserved. <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
+  © <span id="currentYear"></span> DragonVR. All rights reserved. <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
 
 
 
@@ -1643,7 +1643,7 @@ firebase.initializeApp(firebaseConfig);
 
 
 
-
+document.getElementById('currentYear').textContent = new Date().getFullYear();
 
 
 
