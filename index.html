@@ -260,6 +260,42 @@ main {
   scrollbar-color: rgba(255, 106, 0, 0.8) rgba(26, 11, 0, 0.45);
 }
 
+#imageBtn {
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
+
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+
+    border-radius: 50%;
+
+    border: 2px solid #ff4500;
+    background: #220900;
+    color: #ff4500;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+
+    padding: 0;
+    margin: 0;
+
+    flex: 0 0 42px;
+
+    cursor: pointer;
+
+    user-select: none;
+    
+    /* Ensure no text stretching */
+    font-family: 'Montserrat', sans-serif;
+}
+
 .message {
   margin-bottom: 0.7rem;
   padding: 0.6rem 0.8rem;
@@ -547,13 +583,13 @@ main {
 }
 
 /* Show icons ONLY when hovering the message */
-#inputWrapper {
-  position: sticky;
-  bottom: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(10px);
-  padding: 0.5rem;
-  border-top: 1px solid rgba(255, 69, 0, 0.3);
+#inputWrapper{
+    position:sticky;
+    bottom:0;
+    padding:10px;
+    background:none;
+    backdrop-filter:none;
+    border-top:none;
 }
 
 #muteOverlay {
@@ -1057,6 +1093,10 @@ footer a {
 
 
 
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
+
+
 </head>
 
 
@@ -1165,25 +1205,45 @@ footer a {
 
     <div id="muteOverlay">You've been put in timeout, child.. <span id="countdown">00:00</span></div>
 
+    <div id="imagePreview"
+     style="
+     display:none;
+     margin-bottom:8px;">
 
+    <img
+        id="previewImg"
+        style="
+        max-width:220px;
+        border-radius:10px;
+        border:2px solid #ff4500;">
+
+</div>
 
     <form id="chatForm">
 
+    <button type="button" id="imageBtn">+</button>
 
+    <input
+        type="file"
+        id="imagePicker"
+        accept="image/*"
+        hidden>
 
-      <input id="username" placeholder="Name" maxlength="20" required />
+    <input id="username"
+           placeholder="Name"
+           maxlength="20"
+           required>
 
+    <input id="messageInput"
+           placeholder="Message"
+           maxlength="200"
+           required>
 
+    <button type="submit">
+        Send
+    </button>
 
-      <input id="messageInput" placeholder="Message" maxlength="200" required />
-
-
-
-      <button type="submit">Send</button>
-
-
-
-    </form>
+</form>
 
 
 
@@ -1409,7 +1469,11 @@ const cancelReplyBtn = document.getElementById("cancelReply");
   
 const replyPreview = document.getElementById("replyPreview");
 
+const imageBtn = document.getElementById("imageBtn");
+const imagePicker = document.getElementById("imagePicker");
 
+const imagePreview = document.getElementById("imagePreview");
+const previewImg = document.getElementById("previewImg");
 
 // ---------------- STATE ----------------
 
@@ -1453,7 +1517,8 @@ let replyTarget = null;
 
 let editTarget = null;
 
-  
+let selectedImage = null;
+let selectedImageData = null;
 
 let liveEditThrottle = null;
 
@@ -1540,10 +1605,6 @@ const db = firebase.database();
 
 
 const auth = firebase.auth();
-
-
-
-
 
 
 
@@ -1721,7 +1782,12 @@ function showNotification(text) {
 
 
 
-
+function clearImagePreview() {
+    selectedImage = null;
+    if (previewImg) previewImg.src = "";
+    if (imagePreview) imagePreview.style.display = "none";
+    if (imagePicker) imagePicker.value = "";
+}
 
 
 
@@ -1782,6 +1848,7 @@ if (msg.reply) {
   <span class="msg-text">
     ${formatMarkdown(escapeHTML(msg.text))}
   </span>
+  ${msg.imageUrl ? `<div style="margin-top:8px;"><img src="${msg.imageUrl}" style="max-width:300px;max-height:300px;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,'_blank')"></div>` : ''}
 </div>
   `;
   
@@ -2261,32 +2328,65 @@ if (editTarget) {
   messageInput.value = "";
 
   replyTarget = null;
-
+  
   return;
 }
-// NORMAL MESSAGE SEND SHOULD ALWAYS BE HERE
+// NORMAL MESSAGE SEND
 messagesRef.push({
   uid,
   username: name,
   text: role === "member" ? cleanText(text) : text,
   role,
   time: now,
-  reply: replyTarget ? { ...replyTarget } : null
+  reply: replyTarget ? { ...replyTarget } : null,
+  imageUrl: selectedImageData || null
 });
 
-// ---------------- FORCE CLEAN RESET AFTER SEND ----------------
+// Clean up
 messageInput.value = "";
 lastMessageTime = now;
-
-// 🔥 CRITICAL: prevents "stuck edit mode"
 editTarget = null;
 replyTarget = null;
+replyPreview.style.display = "none";
+replyText.innerText = "";
+selectedImage = null;
+selectedImageData = null;
+imagePreview.style.display = "none";
+imagePicker.value = "";
 
-  messageInput.value = "";
-lastMessageTime = now;
+imageBtn.onclick = () => {
 
-// ALWAYS fully reset reply state
-replyTarget = null;
+    imagePicker.click();
+
+};
+
+imagePicker.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification("Image too large. Max size is 5MB.");
+        imagePicker.value = "";
+        return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        showNotification("Please select an image file.");
+        imagePicker.value = "";
+        return;
+    }
+
+    selectedImage = file;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+    selectedImageData = event.target.result;
+    previewImg.src = event.target.result;
+    imagePreview.style.display = "block";
+};
+    reader.readAsDataURL(file);
 };
   
 // ---------------- TYPING ----------------
