@@ -1201,19 +1201,6 @@ footer a {
 
     <div id="muteOverlay">You've been put in timeout, child.. <span id="countdown">00:00</span></div>
 
-    <div id="imagePreview"
-     style="
-     display:none;
-     margin-bottom:8px;">
-
-    <img
-        id="previewImg"
-        style="
-        max-width:220px;
-        border-radius:10px;
-        border:2px solid #ff4500;">
-
-</div>
 
     <form id="chatForm">
 
@@ -1230,10 +1217,44 @@ footer a {
            maxlength="20"
            required>
 
-    <input id="messageInput"
+        <input id="messageInput"
            placeholder="Message"
            maxlength="200"
            required>
+
+    <div id="imagePreview"
+     style="
+     display:none;
+     position:relative;
+     margin-bottom:8px;
+     display:inline-block;">
+
+    <img
+        id="previewImg"
+        style="
+        max-width:220px;
+        border-radius:10px;
+        border:2px solid #ff4500;">
+
+    <button id="removeImageBtn" style="
+        position:absolute;
+        top:-8px;
+        right:-8px;
+        background:#ff4444;
+        color:white;
+        border:none;
+        border-radius:50%;
+        width:24px;
+        height:24px;
+        font-size:14px;
+        cursor:pointer;
+        display:none;
+        padding:0;
+        line-height:24px;
+        text-align:center;
+    ">✕</button>
+
+</div>
 
     <button type="submit">
         Send
@@ -1470,6 +1491,7 @@ const imagePicker = document.getElementById("imagePicker");
 
 const imagePreview = document.getElementById("imagePreview");
 const previewImg = document.getElementById("previewImg");
+const removeImageBtn = document.getElementById("removeImageBtn");
 
 // ---------------- STATE ----------------
 
@@ -1538,9 +1560,14 @@ imagePicker.onchange = e => {
     reader.onload = function(event) {
         selectedImageData = event.target.result;
         previewImg.src = event.target.result;
-        imagePreview.style.display = "block";
+        imagePreview.style.display = "inline-block";
+        removeImageBtn.style.display = "block";
     };
     reader.readAsDataURL(file);
+};
+
+removeImageBtn.onclick = () => {
+    clearImagePreview();
 };
 
 let liveEditThrottle = null;
@@ -1805,8 +1832,10 @@ function showNotification(text) {
 
 function clearImagePreview() {
     selectedImage = null;
+    selectedImageData = null;
     if (previewImg) previewImg.src = "";
     if (imagePreview) imagePreview.style.display = "none";
+    if (removeImageBtn) removeImageBtn.style.display = "none";
     if (imagePicker) imagePicker.value = "";
 }
 
