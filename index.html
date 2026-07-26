@@ -632,41 +632,67 @@ form {
 
 
 
-
-
-
-
-input {
-
-
-
-  padding: 0.5rem;
-
-
-
-  border-radius: 20px;
-
-
-
+#messageInputWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
   border: 2px solid #ff4500;
-
-
-
+  border-radius: 20px;
   background: #220900;
-
-
-
-  color: #fff;
-
-
-
+  overflow: hidden;
 }
 
+#messageInput::placeholder {
+  color: #888;
+}
 
+#messageInput:focus {
+  outline: none;
+}
 
+#messageInput {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  color: #fff;
+}
 
+#imagePreview {
+  display: none;
+  position: relative;
+  padding: 0.5rem 0.5rem 0 0.5rem;
+}
 
+#previewImg {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 10px;
+  border: 2px solid #ff4500;
+  display: block;
+}
 
+#removeImageBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  cursor: pointer;
+  display: none;
+  padding: 0;
+  line-height: 24px;
+  text-align: center;
+  z-index: 5;
+}
 
 button {
 
@@ -1202,7 +1228,7 @@ footer a {
     <div id="muteOverlay">You've been put in timeout, child.. <span id="countdown">00:00</span></div>
 
 
-    <form id="chatForm">
+        <form id="chatForm">
 
     <button type="button" id="imageBtn">+</button>
 
@@ -1215,46 +1241,19 @@ footer a {
     <input id="username"
            placeholder="Name"
            maxlength="20"
-           required>
+           required
+           style="padding:0.5rem;border-radius:20px;border:2px solid #ff4500;background:#220900;color:#fff;">
 
+        <div id="messageInputWrapper">
+        <div id="imagePreview">
+            <img id="previewImg">
+            <button id="removeImageBtn" type="button">✕</button>
+        </div>
         <input id="messageInput"
-           placeholder="Message"
-           maxlength="200"
-           required>
-
-    <div id="imagePreview"
-     style="
-     display:none;
-     position:relative;
-     margin-bottom:8px;
-     display:inline-block;">
-
-    <img
-        id="previewImg"
-        style="
-        max-width:220px;
-        border-radius:10px;
-        border:2px solid #ff4500;">
-
-    <button id="removeImageBtn" style="
-        position:absolute;
-        top:-8px;
-        right:-8px;
-        background:#ff4444;
-        color:white;
-        border:none;
-        border-radius:50%;
-        width:24px;
-        height:24px;
-        font-size:14px;
-        cursor:pointer;
-        display:none;
-        padding:0;
-        line-height:24px;
-        text-align:center;
-    ">✕</button>
-
-</div>
+               placeholder="Message"
+               maxlength="200"
+               required>
+    </div>
 
     <button type="submit">
         Send
@@ -1558,11 +1557,11 @@ imagePicker.onchange = e => {
     selectedImage = file;
     const reader = new FileReader();
     reader.onload = function(event) {
-        selectedImageData = event.target.result;
-        previewImg.src = event.target.result;
-        imagePreview.style.display = "inline-block";
-        removeImageBtn.style.display = "block";
-    };
+    selectedImageData = event.target.result;
+    previewImg.src = event.target.result;
+    imagePreview.style.display = "block";
+    removeImageBtn.style.display = "block";
+};
     reader.readAsDataURL(file);
 };
 
