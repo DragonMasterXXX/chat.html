@@ -1,50 +1,17 @@
 <!DOCTYPE html>
-
-
-
 <html lang="en">
 
-
-
 <head>
-
-
-
 <meta charset="UTF-8" />
-
-
-
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-
 
 <title>Public Chat - DragonVR's Realm</title>
 
-
-
-
-
-
-
 <link rel="icon" href="https://i.imgur.com/H9GNGOj.png" type="image/png">
-
-
-
-
-
-
 
 <style>
 
-
-
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;700&display=swap');
-
-
-
-
-
-
 
 body {
   margin: 0;
@@ -54,21 +21,16 @@ body {
   display: flex;
   flex-direction: column;
 
-  /* Animated GIF background */
   background: url("https://i.imgur.com/xWQWYbj.gif") center center / cover no-repeat fixed;
   position: relative;
-}
 
-html, body {
-  height: 100%;
-}
-
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body::before {
@@ -78,38 +40,20 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.55); /* adjust darkness here */
+  background: rgba(0, 0, 0, 0.55);
   z-index: -1;
 }
 
 header {
-
-
-
   font-family: 'Anton', sans-serif;
-
-
-
   font-size: 2.8rem;
-
-
-
   text-align: center;
-
-
-
   color: #ff6a00;
-
-
-
-  text-shadow: 0 0 3px #ff8c00, 0 0 6px #ff5e00, 0 0 9px #ff3c00;
-
-
-
+  text-shadow:
+    0 0 3px #ff8c00,
+    0 0 6px #ff5e00,
+    0 0 9px #ff3c00;
   margin-bottom: 2rem;
-
-
-
 }
 
 main {
@@ -120,93 +64,27 @@ main {
 }
 
 #ownerLogin {
-
-
-
   display: flex;
-
-
-
   gap: 0.5rem;
-
-
-
   margin-bottom: 1rem;
-
-
-
 }
-
-
-
-
-
-
 
 #ownerLogin input {
-
-
-
   flex: 1;
-
-
-
   padding: 0.5rem;
-
-
-
   border-radius: 20px;
-
-
-
   border: 2px solid #ff4500;
-
-
-
   background: #220900;
-
-
-
   color: #fff;
-
-
-
 }
 
-
-
-
-
-
-
 #ownerLogin button {
-
-
-
   background: #ff4500;
-
-
-
   border: none;
-
-
-
   border-radius: 20px;
-
-
-
   padding: 0 1.2rem;
-
-
-
   font-weight: bold;
-
-
-
   cursor: pointer;
-
-
-
 }
 
 #chatWindow {
@@ -220,12 +98,15 @@ main {
   padding: 1rem;
   overflow-y: auto;
 
-  /* DESKTOP DEFAULT */
   height: 500px;
   max-height: 500px;
+
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(255, 106, 0, 0.8)
+    rgba(26, 11, 0, 0.45);
 }
 
-/* CUSTOM SCROLLBAR */
 #chatWindow::-webkit-scrollbar {
   width: 10px;
 }
@@ -254,65 +135,64 @@ main {
   );
 }
 
-/* Firefox support */
-#chatWindow {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 106, 0, 0.8) rgba(26, 11, 0, 0.45);
-}
+/* ---------------- IMAGE BUTTON ---------------- */
 
 #imageBtn {
-    width: 42px;
-    min-width: 42px;
-    max-width: 42px;
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
 
-    height: 42px;
-    min-height: 42px;
-    max-height: 42px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
 
-    border-radius: 50%;
+  border-radius: 50%;
 
-    border: 2px solid #ff4500;
-    background: #220900;
-    color: #ff4500;
+  border: 2px solid #ff4500;
+  background: #220900;
+  color: #ff4500;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 1;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
 
-    padding: 0;
-    margin: 0;
+  padding: 0;
+  margin: 0;
 
-    flex: 0 0 42px;
+  flex: 0 0 42px;
 
-    cursor: pointer;
+  cursor: pointer;
+  user-select: none;
 
-    user-select: none;
-    
-    /* Ensure no text stretching */
-    font-family: 'Montserrat', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
+
+/* ---------------- MESSAGES ---------------- */
 
 .message {
   margin-bottom: 0.7rem;
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
+
   background: rgba(255,69,0,0.2);
-  
-  /* The Fix: Change flex to block or adjust flex-direction */
-  display: block; 
+
+  display: block;
   position: relative;
+
   border: 2px solid transparent;
+
   contain: layout style;
   will-change: transform, opacity;
-  
-  /* Ensures long links or words break instead of stretching the box */
-  overflow-wrap: break-word; 
+
+  overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+
+  line-height: 1.4;
 }
 
 .msg-text {
@@ -322,157 +202,80 @@ main {
   word-break: break-word;
 }
 
-.message {
-  line-height: 1.4;
-}
-
 .message-time {
-
-
-
   display: block;
-
-
-
   width: 100%;
 
-
-
   font-size: 0.7rem;
-
-
-
   color: #888;
-
-
 
   margin-bottom: 2px;
 
-
-
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
-
-
   padding-bottom: 2px;
-
-
-
 }
 
+/* ---------------- MARKDOWN ---------------- */
 
-
-
-
-
-
-/* Header Markdown Styles */
-
-
-
-.message h1, .message h2, .message h3 {
-
-
-
+.message h1,
+.message h2,
+.message h3 {
   margin: 5px 0;
-
-
-
   color: #ff8c00;
 
-
-
   display: inline-block;
-
-
-
   width: 100%;
-
-
-
 }
 
+.message h1 {
+  font-size: 1.5rem;
+  text-transform: uppercase;
+}
 
+.message h2 {
+  font-size: 1.2rem;
+}
 
-.message h1 { font-size: 1.5rem; text-transform: uppercase; }
+.message h3 {
+  font-size: 1rem;
+  color: #ffb380;
+}
 
-
-
-.message h2 { font-size: 1.2rem; }
-
-
-
-.message h3 { font-size: 1rem; color: #ffb380; }
-
-
-
-
-
-
+/* ---------------- OWNER MESSAGE ---------------- */
 
 .owner-message {
-
-
-
   border: 2px solid gold !important;
-
-
 
   background: rgba(40, 30, 0, 0.75) !important;
 
-
-
   box-shadow:
-
-
-
     0 0 8px rgba(255, 215, 0, 0.6),
-
-
-
     0 0 20px rgba(255, 215, 0, 0.4);
 
-
-
   animation: ownerGlow 2s infinite alternate;
-
-
-
 }
-
-
-
-
-
-
 
 @keyframes ownerGlow {
+  from {
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  }
 
-
-
-  from { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
-
-
-
-  to { box-shadow: 0 0 18px rgba(255, 215, 0, 0.7); }
-
-
-
+  to {
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.7);
+  }
 }
 
+/* ---------------- MESSAGE BUTTONS ---------------- */
 
-
-
-
-
-
-/* 1. Set the default state to hidden */
 .trash-btn,
 .mute-btn,
 .reply-btn {
   position: absolute;
+
   top: 50%;
   transform: translateY(-50%);
+
   cursor: pointer;
   z-index: 10;
 
@@ -483,24 +286,20 @@ main {
 }
 
 .reply-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
   right: 40px;
-  cursor: pointer;
-  opacity: 0;
-  visibility: hidden;
-  transition: 0.2s;
 
   width: 32px;
-  height: 32px; /* bigger container */
+  height: 32px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  visibility: hidden;
 }
 
 .reply-btn img {
-  width: 28px;   /* bigger icon */
+  width: 28px;
   height: 28px;
   object-fit: contain;
 }
@@ -510,10 +309,6 @@ main {
   visibility: visible;
 }
 
-.edited-tag {
-  display: block;
-}
-
 .trash-btn {
   right: 10px;
   font-size: 1.2rem;
@@ -521,25 +316,11 @@ main {
 
 .mute-btn {
   right: 40px;
+
   width: 20px;
   height: 20px;
 }
 
-.username {
-  display: inline;
-  margin-right: 4px;
-  font-weight: 700;
-  color: #ff6a00;
-}
-
-.msg-line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: baseline;
-}
-  
-/* 2. Show ONLY when the parent .message is hovered */
 .message:hover .trash-btn,
 .message:hover .mute-btn,
 .message:hover .reply-btn {
@@ -547,100 +328,119 @@ main {
   pointer-events: auto;
 }
 
-
-
-
-
-
 .message:hover {
-
-
-
   background: rgba(255, 69, 0, 0.35);
-
-
-
 }
-
-
-
-
-
-
 
 .trash-btn:hover {
-
-
-
   color: #ff4444;
-
-
-
   transform: translateY(-50%) scale(1.2);
-
-
-
 }
 
-/* Show icons ONLY when hovering the message */
-#inputWrapper{
-    position:sticky;
-    bottom:0;
-    padding:10px;
-    background:none;
-    backdrop-filter:none;
-    border-top:none;
+.edited-tag {
+  display: block;
 }
 
-#muteOverlay {
-  display: none;
-  position: absolute;
-  top: 0; left: 0; 
-  width: 100%; height: 100%; /* Ensure full coverage */
-  background: rgba(0,0,0,0.9);
-  color: #ff4444;
-  font-weight: bold;
-  text-align: center;
+/* ---------------- USERNAME ---------------- */
+
+.username {
+  display: inline;
+  margin-right: 4px;
+
+  font-weight: 700;
+  color: #ff6a00;
+}
+
+.msg-line {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 4px;
+  align-items: baseline;
+}
+
+/* ---------------- INPUT AREA ---------------- */
+
+#inputWrapper {
+  position: sticky;
+  bottom: 0;
+
+  padding: 10px;
+
+  background: none;
+  backdrop-filter: none;
+
+  border-top: none;
+}
+
+#usernameContainer {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1;
+  min-width: 0;
+}
+
+#usernameContainer #username {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#username {
   padding: 0.5rem;
   border-radius: 20px;
-  z-index: 9999; /* Boost this to the max */
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  pointer-events: all; /* Ensure it blocks clicks */
+  border: 2px solid #ff4500;
+  background: #220900;
+  color: #fff;
+  outline: none;
 }
 
+#username::placeholder {
+  color: #888;
+}
 
+#username:focus {
+  outline: none;
+}
 
-
-
-
+#username.username-locked {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 
 form {
-
-
-
   display: flex;
-
-
-
   gap: 0.5rem;
-
-
-
 }
-
-
 
 #messageInputWrapper {
   flex: 1;
+
   display: flex;
   flex-direction: column;
+
   position: relative;
+
   border: 2px solid #ff4500;
   border-radius: 20px;
+
   background: #220900;
+
   overflow: hidden;
+}
+
+#messageInput {
+  border: none !important;
+  outline: none !important;
+
+  background: transparent !important;
+
+  padding: 0.5rem;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  color: #fff;
 }
 
 #messageInput::placeholder {
@@ -651,371 +451,317 @@ form {
   outline: none;
 }
 
-#messageInput {
-  border: none !important;
-  outline: none !important;
-  background: transparent !important;
-  padding: 0.5rem;
-  width: 100%;
-  box-sizing: border-box;
-  color: #fff;
-}
+/* ---------------- IMAGE PREVIEW ---------------- */
 
 #imagePreview {
   display: none;
+
   position: relative;
+
   padding: 0.5rem 0.5rem 0 0.5rem;
 }
 
 #previewImg {
   max-width: 100%;
   max-height: 200px;
+
   border-radius: 10px;
+
   border: 2px solid #ff4500;
+
   display: block;
 }
 
 #removeImageBtn {
   position: absolute;
+
   top: 8px;
   right: 8px;
+
   background: #ff4444;
   color: white;
+
   border: none;
   border-radius: 50%;
+
   width: 24px;
   height: 24px;
+
   font-size: 14px;
+
   cursor: pointer;
+
   display: none;
+
   padding: 0;
+
   line-height: 24px;
   text-align: center;
+
   z-index: 5;
 }
 
+/* ---------------- BUTTONS ---------------- */
+
 button {
-
-
-
   background: #ff4500;
 
-
-
   border: none;
-
-
-
   border-radius: 20px;
-
-
 
   padding: 0 1.2rem;
 
-
-
   font-weight: bold;
-
-
-
   cursor: pointer;
 
-
-
   color: #fff;
-
-
-
 }
 
+/* ---------------- OVERRIDE BUTTON ---------------- */
 
+#usernameOverrideBtn {
+  display: none;
 
+  align-self: flex-start;
 
+  margin-top: 4px;
 
+  background: #ff4500;
+  color: #fff;
 
+  border: none;
+  border-radius: 15px;
 
-/* --- TYPING INDICATOR STYLES --- */
+  padding: 0.25rem 0.7rem;
 
+  font-size: 0.75rem;
+  font-weight: bold;
 
+  cursor: pointer;
+}
+
+#usernameOverrideBtn:hover {
+  background: #ff6a00;
+}
+
+/* ---------------- TYPING INDICATOR ---------------- */
 
 #typingIndicator {
-
-
-
   height: 25px;
 
-
-
   display: flex;
-
-
-
   align-items: center;
-
-
 
   gap: 10px;
 
-
-
   margin-top: 5px;
-
-
 
   font-size: 0.85rem;
 
-
-
   color: #aaa;
-
-
 
   font-weight: bold;
 
-
-
-  visibility: hidden; /* Hidden when no one is typing */
-
-
-
+  visibility: hidden;
 }
 
-
-
-
-
-
-
 .dots-container {
-
-
-
   display: flex;
-
-
 
   gap: 3px;
 
-
-
   padding-left: 5px;
-
-
-
 }
 
-
-
-
-
-
-
 .dot {
-
-
-
   width: 5px;
-
-
-
   height: 5px;
-
-
 
   background: #aaa;
 
-
-
   border-radius: 50%;
 
-
-
   animation: discordBounce 1.4s infinite ease-in-out;
-
-
-
 }
 
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
 
-
-
-
-
-
-.dot:nth-child(2) { animation-delay: 0.2s; }
-
-
-
-.dot:nth-child(3) { animation-delay: 0.4s; }
-
-
-
-
-
-
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 @keyframes discordBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
 
-
-
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-
-
-
-  40% { transform: scale(1.1); opacity: 1; }
-
-
-
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 }
 
+/* ---------------- MUTE OVERLAY ---------------- */
 
+#muteOverlay {
+  display: none;
 
+  position: absolute;
 
+  top: 0;
+  left: 0;
 
+  width: 100%;
+  height: 100%;
 
+  background: rgba(0,0,0,0.9);
 
-footer {
-
-
-
-  background: #1a0b0b;
-
-
-
-  text-align: center;
-
-
-
-  padding: 1.5rem 1rem;
-
-
-
-  font-size: 0.9rem;
-
-
-
-  color: #aaa;
-
-
-
-  box-shadow: inset 0 3px 15px #ff450050;
-
-
-
-}
-
-
-
-footer a {
-
-
-
-  color: #ff4500;
-
-
-
-  font-weight: 700;
-
-
-
-  text-decoration: none;
-
-
-
-}
-
-
-
-
-
-
-
-.notification {
-
-
-
-  position: fixed;
-
-
-
-  top: 10px;
-
-
-
-  left: 50%;
-
-
-
-  transform: translateX(-50%);
-
-
-
-  background: #220900;
-
-
-
-  border: 2px solid #ff4500;
-
-
-
-  border-radius: 12px;
-
-
-
-  padding: 0.7rem 1rem;
-
-
-
-  color: #fff;
-
-
+  color: #ff4444;
 
   font-weight: bold;
 
+  text-align: center;
 
+  padding: 0.5rem;
 
-  animation: slideFade 3s forwards;
+  border-radius: 20px;
 
+  z-index: 9999;
 
+  align-items: center;
+  justify-content: center;
 
-  z-index: 1000;
+  gap: 10px;
 
-
-
+  pointer-events: all;
 }
 
+/* ---------------- REPLY PREVIEW ---------------- */
 
+#replyPreview {
+  display: none;
 
-@keyframes slideFade {
+  background: #220900;
 
+  border: 1px solid #ff4500;
 
+  padding: 6px 10px;
 
-  0% {opacity: 0; transform: translate(-50%, -20px);}
+  border-radius: 10px;
 
+  margin-bottom: 8px;
 
+  font-size: 0.85rem;
 
-  10% {opacity: 1; transform: translate(-50%, 0);}
-
-
-
-  80% {opacity: 1; transform: translate(-50%, 0);}
-
-
-
-  100% {opacity: 0; transform: translate(-50%, -20px);}
-
-
-
+  color: #fff;
 }
 
-#deleteModal {
+#cancelReply {
+  float: right;
 
+  background: none;
+
+  border: none;
+
+  color: #ff4444;
+
+  cursor: pointer;
+}
+
+/* ---------------- USERNAME CONFIRMATION MODAL ---------------- */
+
+#usernameConfirmModal {
   display: none;
 
   position: fixed;
 
   top: 50%;
+  left: 50%;
 
+  transform: translate(-50%, -50%);
+
+  z-index: 3000;
+
+  width: 320px;
+
+  max-width: calc(100vw - 40px);
+}
+
+#usernameConfirmBox {
+  background: #1a0b00;
+
+  border: 2px solid #ff4500;
+
+  border-radius: 16px;
+
+  padding: 1.2rem 1.5rem;
+
+  box-shadow:
+    0 0 10px rgba(255, 69, 0, 0.6),
+    0 0 25px rgba(255, 69, 0, 0.3);
+
+  text-align: center;
+
+  color: #fff;
+}
+
+#usernameConfirmBox p {
+  margin: 0 0 1.2rem 0;
+
+  line-height: 1.45;
+
+  font-size: 0.9rem;
+}
+
+#usernameConfirmButtons {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 0.7rem;
+}
+
+#usernameConfirmButtons button {
+  border: none;
+
+  border-radius: 20px;
+
+  padding: 0.55rem 1.2rem;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+  color: #fff;
+}
+
+#usernameNotYet {
+  background: #555;
+}
+
+#usernameNotYet:hover {
+  background: #666;
+}
+
+#usernameProceed {
+  background: #ff4500;
+}
+
+#usernameProceed:hover {
+  background: #ff6a00;
+}
+
+/* ---------------- DELETE MODAL ---------------- */
+
+#deleteModal {
+  display: none;
+
+  position: fixed;
+
+  top: 50%;
   left: 50%;
 
   transform: translate(-50%, -50%);
@@ -1033,29 +779,108 @@ footer a {
   width: 300px;
 
   text-align: center;
-
 }
 
-/* ---------------- MOBILE FIXES ---------------- */
+/* ---------------- FOOTER ---------------- */
+
+footer {
+  background: #1a0b0b;
+
+  text-align: center;
+
+  padding: 1.5rem 1rem;
+
+  font-size: 0.9rem;
+
+  color: #aaa;
+
+  box-shadow: inset 0 3px 15px #ff450050;
+}
+
+footer a {
+  color: #ff4500;
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+/* ---------------- NOTIFICATIONS ---------------- */
+
+.notification {
+  position: fixed;
+
+  top: 10px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  background: #220900;
+
+  border: 2px solid #ff4500;
+
+  border-radius: 12px;
+
+  padding: 0.7rem 1rem;
+
+  color: #fff;
+
+  font-weight: bold;
+
+  animation: slideFade 3s forwards;
+
+  z-index: 5000;
+}
+
+@keyframes slideFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  80% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+}
+
+/* ---------------- MOBILE ---------------- */
+
 @media (max-width: 768px) {
 
   body {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 
   header {
     font-size: 2rem;
+
     margin-bottom: 1rem;
+
     padding: 0.5rem;
+
     text-align: center;
   }
 
   main {
     width: 100%;
     max-width: 100%;
+
     margin: 0;
+
     padding: 0.5rem;
+
     box-sizing: border-box;
   }
 
@@ -1066,17 +891,21 @@ footer a {
   #ownerLogin input,
   #ownerLogin button {
     width: 100%;
+
     box-sizing: border-box;
   }
 
   #chatWindow {
-  border-radius: 10px;
-  padding: 0.7rem;
+    border-radius: 10px;
 
-  height: auto;
-  max-height: none;
-  min-height: 60vh;
-}
+    padding: 0.7rem;
+
+    height: auto;
+
+    max-height: none;
+
+    min-height: 60vh;
+  }
 
   .message {
     padding-right: 90px;
@@ -1090,1645 +919,3344 @@ footer a {
   #messageInput,
   #chatForm button {
     width: 100%;
+
     box-sizing: border-box;
+  }
+
+  #imageBtn {
+    width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+
+    flex: 0 0 42px !important;
   }
 
   footer {
     font-size: 0.8rem;
+
     padding: 1rem;
   }
-
 }
+
 </style>
 
-
-
-
-
-
-
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-
-
-
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-
-
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
-
 
 </head>
 
-
-
-
-
-
-
 <body>
-
-
-
-
-
-
 
 <header>🔥 DragonVR Live Chat 🔥</header>
 
-
-
-
-
-
-
 <main>
 
-
+  <!-- ---------------- OWNER LOGIN ---------------- -->
 
   <div id="ownerLogin">
 
+    <input
+      id="ownerEmail"
+      placeholder="Email"
+      type="email"
+    />
 
+    <input
+      id="ownerPassword"
+      placeholder="Password"
+      type="password"
+    />
 
-  <input id="ownerEmail" placeholder="Email" type="email" />
-
-
-
-  <input id="ownerPassword" placeholder="Password" type="password" />
-
-
-
-  <button id="ownerLoginBtn">Login</button>
-
-
-
-  <button id="logoutBtn">Logout</button>
-
-
-
-    <input id="systemMessageInput" placeholder="System Message" maxlength="200"
-
-
-
-      style="display:none; padding:0.4rem 0.6rem; border-radius:20px; border:2px solid #fff; background:#111; color:#fff; outline:none; width:160px;" />
-
-
-
-    <button id="systemSendBtn"
-
-
-
-      style="display:none; padding:0.4rem 0.8rem; border:none; border-radius:20px; background:#fff; color:#000; font-weight:bold; cursor:pointer;">
-
-
-
-      Send
-
-
-
+    <button id="ownerLoginBtn">
+      Login
     </button>
 
+    <button id="logoutBtn">
+      Logout
+    </button>
 
+    <input
+      id="systemMessageInput"
+      placeholder="System Message"
+      maxlength="200"
+      style="
+        display:none;
+        padding:0.4rem 0.6rem;
+        border-radius:20px;
+        border:2px solid #fff;
+        background:#111;
+        color:#fff;
+        outline:none;
+        width:160px;
+      "
+    />
+
+    <button
+      id="systemSendBtn"
+      style="
+        display:none;
+        padding:0.4rem 0.8rem;
+        border:none;
+        border-radius:20px;
+        background:#fff;
+        color:#000;
+        font-weight:bold;
+        cursor:pointer;
+      "
+    >
+      Send
+    </button>
 
   </div>
 
-
-
-
-
-
+  <!-- ---------------- CHAT ---------------- -->
 
   <div id="chatWindow"></div>
 
-
-
-
-
-
+  <!-- ---------------- INPUT AREA ---------------- -->
 
   <div id="inputWrapper">
-      
-      <div id="replyPreview" style="
-  display:none;
-  background:#220900;
-  border:1px solid #ff4500;
-  padding:6px 10px;
-  border-radius:10px;
-  margin-bottom:8px;
-  font-size:0.85rem;
-  color:#fff;
-">
-  Replying to: <span id="replyText"></span>
-  <button id="cancelReply" style="float:right; background:none; border:none; color:#ff4444; cursor:pointer;">✖</button>
-</div>
 
+    <!-- REPLY PREVIEW -->
 
+    <div id="replyPreview">
 
-    <div id="muteOverlay">You've been put in timeout, child.. <span id="countdown">00:00</span></div>
+      Replying to:
+      <span id="replyText"></span>
 
+      <button
+        type="button"
+        id="cancelReply"
+      >
+        ✖
+      </button>
 
-        <form id="chatForm">
-
-    <button type="button" id="imageBtn">+</button>
-
-    <input
-        type="file"
-        id="imagePicker"
-        accept="image/*"
-        hidden>
-
-    <input id="username"
-           placeholder="Name"
-           maxlength="20"
-           required
-           style="padding:0.5rem;border-radius:20px;border:2px solid #ff4500;background:#220900;color:#fff;">
-
-        <div id="messageInputWrapper">
-        <div id="imagePreview">
-            <img id="previewImg">
-            <button id="removeImageBtn" type="button">✕</button>
-        </div>
-        <input id="messageInput"
-               placeholder="Message"
-               maxlength="200"
-               required>
     </div>
 
-    <button type="submit">
-        Send
-    </button>
+    <!-- USERNAME CONFIRMATION -->
 
-</form>
+    <div id="usernameConfirmModal">
 
+      <div id="usernameConfirmBox">
 
+        <p>
+          Your username will be automatically saved and can't be changed unless
+          you ask the owner to give you permission. Make sure this is what you
+          want your username to be before you start chatting with other members.
+        </p>
 
-    
+        <div id="usernameConfirmButtons">
 
+          <button
+            type="button"
+            id="usernameNotYet"
+          >
+            Not Yet
+          </button>
 
+          <button
+            type="button"
+            id="usernameProceed"
+          >
+            Proceed
+          </button>
 
-    <div id="typingIndicator">
-
-
-
-      <div class="dots-container">
-
-
-
-        <div class="dot"></div>
-
-
-
-        <div class="dot"></div>
-
-
-
-        <div class="dot"></div>
-
-
+        </div>
 
       </div>
 
+    </div>
 
+    <!-- MUTE OVERLAY -->
 
-      <span id="typingText"></span>
+    <div id="muteOverlay">
 
+      You've been put in timeout, child..
 
+      <span id="countdown">
+        00:00
+      </span>
 
     </div>
 
+    <!-- CHAT FORM -->
 
+    <form id="chatForm">
+
+      <!-- IMAGE BUTTON -->
+
+      <button
+        type="button"
+        id="imageBtn"
+      >
+        +
+      </button>
+
+      <!-- HIDDEN FILE PICKER -->
+
+      <input
+        type="file"
+        id="imagePicker"
+        accept="image/*"
+        hidden
+      />
+
+      <!-- USERNAME -->
+
+      <div id="usernameContainer">
+
+        <input
+          id="username"
+          placeholder="Name"
+          maxlength="20"
+          required
+        />
+
+        <!-- OWNER ONLY -->
+
+        <button
+          type="button"
+          id="usernameOverrideBtn"
+        >
+          Override
+        </button>
+
+      </div>
+
+      <!-- MESSAGE -->
+
+      <div id="messageInputWrapper">
+
+        <!-- IMAGE PREVIEW -->
+
+        <div id="imagePreview">
+
+          <img
+            id="previewImg"
+            alt="Image preview"
+          />
+
+          <button
+            type="button"
+            id="removeImageBtn"
+          >
+            ✖
+          </button>
+
+        </div>
+
+        <input
+          id="messageInput"
+          placeholder="Message"
+          maxlength="200"
+          required
+        />
+
+      </div>
+
+      <!-- SEND -->
+
+      <button
+        type="submit"
+      >
+        Send
+      </button>
+
+    </form>
+
+    <!-- TYPING INDICATOR -->
+
+    <div id="typingIndicator">
+
+      <div class="dots-container">
+
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+
+      </div>
+
+      <span id="typingText"></span>
+
+    </div>
 
   </div>
 
-
-
 </main>
 
-
-
-
-
-
+<!-- ---------------- DELETE MODAL ---------------- -->
 
 <div id="deleteModal">
 
+  <p>
+    Are you sure you want to delete this message?
+  </p>
 
+  <button id="cancelDelete">
+    Cancel
+  </button>
 
-  <p>Are you sure you want to delete this message?</p>
-
-
-
-  <button id="cancelDelete">Cancel</button>
-
-
-
-  <button id="confirmDelete">Delete</button>
-
-
+  <button id="confirmDelete">
+    Delete
+  </button>
 
 </div>
 
-
-
-
-
-
-
 <footer>
 
+  ©
+  <span id="currentYear"></span>
+  DragonVR. All rights reserved.
 
-
-  © <span id="currentYear"></span> DragonVR. All rights reserved. <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">Back to Home</a>
-
-
+  <a href="https://dragonmasterxxx.github.io/dragonvr-realm/">
+    Back to Home
+  </a>
 
 </footer>
 
-
-
-
-
-
-
 <script>
 
+/* =========================================================
+   CONFIG
+========================================================= */
 
+const MIC_NORMAL =
+  "https://i.imgur.com/XCFidkl.png";
 
-// ---------------- CONFIG ----------------
-
-
-
-const MIC_NORMAL = "https://i.imgur.com/XCFidkl.png"; 
-
-
-
-const MIC_MUTED = "https://i.imgur.com/jYohHJ8.png"; 
-
-
-
-
-
-
+const MIC_MUTED =
+  "https://i.imgur.com/jYohHJ8.png";
 
 const COOLDOWN_MS = 3000;
 
+const MUTE_DURATION_MS =
+  30 * 60 * 1000;
 
 
-const MUTE_DURATION_MS = 30 * 60 * 1000;
-
-
-
-
-
-
+/* =========================================================
+   PROFANITY
+========================================================= */
 
 let profanity = [];
 
-
-
-
-
-
-
-// ---------------- PROFANITY LOAD ----------------
-
-
-
-fetch('profanity.json')
-
-
-
+fetch("profanity.json")
   .then(res => res.json())
-
-
-
-  .then(data => profanity = data)
-
-
-
-  .catch(err => console.error("Failed to load profanity list", err));
-
-
-
-
-
-
-
-// ---------------- DOM ----------------
-
-
-
-const chatWindow = document.getElementById("chatWindow");
-
-
-
-const deleteModal = document.getElementById("deleteModal");
-
-
-
-const confirmDelete = document.getElementById("confirmDelete");
-
-
-
-const cancelDelete = document.getElementById("cancelDelete");
-
-
-
-const systemMessageInput = document.getElementById("systemMessageInput");
-
-
-
-const systemSendBtn = document.getElementById("systemSendBtn");
-
-
-
-const ownerLoginBtn = document.getElementById("ownerLoginBtn");
-
-
-
-const logoutBtn = document.getElementById("logoutBtn");
-
-
-
-const ownerPassword = document.getElementById("ownerPassword");
-
-
-
-const ownerEmail = document.getElementById("ownerEmail");
-
-
-
-const usernameInput = document.getElementById("username");
-
-
-
-const messageInput = document.getElementById("messageInput");
-
-
-
-const chatForm = document.getElementById("chatForm");
-
-
-
-const typingIndicator = document.getElementById("typingIndicator");
-
-
-
-const typingText = document.getElementById("typingText");
-
-
-
-const cancelReplyBtn = document.getElementById("cancelReply");
-
-  
-  
-const replyPreview = document.getElementById("replyPreview");
-
-const imageBtn = document.getElementById("imageBtn");
-const imagePicker = document.getElementById("imagePicker");
-
-const imagePreview = document.getElementById("imagePreview");
-const previewImg = document.getElementById("previewImg");
-const removeImageBtn = document.getElementById("removeImageBtn");
-
-// ---------------- STATE ----------------
-
-
+  .then(data => {
+    profanity = data;
+  })
+  .catch(err => {
+    console.error(
+      "Failed to load profanity list",
+      err
+    );
+  });
+
+
+/* =========================================================
+   DOM ELEMENTS
+========================================================= */
+
+const chatWindow =
+  document.getElementById("chatWindow");
+
+const deleteModal =
+  document.getElementById("deleteModal");
+
+const confirmDelete =
+  document.getElementById("confirmDelete");
+
+const cancelDelete =
+  document.getElementById("cancelDelete");
+
+const systemMessageInput =
+  document.getElementById("systemMessageInput");
+
+const systemSendBtn =
+  document.getElementById("systemSendBtn");
+
+const ownerLoginBtn =
+  document.getElementById("ownerLoginBtn");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const ownerPassword =
+  document.getElementById("ownerPassword");
+
+const ownerEmail =
+  document.getElementById("ownerEmail");
+
+const usernameInput =
+  document.getElementById("username");
+
+const messageInput =
+  document.getElementById("messageInput");
+
+const usernameConfirmModal =
+  document.getElementById(
+    "usernameConfirmModal"
+  );
+
+const usernameNotYet =
+  document.getElementById(
+    "usernameNotYet"
+  );
+
+const usernameProceed =
+  document.getElementById(
+    "usernameProceed"
+  );
+
+const usernameOverrideBtn =
+  document.getElementById(
+    "usernameOverrideBtn"
+  );
+
+const chatForm =
+  document.getElementById("chatForm");
+
+const typingIndicator =
+  document.getElementById(
+    "typingIndicator"
+  );
+
+const typingText =
+  document.getElementById(
+    "typingText"
+  );
+
+const cancelReplyBtn =
+  document.getElementById(
+    "cancelReply"
+  );
+
+const replyPreview =
+  document.getElementById(
+    "replyPreview"
+  );
+
+const replyText =
+  document.getElementById(
+    "replyText"
+  );
+
+const imageBtn =
+  document.getElementById("imageBtn");
+
+const imagePicker =
+  document.getElementById(
+    "imagePicker"
+  );
+
+const imagePreview =
+  document.getElementById(
+    "imagePreview"
+  );
+
+const previewImg =
+  document.getElementById(
+    "previewImg"
+  );
+
+const removeImageBtn =
+  document.getElementById(
+    "removeImageBtn"
+  );
+
+const muteOverlay =
+  document.getElementById(
+    "muteOverlay"
+  );
+
+const countdown =
+  document.getElementById(
+    "countdown"
+  );
+
+
+/* =========================================================
+   STATE
+========================================================= */
 
 let isOwner = false;
 
-
-
 let isAdmin = false;
 
+let usernameOverrideAccess = false;
 
+let pendingUsernameMessage = null;
 
 let lastMessageTime = 0;
 
-
-
 let messageToDeleteKey = null;
-
-
 
 let currentUsername = "";
 
-
-
 let mutedUntil = 0;
 
-
-
-let countdownInterval;
-
-
+let countdownInterval = null;
 
 let typingTimeout = null;
 
-
-
 let replyTarget = null;
-
-
 
 let editTarget = null;
 
 let selectedImage = null;
+
 let selectedImageData = null;
 
-imageBtn.onclick = () => {
-    imagePicker.click();
-};
 
-imagePicker.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-        showNotification("Image too large. Max size is 5MB.");
-        imagePicker.value = "";
-        return;
-    }
-    if (!file.type.startsWith('image/')) {
-        showNotification("Please select an image file.");
-        imagePicker.value = "";
-        return;
-    }
-    selectedImage = file;
-    const reader = new FileReader();
-    reader.onload = function(event) {
-    selectedImageData = event.target.result;
-    previewImg.src = event.target.result;
-    imagePreview.style.display = "block";
-    removeImageBtn.style.display = "block";
-};
-    reader.readAsDataURL(file);
-};
+/* =========================================================
+   GUEST ID
+========================================================= */
 
-removeImageBtn.onclick = () => {
-    clearImagePreview();
-};
+let sessionGuestId =
+  localStorage.getItem(
+    "chat_guest_id"
+  );
 
-let liveEditThrottle = null;
-  
-function getMyUid() {
-  return firebase.auth().currentUser?.uid || sessionGuestId;
+if (!sessionGuestId) {
+
+  sessionGuestId =
+    "guest_" +
+    Math.random()
+      .toString(36)
+      .substr(2, 9);
+
+  localStorage.setItem(
+    "chat_guest_id",
+    sessionGuestId
+  );
 }
 
-function isMyMessage(msgUid) {
-  return msgUid === getMyUid();
-}
 
-function canEditMessage(msgUid) {
-  return isMyMessage(msgUid); // STRICT RULE: only own messages
-}
-
-function canDeleteMessage(msgUid) {
-  return isOwner || isMyMessage(msgUid);
-}
-
-function canTimeout() {
-  return isOwner || isAdmin;
-}
-  
-// ---------------- FIREBASE ----------------
-
-
+/* =========================================================
+   FIREBASE
+========================================================= */
 
 const firebaseConfig = {
 
+  apiKey:
+    "AIzaSyDIjYJvHsSKg3IRHlmynXFmfPri98nrtLU",
 
+  authDomain:
+    "dragonvr-s-realm-d91d0.firebaseapp.com",
 
-  apiKey: "AIzaSyDIjJYvHsSKg3IRHlmynXFmfPri98nrtLU",
+  databaseURL:
+    "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
 
+  projectId:
+    "dragonvr-s-realm-d91d0",
 
+  storageBucket:
+    "dragonvr-s-realm-d91d0.firebasestorage.app",
 
-  authDomain: "dragonvr-s-realm-d91d0.firebaseapp.com",
+  messagingSenderId:
+    "469303383863",
 
+  appId:
+    "1:469303383863:web:fe9a8e946fe81458a86cb2",
 
-
-  databaseURL: "https://dragonvr-s-realm-d91d0-default-rtdb.firebaseio.com",
-
-
-
-  projectId: "dragonvr-s-realm-d91d0",
-
-
-
-  storageBucket: "dragonvr-s-realm-d91d0.firebasestorage.app",
-
-
-
-  messagingSenderId: "469303383863",
-
-
-
-  appId: "1:469303383863:web:fe9a8e946fe81458a86cb2",
-
-
-
-  measurementId: "G-FLTP7DK55E"
-
-
-
+  measurementId:
+    "G-FLTP7DK55E"
 };
 
+firebase.initializeApp(
+  firebaseConfig
+);
+
+const db =
+  firebase.database();
+
+const auth =
+  firebase.auth();
+
+const messagesRef =
+  db.ref("chatMessages");
+
+const typingRef =
+  db.ref("typingStatus");
+
+const mutesRef =
+  db.ref("mutedUsers");
+
+const overrideAccessRef =
+  db.ref("usernameOverrideAccess");
+
+document.getElementById(
+  "currentYear"
+).textContent =
+  new Date().getFullYear();
 
 
+/* =========================================================
+   BASIC HELPERS
+========================================================= */
+
+function getMyUid() {
+
+  return (
+    firebase.auth()
+      .currentUser?.uid ||
+    sessionGuestId
+  );
+
+}
+
+function isMyMessage(msgUid) {
+
+  return msgUid === getMyUid();
+
+}
+
+function canEditMessage(msgUid) {
+
+  return isMyMessage(msgUid);
+
+}
+
+function canDeleteMessage(msgUid) {
+
+  return (
+    isOwner ||
+    isMyMessage(msgUid)
+  );
+
+}
+
+function canTimeout() {
+
+  return (
+    isOwner ||
+    isAdmin
+  );
+
+}
 
 
-
-
-firebase.initializeApp(firebaseConfig);
-
-
-
-document.getElementById('currentYear').textContent = new Date().getFullYear();
-
-
-
-const db = firebase.database();
-
-
-
-const auth = firebase.auth();
-
-
-
-const messagesRef = db.ref("chatMessages");
-
-
-
-const typingRef = db.ref("typingStatus");
-
-
-
-const mutesRef = db.ref("mutedUsers");
-
-
-
-
-
-
-
-const muteOverlay = document.getElementById("muteOverlay");
-
-
-
-const countdown = document.getElementById("countdown");
-  
-// ---------------- HELPERS ----------------
-
-
+/* =========================================================
+   HTML ESCAPING
+========================================================= */
 
 function escapeHTML(str = "") {
 
-
-
-  return str.replace(/[&<>"']/g, m => ({
-
-
-
-    "&":"&amp;",
-
-
-
-    "<":"&lt;",
-
-
-
-    ">":"&gt;",
-
-
-
-    '"':"&quot;",
-
-
-
-    "'":"&#039;"
-
-
-
-  }[m]));
-
-
+  return str.replace(
+    /[&<>"']/g,
+    m => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[m])
+  );
 
 }
 
 
-
-
-
-
+/* =========================================================
+   MARKDOWN
+========================================================= */
 
 function formatMarkdown(text = "") {
 
+  if (text.startsWith("### ")) {
 
+    text =
+      `<h3>${text.slice(4)}</h3>`;
 
-  if (text.startsWith("### ")) text = `<h3>${text.slice(4)}</h3>`;
+  }
 
+  else if (text.startsWith("## ")) {
 
+    text =
+      `<h2>${text.slice(3)}</h2>`;
 
-  else if (text.startsWith("## ")) text = `<h2>${text.slice(3)}</h2>`;
+  }
 
+  else if (text.startsWith("# ")) {
 
+    text =
+      `<h1>${text.slice(2)}</h1>`;
 
-  else if (text.startsWith("# ")) text = `<h1>${text.slice(2)}</h1>`;
+  }
 
+  text =
+    text.replace(
+      /\*\*\*(.*?)\*\*\*/g,
+      "<b><i>$1</i></b>"
+    );
 
+  text =
+    text.replace(
+      /\*\*(.*?)\*\*/g,
+      "<b>$1</b>"
+    );
 
+  text =
+    text.replace(
+      /\*(.*?)\*/g,
+      "<i>$1</i>"
+    );
 
-
-
-
-  text = text.replace(/\*\*\*(.*?)\*\*\*/g, "<b><i>$1</i></b>");
-
-
-
-  text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
-
-
-
-  text = text.replace(/\*(.*?)\*/g, "<i>$1</i>");
-
-
-
-  text = text.replace(/~~(.*?)~~/g, "<strike>$1</strike>");
-
-
+  text =
+    text.replace(
+      /~~(.*?)~~/g,
+      "<strike>$1</strike>"
+    );
 
   return text;
 
-
-
 }
 
 
-
-
-
-
+/* =========================================================
+   PROFANITY FILTER
+========================================================= */
 
 function cleanText(t = "") {
 
-
-
   profanity.forEach(w => {
 
+    const escaped =
+      w.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
 
-
-    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-
-
-    t = t.replace(new RegExp(escaped, "gi"), "****");
-
-
+    t =
+      t.replace(
+        new RegExp(
+          escaped,
+          "gi"
+        ),
+        "****"
+      );
 
   });
-
-
 
   return t;
 
-
-
 }
 
 
-
-
-
-
+/* =========================================================
+   NOTIFICATION
+========================================================= */
 
 function showNotification(text) {
 
+  const n =
+    document.createElement("div");
 
+  n.className =
+    "notification";
 
-  const n = document.createElement("div");
-
-
-
-  n.className = "notification";
-
-
-
-  n.textContent = text;
-
-
+  n.textContent =
+    text;
 
   document.body.appendChild(n);
 
-
-
-  setTimeout(() => n.remove(), 3000);
-
-
+  setTimeout(
+    () => n.remove(),
+    3000
+  );
 
 }
 
 
+/* =========================================================
+   IMAGE PREVIEW
+========================================================= */
 
 function clearImagePreview() {
-    selectedImage = null;
-    selectedImageData = null;
-    if (previewImg) previewImg.src = "";
-    if (imagePreview) imagePreview.style.display = "none";
-    if (removeImageBtn) removeImageBtn.style.display = "none";
-    if (imagePicker) imagePicker.value = "";
+
+  selectedImage = null;
+
+  selectedImageData = null;
+
+  previewImg.src = "";
+
+  imagePreview.style.display =
+    "none";
+
+  removeImageBtn.style.display =
+    "none";
+
+  imagePicker.value = "";
+
+}
+
+imageBtn.onclick = () => {
+
+  imagePicker.click();
+
+};
+
+imagePicker.onchange = e => {
+
+  const file =
+    e.target.files[0];
+
+  if (!file) return;
+
+  if (
+    file.size >
+    5 * 1024 * 1024
+  ) {
+
+    showNotification(
+      "Image too large. Max size is 5MB."
+    );
+
+    imagePicker.value = "";
+
+    return;
+
+  }
+
+  if (
+    !file.type.startsWith("image/")
+  ) {
+
+    showNotification(
+      "Please select an image file."
+    );
+
+    imagePicker.value = "";
+
+    return;
+
+  }
+
+  selectedImage = file;
+
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    function(event) {
+
+      selectedImageData =
+        event.target.result;
+
+      previewImg.src =
+        event.target.result;
+
+      imagePreview.style.display =
+        "block";
+
+      removeImageBtn.style.display =
+        "block";
+
+    };
+
+  reader.readAsDataURL(file);
+
+};
+
+removeImageBtn.onclick =
+  () => {
+
+    clearImagePreview();
+
+  };
+
+
+/* =========================================================
+   SAVED USERNAME SYSTEM
+========================================================= */
+
+function getSavedUsernameKey() {
+
+  const uid =
+    auth.currentUser?.uid ||
+    sessionGuestId;
+
+  return (
+    "saved_chat_username_" +
+    uid
+  );
+
+}
+
+function getSavedUsername() {
+
+  return localStorage.getItem(
+    getSavedUsernameKey()
+  );
+
+}
+
+function saveUsername(name) {
+
+  localStorage.setItem(
+    getSavedUsernameKey(),
+    name
+  );
+
+}
+
+function clearSavedUsername() {
+
+  localStorage.removeItem(
+    getSavedUsernameKey()
+  );
+
+}
+
+function lockUsernameInput() {
+
+  usernameInput.classList.add(
+    "username-locked"
+  );
+
+  usernameInput.readOnly =
+    true;
+
+}
+
+function unlockUsernameInput() {
+
+  usernameInput.classList.remove(
+    "username-locked"
+  );
+
+  usernameInput.readOnly =
+    false;
+
+}
+
+function loadSavedUsername() {
+
+  const savedUsername =
+    getSavedUsername();
+
+  if (savedUsername) {
+
+    usernameInput.value =
+      savedUsername;
+
+    currentUsername =
+      savedUsername;
+
+    lockUsernameInput();
+
+  }
+
+  else {
+
+    unlockUsernameInput();
+
+  }
+
+}
+
+function showUsernameConfirmation() {
+
+  usernameConfirmModal.style.display =
+    "block";
+
+}
+
+function hideUsernameConfirmation() {
+
+  usernameConfirmModal.style.display =
+    "none";
+
 }
 
 
+/* =========================================================
+   USERNAME CONFIRMATION
+========================================================= */
 
-// --- NEW: Persistent Guest Identity ---
-// Check if we already have a guest ID in storage, otherwise create one
-let sessionGuestId = localStorage.getItem("chat_guest_id");
-if (!sessionGuestId) {
-    sessionGuestId = "guest_" + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem("chat_guest_id", sessionGuestId);
-}
+usernameNotYet.onclick = () => {
 
-// --- FIXED: Message Rendering with Role memory ---
+  hideUsernameConfirmation();
+
+  pendingUsernameMessage =
+    null;
+
+  showNotification(
+    "Message not sent. Choose a username when you're ready."
+  );
+
+};
+
+usernameProceed.onclick = () => {
+
+  if (!pendingUsernameMessage) {
+
+    hideUsernameConfirmation();
+
+    return;
+
+  }
+
+  const name =
+    usernameInput.value.trim();
+
+  if (!name) {
+
+    hideUsernameConfirmation();
+
+    showNotification(
+      "Please enter a username first."
+    );
+
+    return;
+
+  }
+
+  saveUsername(name);
+
+  currentUsername =
+    name;
+
+  lockUsernameInput();
+
+  hideUsernameConfirmation();
+
+  const pending =
+    pendingUsernameMessage;
+
+  pendingUsernameMessage =
+    null;
+
+  sendChatMessage(pending);
+
+};
+
+
+/* =========================================================
+   LOAD SAVED USERNAME
+========================================================= */
+
+loadSavedUsername();
+
+
+/* =========================================================
+   MESSAGE RENDERING
+========================================================= */
+
 function addMessage(msg, key) {
-  if (!msg || msg.text === undefined || chatWindow.querySelector(`[data-key="${key}"]`)) return;
-  
-  const div = document.createElement("div");
-  let replyHTML = "";
 
-if (msg.reply) {
-  replyHTML = `
-    <div style="
-      border-left: 3px solid #ff4500;
-      padding-left: 6px;
-      margin-bottom: 5px;
-      font-size: 0.8rem;
-      color: #ccc;
-    ">
-      ↪ ${msg.reply.username}: ${msg.reply.text}
-    </div>
-  `;
-}
-  div.className = "message";
-  div.dataset.key = key;
-  div.dataset.authorUid = msg.uid; 
-  div.dataset.role = msg.role || "member"; // STORE THE ROLE HERE
+  if (
+    !msg ||
+    msg.text === undefined ||
+    chatWindow.querySelector(
+      `[data-key="${key}"]`
+    )
+  ) {
 
-  const role = msg.role || "member";
-  if (role === "owner") div.classList.add("owner-message");
+    return;
 
-  const dateObj = new Date(msg.time);
-  const datePart = dateObj.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const timePart = dateObj.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  const timeStr = `${datePart} • ${timePart}`;
-  
+  }
+
+  const div =
+    document.createElement("div");
+
+  div.className =
+    "message";
+
+  div.dataset.key =
+    key;
+
+  div.dataset.authorUid =
+    msg.uid || "";
+
+  div.dataset.role =
+    msg.role || "member";
+
+  const role =
+    msg.role || "member";
+
+  if (role === "owner") {
+
+    div.classList.add(
+      "owner-message"
+    );
+
+  }
+
+  const dateObj =
+    new Date(msg.time);
+
+  const datePart =
+    dateObj.toLocaleString(
+      "en-US",
+      {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      }
+    );
+
+  const timePart =
+    dateObj.toLocaleString(
+      "en-US",
+      {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      }
+    );
+
+  const timeStr =
+    `${datePart} • ${timePart}`;
+
   let badge = "";
+
   let nameStyle = "";
 
-  if (role === "owner") { badge = "👑"; nameStyle = 'style="color: gold; font-weight: 900"'; }
-  else if (role === "admin") { badge = "⭐"; nameStyle = 'style="color: gold; font-weight: 800"'; }
-  else if (role === "system") { badge = "⚙️"; nameStyle = 'style="color: white; font-weight: 900"'; }
+  if (role === "owner") {
+
+    badge = "👑";
+
+    nameStyle =
+      'style="color: gold; font-weight: 900"';
+
+  }
+
+  else if (role === "admin") {
+
+    badge = "⭐";
+
+    nameStyle =
+      'style="color: gold; font-weight: 800"';
+
+  }
+
+  else if (role === "system") {
+
+    badge = "⚙️";
+
+    nameStyle =
+      'style="color: white; font-weight: 900"';
+
+  }
+
+  let replyHTML = "";
+
+  if (msg.reply) {
+
+    replyHTML = `
+      <div style="
+        border-left: 3px solid #ff4500;
+        padding-left: 6px;
+        margin-bottom: 5px;
+        font-size: 0.8rem;
+        color: #ccc;
+      ">
+        ↪ ${escapeHTML(
+          msg.reply.username || ""
+        )}:
+        ${escapeHTML(
+          msg.reply.text || ""
+        )}
+      </div>
+    `;
+
+  }
+
+  let imageHTML = "";
+
+  if (msg.imageUrl) {
+
+    imageHTML = `
+      <div style="margin-top:8px;">
+        <img
+          src="${msg.imageUrl}"
+          style="
+            max-width:300px;
+            max-height:300px;
+            border-radius:8px;
+            cursor:pointer;
+          "
+          onclick="window.open(this.src,'_blank')"
+        >
+      </div>
+    `;
+
+  }
 
   div.innerHTML = `
-    <span class="message-time">${timeStr}</span>
+
+    <span class="message-time">
+      ${timeStr}
+    </span>
+
     ${replyHTML}
+
     <div class="msg-line">
-  ${badge ? `<span class="badge">${badge}</span>` : ""}
-  <span class="username" ${nameStyle}>${msg.username}:</span>
-  <span class="msg-text">
-    ${formatMarkdown(escapeHTML(msg.text))}
-  </span>
-  ${msg.imageUrl ? `<div style="margin-top:8px;"><img src="${msg.imageUrl}" style="max-width:300px;max-height:300px;border-radius:8px;cursor:pointer;" onclick="window.open(this.src,'_blank')"></div>` : ''}
-</div>
+
+      ${
+        badge
+          ? `<span class="badge">${badge}</span>`
+          : ""
+      }
+
+      <span
+        class="username"
+        ${nameStyle}
+      >
+        ${escapeHTML(msg.username || "")}:
+      </span>
+
+      <span class="msg-text">
+        ${formatMarkdown(
+          escapeHTML(msg.text)
+        )}
+      </span>
+
+      ${imageHTML}
+
+    </div>
+
   `;
-  
+
   chatWindow.appendChild(div);
-  injectTrashIcon(div, msg.uid, role);
-}
 
-// --- FIXED: Permission Logic for Members ---
-function injectTrashIcon(messageDiv, authorUid, role) {
-  const user = firebase.auth().currentUser;
-  const key = messageDiv.dataset.key;
+  injectTrashIcon(
+    div,
+    msg.uid,
+    role
+  );
 
-  const isMyMessage =
-    (user && authorUid === user.uid) ||
-    (authorUid === sessionGuestId);
-
-  // always clear old buttons first
-messageDiv.querySelectorAll(".trash-btn, .reply-btn, .edit-btn").forEach(el => el.remove());
-
-  const reply = document.createElement("span");
-  reply.className = "reply-btn";
-  reply.innerHTML = `<img src="https://i.imgur.com/tUveWHG.png" width="18">`;
-
-  reply.onclick = () => {
-    replyTarget = {
-    key,
-    username: (
-      messageDiv.querySelector(".username")?.innerText || "Unknown"
-    ).replace(/:$/, ""),
-    text: (messageDiv.querySelector(".msg-text")?.innerText || "").slice(0, 80) || ""
-  };
-    
-    document.getElementById("replyPreview").style.display = "block";
-    document.getElementById("replyText").innerText =
-      `${replyTarget.username}: ${replyTarget.text}`;
-  };
-
-  messageDiv.appendChild(reply);
-
-  const edit = document.createElement("span");
-edit.className = "reply-btn";
-edit.style.right = "70px"; // pushes it left of reply
-
-edit.innerHTML = `✏️`;
-
-edit.onclick = () => {
-  const authorUid = messageDiv.dataset.authorUid;
-
-  if (authorUid !== getMyUid()) {
-    showNotification("You can only edit your own messages.");
-    return;
-  }
-
-  const text = messageDiv.querySelector(".msg-text")?.innerText || "";
-
-  editTarget = {
-    key,
-    originalText: text
-  };
-
-  messageInput.value = text;
-  messageInput.focus();
-
-  showNotification("Editing message...");
-};
-
-messageDiv.appendChild(edit);
-
-  let canDelete = false;
-
-// Owner can delete EVERYTHING
-if (isOwner) {
-  canDelete = true;
-}
-
-// Everyone else only deletes their own
-else {
-  canDelete = isMyMessage;
-}
-
-  if (canDelete) {
-    const trash = document.createElement("span");
-    trash.className = "trash-btn";
-    trash.innerHTML = "🗑️";
-    trash.onclick = () => openDeleteModal(key);
-    messageDiv.appendChild(trash);
-  }
-}
-
-// --- FIXED: UI Refresh using stored data attributes ---
-function refreshPermissionsUI() {
-  const messages = chatWindow.querySelectorAll('.message');
-  messages.forEach(div => {
-    const authorUid = div.dataset.authorUid;
-    const role = div.dataset.role; // Pull the real role from the attribute
-    injectTrashIcon(div, authorUid, role);
-  });
-}
-
-// --- FIXED: Active Mute Listener ---
-function checkMuteStatus() {
-    if (countdownInterval) clearInterval(countdownInterval);
-    
-    // Check if current user (Auth or Guest) is in the mute list
-    const myUid = firebase.auth().currentUser?.uid || sessionGuestId;
-    
-    mutesRef.child(myUid).on("value", snapshot => {
-        const muteTime = snapshot.val();
-        const now = Date.now();
-
-        if (muteTime && now < muteTime) {
-            mutedUntil = muteTime;
-            muteOverlay.style.setProperty('display', 'flex', 'important'); //
-            messageInput.disabled = true;
-            messageInput.blur();
-
-            countdownInterval = setInterval(() => {
-                const currentTime = Date.now();
-                const remaining = Math.max(0, Math.floor((mutedUntil - currentTime) / 1000));
-                
-                if (remaining <= 0) {
-                    clearInterval(countdownInterval);
-                    muteOverlay.style.setProperty('display', 'none', 'important');
-                    messageInput.disabled = false;
-                    mutedUntil = 0;
-                    mutesRef.child(myUid).remove();
-                } else {
-                    const mins = Math.floor(remaining / 60);
-                    const secs = remaining % 60;
-                    countdown.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-                }
-            }, 1000);
-        } else {
-            muteOverlay.style.setProperty('display', 'none', 'important');
-            messageInput.disabled = false;
-            mutedUntil = 0;
-        }
-    });
-}
-  
-// Re-run mute check whenever the database updates
-mutesRef.on("value", checkMuteStatus);
-  
-// ---------------- REALTIME LISTENERS ----------------
-let initialLoad = true;
-const messagesQuery = messagesRef.limitToLast(50);
-
-// Fetch the initial batch first to avoid the "jumping" during load
-messagesQuery.once("value", () => {
-  initialLoad = false;
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-});
-
-  function isMobile() {
-  return window.innerWidth <= 768;
-}
-
-messagesQuery.on("child_added", snap => {
-  console.log("NEW MSG:", snap.val());
-
-  addMessage(snap.val(), snap.key);
-
-  setTimeout(() => {
-
-    const isNearBottom =
-      chatWindow.scrollHeight - chatWindow.clientHeight
-      <= chatWindow.scrollTop + 200;
-
-    // Desktop smooth auto-scroll
-    if (!isMobile() && isNearBottom) {
-
-      chatWindow.scrollTo({
-        top: chatWindow.scrollHeight,
-        behavior: 'smooth'
-      });
-
-    }
-
-    // Mobile: only scroll if already near bottom
-    else if (isMobile() && isNearBottom) {
-
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-
-    }
-
-  }, 50);
-});
-
-messagesRef.on("child_removed", snap => {
-  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
-  if (el) {
-    el.style.transition = "opacity 0.2s ease, transform 0.2s ease";
-    el.style.opacity = "0";
-    el.style.transform = "scale(0.95)";
-    
-    // Remove from DOM after the quick animation
-    setTimeout(() => {
-      el.remove();
-    }, 200);
-  }
-});
-
-messageInput.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-
-  // Only cancel if editing
-  if (!editTarget) return;
-
-  e.preventDefault();
-
-  // Cancel edit state
-  editTarget = null;
-  messageInput.value = "";
-
-  // Clear reply state too
-  replyTarget = null;
-
-  const preview = document.getElementById("replyPreview");
-  if (preview) preview.style.display = "none";
-
-  showNotification("Edit cancelled");
-  messageInput.focus();
-});  
-
-messagesRef.on("child_changed", snap => {
-  const el = chatWindow.querySelector(`[data-key="${snap.key}"]`);
-  if (!el) return;
-
-  const msg = snap.val();
-
-  // update text
-  const textSpan = el.querySelector(".msg-text");
-  if (textSpan) {
-    textSpan.innerHTML = formatMarkdown(escapeHTML(msg.text));
-  }
-
-  // store updated data
-  el.dataset.authorUid = msg.uid;
-  el.dataset.role = msg.role || "member";
-
-  // force refresh buttons (IMPORTANT)
-  el.dataset.iconsInjected = "false";
-
-  // re-inject controls cleanly
-  injectTrashIcon(el, msg.uid, msg.role);
-
-  // edited tag
-  let editedTag = el.querySelector(".edited-tag");
+  /* IMPORTANT:
+     This makes "(edited)" survive
+     a page refresh.
+  */
 
   if (msg.edited) {
-    if (!editedTag) {
-      editedTag = document.createElement("div");
-      editedTag.className = "edited-tag";
-      editedTag.textContent = "(edited)";
-      editedTag.style.cssText = "font-size:0.7rem;color:#999;margin-top:3px;";
-      el.appendChild(editedTag);
-    }
-  }
-});
 
-cancelReplyBtn.onclick = () => {
-  replyTarget = null;
-  editTarget = null;
-  replyPreview.style.display = "none";
-  replyText.innerText = "";
-};
+    const editedTag =
+      document.createElement("div");
 
+    editedTag.className =
+      "edited-tag";
 
-// ---------------- AUTH ----------------
+    editedTag.textContent =
+      "(edited)";
 
+    editedTag.style.cssText =
+      "font-size:0.7rem;color:#999;margin-top:3px;";
 
+    div.appendChild(
+      editedTag
+    );
 
-let liveEmail = "";
-
-
-
-let liveIsOwner = false;
-
-
-
-let liveIsAdmin = false;
-
-
-
-
-
-
-
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    liveEmail = user.email.toLowerCase();
-    isOwner = liveEmail === "dragonvr@fire-breathing.com";
-    isAdmin = ["michael@smj.com", "purple@not-magic.com", "kizzy$$$@dabest.com"].includes(liveEmail);
-    
-    // Fix: Only set default name if the input is currently empty
-    if (!usernameInput.value.trim()) {
-      currentUsername = user.email.split('@')[0];
-      usernameInput.value = currentUsername;
-    }
-
-    mutesRef.once("value", checkMuteStatus);
-  } else {
-    isOwner = false;
-    isAdmin = false;
-    currentUsername = "";
-    usernameInput.value = "";
   }
 
-  // Refresh trash icons for existing messages upon login/logout
-  refreshPermissionsUI();
-
-  const showSystem = isOwner && user;
-  systemMessageInput.style.display = showSystem ? "inline-block" : "none";
-  systemSendBtn.style.display = showSystem ? "inline-block" : "none";
-});
-  
-// ---------------- DELETE MODAL ----------------
+}
 
 
+/* =========================================================
+   MESSAGE CONTROLS
+========================================================= */
+
+function injectTrashIcon(
+  messageDiv,
+  authorUid,
+  role
+) {
+
+  const key =
+    messageDiv.dataset.key;
+
+  const user =
+    firebase.auth().currentUser;
+
+  const isMyMessage =
+    (user &&
+      authorUid === user.uid) ||
+    authorUid === sessionGuestId;
+
+  /* Remove old controls first */
+
+  messageDiv
+    .querySelectorAll(
+      ".trash-btn, .reply-btn, .edit-btn"
+    )
+    .forEach(
+      el => el.remove()
+    );
+
+
+  /* ---------------- REPLY ---------------- */
+
+  const reply =
+    document.createElement("span");
+
+  reply.className =
+    "reply-btn";
+
+  reply.innerHTML =
+    `<img src="https://i.imgur.com/tUveWHG.png" width="18">`;
+
+  reply.onclick = () => {
+
+    replyTarget = {
+
+      key,
+
+      username:
+        (
+          messageDiv.querySelector(
+            ".username"
+          )?.innerText ||
+          "Unknown"
+        ).replace(/:$/, ""),
+
+      text:
+        (
+          messageDiv.querySelector(
+            ".msg-text"
+          )?.innerText ||
+          ""
+        ).slice(0, 80)
+
+    };
+
+    replyPreview.style.display =
+      "block";
+
+    replyText.innerText =
+      `${replyTarget.username}: ${replyTarget.text}`;
+
+  };
+
+  messageDiv.appendChild(
+    reply
+  );
+
+
+  /* ---------------- EDIT ---------------- */
+
+  const edit =
+    document.createElement("span");
+
+  edit.className =
+    "reply-btn edit-btn";
+
+  edit.style.right =
+    "70px";
+
+  edit.innerHTML =
+    "✏️";
+
+  edit.onclick = () => {
+
+    const actualAuthorUid =
+      messageDiv.dataset.authorUid;
+
+    if (
+      actualAuthorUid !==
+      getMyUid()
+    ) {
+
+      showNotification(
+        "You can only edit your own messages."
+      );
+
+      return;
+
+    }
+
+    const text =
+      messageDiv.querySelector(
+        ".msg-text"
+      )?.innerText || "";
+
+    editTarget = {
+
+      key,
+
+      originalText:
+        text
+
+    };
+
+    messageInput.value =
+      text;
+
+    messageInput.focus();
+
+    showNotification(
+      "Editing message..."
+    );
+
+  };
+
+  messageDiv.appendChild(
+    edit
+  );
+
+
+  /* ---------------- DELETE ---------------- */
+
+  let canDelete =
+    false;
+
+  if (isOwner) {
+
+    canDelete =
+      true;
+
+  }
+
+  else {
+
+    canDelete =
+      isMyMessage;
+
+  }
+
+  if (canDelete) {
+
+    const trash =
+      document.createElement("span");
+
+    trash.className =
+      "trash-btn";
+
+    trash.innerHTML =
+      "🗑️";
+
+    trash.onclick = () => {
+
+      openDeleteModal(
+        key
+      );
+
+    };
+
+    messageDiv.appendChild(
+      trash
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   REFRESH PERMISSIONS
+========================================================= */
+
+function refreshPermissionsUI() {
+
+  const messages =
+    chatWindow.querySelectorAll(
+      ".message"
+    );
+
+  messages.forEach(div => {
+
+    const authorUid =
+      div.dataset.authorUid;
+
+    const role =
+      div.dataset.role;
+
+    injectTrashIcon(
+      div,
+      authorUid,
+      role
+    );
+
+  });
+
+}
+
+
+/* =========================================================
+   MUTE CHECK
+========================================================= */
+
+function checkMuteStatus() {
+
+  if (countdownInterval) {
+
+    clearInterval(
+      countdownInterval
+    );
+
+  }
+
+  const myUid =
+    firebase.auth().currentUser?.uid ||
+    sessionGuestId;
+
+  mutesRef
+    .child(myUid)
+    .on(
+      "value",
+      snapshot => {
+
+        const muteTime =
+          snapshot.val();
+
+        const now =
+          Date.now();
+
+        if (
+          muteTime &&
+          now < muteTime
+        ) {
+
+          mutedUntil =
+            muteTime;
+
+          muteOverlay.style.setProperty(
+            "display",
+            "flex",
+            "important"
+          );
+
+          messageInput.disabled =
+            true;
+
+          messageInput.blur();
+
+          countdownInterval =
+            setInterval(() => {
+
+              const currentTime =
+                Date.now();
+
+              const remaining =
+                Math.max(
+                  0,
+                  Math.floor(
+                    (
+                      mutedUntil -
+                      currentTime
+                    ) / 1000
+                  )
+                );
+
+              if (
+                remaining <= 0
+              ) {
+
+                clearInterval(
+                  countdownInterval
+                );
+
+                muteOverlay.style.setProperty(
+                  "display",
+                  "none",
+                  "important"
+                );
+
+                messageInput.disabled =
+                  false;
+
+                mutedUntil =
+                  0;
+
+                mutesRef
+                  .child(myUid)
+                  .remove();
+
+              }
+
+              else {
+
+                const mins =
+                  Math.floor(
+                    remaining / 60
+                  );
+
+                const secs =
+                  remaining % 60;
+
+                countdown.textContent =
+                  `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+
+              }
+
+            }, 1000);
+
+        }
+
+        else {
+
+          muteOverlay.style.setProperty(
+            "display",
+            "none",
+            "important"
+          );
+
+          messageInput.disabled =
+            false;
+
+          mutedUntil =
+            0;
+
+        }
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   REALTIME MESSAGE LISTENERS
+========================================================= */
+
+let initialLoad =
+  true;
+
+const messagesQuery =
+  messagesRef.limitToLast(50);
+
+messagesQuery.once(
+  "value",
+  () => {
+
+    initialLoad =
+      false;
+
+    chatWindow.scrollTop =
+      chatWindow.scrollHeight;
+
+  }
+);
+
+function isMobile() {
+
+  return window.innerWidth <= 768;
+
+}
+
+messagesQuery.on(
+  "child_added",
+  snap => {
+
+    addMessage(
+      snap.val(),
+      snap.key
+    );
+
+    setTimeout(() => {
+
+      const isNearBottom =
+        chatWindow.scrollHeight -
+        chatWindow.clientHeight <=
+        chatWindow.scrollTop + 200;
+
+      if (
+        !isMobile() &&
+        isNearBottom
+      ) {
+
+        chatWindow.scrollTo({
+
+          top:
+            chatWindow.scrollHeight,
+
+          behavior:
+            "smooth"
+
+        });
+
+      }
+
+      else if (
+        isMobile() &&
+        isNearBottom
+      ) {
+
+        chatWindow.scrollTop =
+          chatWindow.scrollHeight;
+
+      }
+
+    }, 50);
+
+  }
+);
+
+
+/* =========================================================
+   MESSAGE REMOVAL
+========================================================= */
+
+messagesRef.on(
+  "child_removed",
+  snap => {
+
+    const el =
+      chatWindow.querySelector(
+        `[data-key="${snap.key}"]`
+      );
+
+    if (!el) return;
+
+    el.style.transition =
+      "opacity 0.2s ease, transform 0.2s ease";
+
+    el.style.opacity =
+      "0";
+
+    el.style.transform =
+      "scale(0.95)";
+
+    setTimeout(
+      () => el.remove(),
+      200
+    );
+
+  }
+);
+
+
+/* =========================================================
+   MESSAGE EDITING
+========================================================= */
+
+messagesRef.on(
+  "child_changed",
+  snap => {
+
+    const el =
+      chatWindow.querySelector(
+        `[data-key="${snap.key}"]`
+      );
+
+    if (!el) return;
+
+    const msg =
+      snap.val();
+
+    const textSpan =
+      el.querySelector(
+        ".msg-text"
+      );
+
+    if (textSpan) {
+
+      textSpan.innerHTML =
+        formatMarkdown(
+          escapeHTML(
+            msg.text
+          )
+        );
+
+    }
+
+    el.dataset.authorUid =
+      msg.uid;
+
+    el.dataset.role =
+      msg.role ||
+      "member";
+
+
+    /* Remove old edited tag */
+
+    const oldEditedTag =
+      el.querySelector(
+        ".edited-tag"
+      );
+
+    if (oldEditedTag) {
+
+      oldEditedTag.remove();
+
+    }
+
+
+    /* Add edited tag if needed */
+
+    if (msg.edited) {
+
+      const editedTag =
+        document.createElement("div");
+
+      editedTag.className =
+        "edited-tag";
+
+      editedTag.textContent =
+        "(edited)";
+
+      editedTag.style.cssText =
+        "font-size:0.7rem;color:#999;margin-top:3px;";
+
+      el.appendChild(
+        editedTag
+      );
+
+    }
+
+    injectTrashIcon(
+      el,
+      msg.uid,
+      msg.role
+    );
+
+  }
+);
+
+
+/* =========================================================
+   ESCAPE = CANCEL EDIT
+========================================================= */
+
+messageInput.addEventListener(
+  "keydown",
+  e => {
+
+    if (
+      e.key !== "Escape"
+    ) {
+
+      return;
+
+    }
+
+    if (!editTarget) {
+
+      return;
+
+    }
+
+    e.preventDefault();
+
+    editTarget =
+      null;
+
+    messageInput.value =
+      "";
+
+    replyTarget =
+      null;
+
+    replyPreview.style.display =
+      "none";
+
+    showNotification(
+      "Edit cancelled"
+    );
+
+    messageInput.focus();
+
+  }
+);
+
+
+/* =========================================================
+   CANCEL REPLY
+========================================================= */
+
+cancelReplyBtn.onclick =
+  () => {
+
+    replyTarget =
+      null;
+
+    editTarget =
+      null;
+
+    replyPreview.style.display =
+      "none";
+
+    replyText.innerText =
+      "";
+
+  };
+
+
+/* =========================================================
+   AUTH
+========================================================= */
+
+let liveEmail =
+  "";
+
+let liveIsOwner =
+  false;
+
+let liveIsAdmin =
+  false;
+
+firebase.auth().onAuthStateChanged(
+  user => {
+
+    if (user) {
+
+      liveEmail =
+        user.email.toLowerCase();
+
+      isOwner =
+        liveEmail ===
+        "dragonvr@fire-breathing.com";
+
+      isAdmin =
+        [
+          "michael@smj.com",
+          "purple@not-magic.com",
+          "kizzy$$$@dabest.com"
+        ].includes(
+          liveEmail
+        );
+
+
+      /* Load saved username */
+
+      loadSavedUsername();
+
+
+      /* Owner Override button */
+
+      usernameOverrideBtn.style.display =
+        isOwner
+          ? "block"
+          : "none";
+
+
+      /* If no saved username,
+         use email prefix temporarily.
+      */
+
+      if (
+        !getSavedUsername() &&
+        !usernameInput.value.trim()
+      ) {
+
+        currentUsername =
+          user.email.split("@")[0];
+
+        usernameInput.value =
+          currentUsername;
+
+      }
+
+
+      /* Check if this user has
+         override access assigned
+      */
+
+      overrideAccessRef
+        .child(user.uid)
+        .once(
+          "value",
+          snapshot => {
+
+            usernameOverrideAccess =
+              snapshot.val() === true;
+
+          }
+        );
+
+
+      checkMuteStatus();
+
+    }
+
+    else {
+
+      isOwner =
+        false;
+
+      isAdmin =
+        false;
+
+      usernameOverrideAccess =
+        false;
+
+      currentUsername =
+        "";
+
+      usernameInput.value =
+        "";
+
+      usernameOverrideBtn.style.display =
+        "none";
+
+      loadSavedUsername();
+
+    }
+
+
+    refreshPermissionsUI();
+
+
+    const showSystem =
+      isOwner && user;
+
+    systemMessageInput.style.display =
+      showSystem
+        ? "inline-block"
+        : "none";
+
+    systemSendBtn.style.display =
+      showSystem
+        ? "inline-block"
+        : "none";
+
+  }
+);
+
+
+/* =========================================================
+   OWNER OVERRIDE
+========================================================= */
+
+usernameOverrideBtn.onclick =
+  () => {
+
+    if (!isOwner) {
+
+      showNotification(
+        "Owner access required."
+      );
+
+      return;
+
+    }
+
+    usernameOverrideAccess =
+      true;
+
+    unlockUsernameInput();
+
+    usernameInput.focus();
+
+    showNotification(
+      "Username override enabled."
+    );
+
+  };
+
+
+/* =========================================================
+   DELETE MODAL
+========================================================= */
 
 function openDeleteModal(key) {
-  messageToDeleteKey = key;
-  deleteModal.style.display = "block";
+
+  messageToDeleteKey =
+    key;
+
+  deleteModal.style.display =
+    "block";
+
 }
 
 function closeDeleteModal() {
-  deleteModal.style.display = "none";
-  messageToDeleteKey = null;
+
+  deleteModal.style.display =
+    "none";
+
+  messageToDeleteKey =
+    null;
+
 }
 
-cancelDelete.onclick = closeDeleteModal;
+cancelDelete.onclick =
+  closeDeleteModal;
 
-confirmDelete.onclick = () => {
-  if (!messageToDeleteKey) return;
+confirmDelete.onclick =
+  () => {
 
-  const messageEl = document.querySelector(
-    `[data-key="${messageToDeleteKey}"]`
+    if (!messageToDeleteKey) {
+
+      return;
+
+    }
+
+    const messageEl =
+      document.querySelector(
+        `[data-key="${messageToDeleteKey}"]`
+      );
+
+    if (!messageEl) {
+
+      showNotification(
+        "Message not found."
+      );
+
+      closeDeleteModal();
+
+      return;
+
+    }
+
+    const authorUid =
+      messageEl.dataset.authorUid;
+
+    const myUid =
+      firebase.auth()
+        .currentUser?.uid ||
+      sessionGuestId;
+
+    let allowed =
+      false;
+
+    if (isOwner) {
+
+      allowed =
+        true;
+
+    }
+
+    else if (
+      authorUid === myUid
+    ) {
+
+      allowed =
+        true;
+
+    }
+
+    if (!allowed) {
+
+      showNotification(
+        "Permission denied."
+      );
+
+      closeDeleteModal();
+
+      return;
+
+    }
+
+    messagesRef
+      .child(
+        messageToDeleteKey
+      )
+      .remove()
+      .then(() => {
+
+        showNotification(
+          "Message deleted"
+        );
+
+        closeDeleteModal();
+
+      })
+      .catch(err => {
+
+        showNotification(
+          "Delete failed: " +
+          err.message
+        );
+
+      });
+
+  };
+
+
+/* =========================================================
+   ACTUAL MESSAGE SENDER
+========================================================= */
+
+function sendChatMessage(data) {
+
+  const name =
+    data.name;
+
+  const text =
+    data.text;
+
+  const uid =
+    data.uid;
+
+  const role =
+    data.role;
+
+  const now =
+    data.now;
+
+
+  /* Cooldown */
+
+  if (
+    role === "member" &&
+    now - lastMessageTime <
+    COOLDOWN_MS
+  ) {
+
+    showNotification(
+      "Slow down"
+    );
+
+    return;
+
+  }
+
+
+  /* Create message */
+
+  const messageData = {
+
+    uid,
+
+    username:
+      name,
+
+    text:
+      role === "member"
+        ? cleanText(text)
+        : text,
+
+    role,
+
+    time:
+      now,
+
+    reply:
+      replyTarget
+        ? { ...replyTarget }
+        : null,
+
+    imageUrl:
+      selectedImageData ||
+      null
+
+  };
+
+
+  /* Send */
+
+  messagesRef.push(
+    messageData
   );
 
-  if (!messageEl) {
-    showNotification("Message not found.");
-    closeDeleteModal();
-    return;
-  }
 
-  const authorUid = messageEl.dataset.authorUid;
-  const role = messageEl.dataset.role;
+  /* Reset input */
 
-  const user = firebase.auth().currentUser;
+  messageInput.value =
+    "";
 
-  const myUid = user?.uid || sessionGuestId;
+  lastMessageTime =
+    now;
 
-  let allowed = false;
 
-// Owner can delete everything
-if (isOwner) {
-  allowed = true;
+  /* Reset reply */
+
+  replyTarget =
+    null;
+
+  replyPreview.style.display =
+    "none";
+
+  replyText.innerText =
+    "";
+
+
+  /* Reset edit */
+
+  editTarget =
+    null;
+
+
+  /* Reset image */
+
+  clearImagePreview();
+
 }
 
-// Everyone else only their own
-else if (authorUid === myUid) {
-  allowed = true;
-}
 
-  if (!allowed) {
-    showNotification("Permission denied.");
-    closeDeleteModal();
-    return;
-  }
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
 
-  messagesRef.child(messageToDeleteKey).remove()
-    .then(() => {
-      showNotification("Message deleted");
-      closeDeleteModal();
-    })
-    .catch(err => {
-      showNotification("Delete failed: " + err.message);
-    });
-};
+chatForm.onsubmit =
+  e => {
 
-// ---------------- SEND MESSAGE ----------------
-chatForm.onsubmit = e => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const user = auth.currentUser;
-  const uid = user ? user.uid : sessionGuestId; 
-  
-  const name = usernameInput.value.trim();
-  const text = messageInput.value.trim();
-  const now = Date.now();
-  
-  currentUsername = name;
+    const name =
+      usernameInput.value.trim();
 
-  // FIX: Use the globally updated state variables
-  let role = "member";
-  if (isOwner) role = "owner";
-  else if (isAdmin) role = "admin";
+    const text =
+      messageInput.value.trim();
 
-  // --- COMMAND PARSER ---
-  if (text.startsWith("/timeout") && (role === "owner" || role === "admin")) {
-    const rawContent = text.replace("/timeout", "").trim();
-    const lastSpaceIndex = rawContent.lastIndexOf(" ");
-    
-    // Check if the user provided enough arguments
-    if (lastSpaceIndex === -1) {
-      showNotification("Usage: /timeout (user) (minutes/cancel)");
-    } else {
-      const targetUser = rawContent.slice(0, lastSpaceIndex).trim();
-      const durationArg = rawContent.slice(lastSpaceIndex).trim().toLowerCase();
 
-      // Find the most recent message from this username to get their UID
-      messagesRef.orderByChild("username").equalTo(targetUser).limitToLast(1).once("value", snap => {
-        const data = snap.val();
-        if (data) {
-          const [key, entry] = Object.entries(data)[0];
-          const targetUid = entry.uid;
-          
-          const targetRole = entry?.role || "member";
+    /* Username required */
 
-      // Admins can ONLY timeout members
-        if (isAdmin && targetRole !== "member") {
-        showNotification("Admins can only timeout members.");
-        return;
-      }
-          
-          if (durationArg === "cancel") {
-            // REMOVE the mute entry from Firebase
-            mutesRef.child(targetUid).remove()
-              .then(() => showNotification(`${targetUser} has been unmuted.`))
-              .catch(err => showNotification("Error: " + err.message));
-          } else {
-            const minutes = parseInt(durationArg);
-            if (isNaN(minutes)) {
-              showNotification("Please provide a number of minutes or 'cancel'.");
-            } else {
-              const until = Date.now() + (minutes * 60 * 1000);
-              mutesRef.child(targetUid).set(until)
-                .then(() => showNotification(`${targetUser} timed out for ${minutes}m.`))
-                .catch(err => showNotification("Mute failed: " + err.message));
-            }
-          }
-        } else {
-          showNotification(`User '${targetUser}' not found in recent history.`);
-        }
-      });
+    if (!name) {
+
+      showNotification(
+        "Please enter a username."
+      );
+
+      return;
+
     }
-    messageInput.value = ""; 
-    return; 
-  }
-
-  // --- REGULAR MESSAGE LOGIC ---
-  if (now < mutedUntil) return showNotification("You are muted");
-
-  if (role === "member" && now - lastMessageTime < COOLDOWN_MS)
-    return showNotification("Slow down");
-
-  // ---------------- EDIT MODE ----------------
-if (editTarget) {
-  const newText = messageInput.value.trim();
-
-  // Safety check: prevent empty edits
-  if (!newText) {
-    showNotification("Cannot send empty edit");
-    return;
-  }
-
-  messagesRef.child(editTarget.key).update({
-    text: newText,
-    edited: true,
-    editTime: Date.now()
-  });
-
-  showNotification("Message updated");
-
-  // 🔥 HARD RESET (IMPORTANT)
-  editTarget = null;
-  messageInput.value = "";
-
-  replyTarget = null;
-  
-  return;
-}
-// NORMAL MESSAGE SEND
-messagesRef.push({
-  uid,
-  username: name,
-  text: role === "member" ? cleanText(text) : text,
-  role,
-  time: now,
-  reply: replyTarget ? { ...replyTarget } : null,
-  imageUrl: selectedImageData || null
-});
-
-// Clean up
-messageInput.value = "";
-lastMessageTime = now;
-editTarget = null;
-replyTarget = null;
-replyPreview.style.display = "none";
-replyText.innerText = "";
-selectedImage = null;
-selectedImageData = null;
-imagePreview.style.display = "none";
-imagePicker.value = "";
-}
-  
-// ---------------- TYPING ----------------
 
 
+    /* Message required */
+
+    if (!text) {
+
+      showNotification(
+        "Please enter a message."
+      );
+
+      return;
+
+    }
+
+
+    const user =
+      auth.currentUser;
+
+    const uid =
+      user
+        ? user.uid
+        : sessionGuestId;
+
+
+    currentUsername =
+      name;
+
+
+    let role =
+      "member";
+
+    if (isOwner) {
+
+      role =
+        "owner";
+
+    }
+
+    else if (isAdmin) {
+
+      role =
+        "admin";
+
+    }
+
+
+    /* =====================================================
+       OWNER COMMAND:
+       /assign-override-access [username]
+    ===================================================== */
+
+    if (
+      text.startsWith(
+        "/assign-override-access"
+      ) &&
+      isOwner
+    ) {
+
+      const targetUsername =
+        text
+          .replace(
+            "/assign-override-access",
+            ""
+          )
+          .trim();
+
+      if (!targetUsername) {
+
+        showNotification(
+          "Usage: /assign-override-access [username]"
+        );
+
+        return;
+
+      }
+
+      messagesRef
+        .orderByChild(
+          "username"
+        )
+        .equalTo(
+          targetUsername
+        )
+        .limitToLast(1)
+        .once(
+          "value",
+          snap => {
+
+            const data =
+              snap.val();
+
+            if (!data) {
+
+              showNotification(
+                `User '${targetUsername}' not found in recent history.`
+              );
+
+              return;
+
+            }
+
+            const [
+              key,
+              entry
+            ] =
+              Object.entries(
+                data
+              )[0];
+
+            const targetUid =
+              entry.uid;
+
+            if (!targetUid) {
+
+              showNotification(
+                "Could not find that user's ID."
+              );
+
+              return;
+
+            }
+
+            overrideAccessRef
+              .child(
+                targetUid
+              )
+              .set(true)
+              .then(() => {
+
+                showNotification(
+                  `Override access assigned to ${targetUsername}.`
+                );
+
+              })
+              .catch(err => {
+
+                showNotification(
+                  "Override failed: " +
+                  err.message
+                );
+
+              });
+
+          }
+        );
+
+      messageInput.value =
+        "";
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       TIMEOUT COMMAND
+    ===================================================== */
+
+    if (
+      text.startsWith(
+        "/timeout"
+      ) &&
+      (
+        role === "owner" ||
+        role === "admin"
+      )
+    ) {
+
+      const rawContent =
+        text
+          .replace(
+            "/timeout",
+            ""
+          )
+          .trim();
+
+      const lastSpaceIndex =
+        rawContent.lastIndexOf(
+          " "
+        );
+
+      if (
+        lastSpaceIndex === -1
+      ) {
+
+        showNotification(
+          "Usage: /timeout (user) (minutes/cancel)"
+        );
+
+      }
+
+      else {
+
+        const targetUser =
+          rawContent
+            .slice(
+              0,
+              lastSpaceIndex
+            )
+            .trim();
+
+        const durationArg =
+          rawContent
+            .slice(
+              lastSpaceIndex
+            )
+            .trim()
+            .toLowerCase();
+
+
+        messagesRef
+          .orderByChild(
+            "username"
+          )
+          .equalTo(
+            targetUser
+          )
+          .limitToLast(1)
+          .once(
+            "value",
+            snap => {
+
+              const data =
+                snap.val();
+
+              if (data) {
+
+                const [
+                  key,
+                  entry
+                ] =
+                  Object.entries(
+                    data
+                  )[0];
+
+                const targetUid =
+                  entry.uid;
+
+                const targetRole =
+                  entry?.role ||
+                  "member";
+
+
+                /* Admins only timeout members */
+
+                if (
+                  isAdmin &&
+                  targetRole !==
+                    "member"
+                ) {
+
+                  showNotification(
+                    "Admins can only timeout members."
+                  );
+
+                  return;
+
+                }
+
+
+                /* Cancel timeout */
+
+                if (
+                  durationArg ===
+                  "cancel"
+                ) {
+
+                  mutesRef
+                    .child(
+                      targetUid
+                    )
+                    .remove()
+                    .then(() => {
+
+                      showNotification(
+                        `${targetUser} has been unmuted.`
+                      );
+
+                    })
+                    .catch(err => {
+
+                      showNotification(
+                        "Error: " +
+                        err.message
+                      );
+
+                    });
+
+                }
+
+                /* Apply timeout */
+
+                else {
+
+                  const minutes =
+                    parseInt(
+                      durationArg
+                    );
+
+                  if (
+                    isNaN(
+                      minutes
+                    )
+                  ) {
+
+                    showNotification(
+                      "Please provide a number of minutes or 'cancel'."
+                    );
+
+                  }
+
+                  else {
+
+                    const until =
+                      Date.now() +
+                      minutes *
+                      60 *
+                      1000;
+
+                    mutesRef
+                      .child(
+                        targetUid
+                      )
+                      .set(
+                        until
+                      )
+                      .then(() => {
+
+                        showNotification(
+                          `${targetUser} timed out for ${minutes}m.`
+                        );
+
+                      })
+                      .catch(err => {
+
+                        showNotification(
+                          "Mute failed: " +
+                          err.message
+                        );
+
+                      });
+
+                  }
+
+                }
+
+              }
+
+              else {
+
+                showNotification(
+                  `User '${targetUser}' not found in recent history.`
+                );
+
+              }
+
+            }
+          );
+
+      }
+
+      messageInput.value =
+        "";
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       MUTED CHECK
+    ===================================================== */
+
+    if (
+      Date.now() <
+      mutedUntil
+    ) {
+
+      showNotification(
+        "You are muted"
+      );
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       EDIT MODE
+    ===================================================== */
+
+    if (editTarget) {
+
+      const newText =
+        messageInput.value.trim();
+
+      if (!newText) {
+
+        showNotification(
+          "Cannot send empty edit"
+        );
+
+        return;
+
+      }
+
+      messagesRef
+        .child(
+          editTarget.key
+        )
+        .update({
+
+          text:
+            newText,
+
+          edited:
+            true,
+
+          editTime:
+            Date.now()
+
+        });
+
+      showNotification(
+        "Message updated"
+      );
+
+      editTarget =
+        null;
+
+      messageInput.value =
+        "";
+
+      replyTarget =
+        null;
+
+      replyPreview.style.display =
+        "none";
+
+      replyText.innerText =
+        "";
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       SAVED USERNAME CHECK
+    ===================================================== */
+
+    const savedUsername =
+      getSavedUsername();
+
+
+    /* Existing saved username */
+
+    if (savedUsername) {
+
+      if (
+        name !==
+        savedUsername
+      ) {
+
+        /* Owner can bypass
+           ONLY after clicking Override.
+        */
+
+        if (
+          isOwner &&
+          usernameOverrideAccess
+        ) {
+
+          /* Allowed */
+
+        }
+
+        else {
+
+          usernameInput.value =
+            savedUsername;
+
+          currentUsername =
+            savedUsername;
+
+          showNotification(
+            "Your username is locked."
+          );
+
+          return;
+
+        }
+
+      }
+
+    }
+
+
+    /* =====================================================
+       FIRST USERNAME:
+       ASK FOR CONFIRMATION
+    ===================================================== */
+
+    else if (
+      !usernameOverrideAccess
+    ) {
+
+      pendingUsernameMessage = {
+
+        name,
+
+        text,
+
+        uid,
+
+        role,
+
+        now:
+          Date.now()
+
+      };
+
+      showUsernameConfirmation();
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       COOLDOWN
+    ===================================================== */
+
+    const now =
+      Date.now();
+
+    if (
+      role === "member" &&
+      now - lastMessageTime <
+      COOLDOWN_MS
+    ) {
+
+      showNotification(
+        "Slow down"
+      );
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       SEND
+    ===================================================== */
+
+    sendChatMessage({
+
+      name,
+
+      text,
+
+      uid,
+
+      role,
+
+      now
+
+    });
+
+  };
+
+
+/* =========================================================
+   TYPING INDICATOR
+========================================================= */
 
 function setTyping(state) {
 
+  if (!currentUsername) {
 
+    return;
 
-  if (!currentUsername) return;
+  }
 
+  const typingId =
+    auth.currentUser?.uid ||
+    `guest_${currentUsername}`;
 
-
-
-
-
-
-  const typingId = auth.currentUser?.uid || `guest_${currentUsername}`;
-
-
-
-  const ref = typingRef.child(typingId);
-
-
-
-
-
-
+  const ref =
+    typingRef.child(
+      typingId
+    );
 
   if (state) {
 
+    ref.set({
 
+      username:
+        currentUsername,
 
-    ref.set({ username: currentUsername, time: Date.now() });
+      time:
+        Date.now()
 
+    });
 
+    if (typingTimeout) {
 
+      clearTimeout(
+        typingTimeout
+      );
 
+    }
 
+    typingTimeout =
+      setTimeout(
+        () => setTyping(false),
+        3000
+      );
 
+  }
 
-    if (typingTimeout) clearTimeout(typingTimeout);
-
-
-
-    typingTimeout = setTimeout(() => setTyping(false), 3000);
-
-
-
-  } else {
-
-
+  else {
 
     ref.remove();
 
-
-
   }
-
-
 
 }
 
+let typingThrottle =
+  false;
 
+messageInput.addEventListener(
+  "input",
+  () => {
 
+    if (typingThrottle) {
 
+      return;
 
+    }
 
+    typingThrottle =
+      true;
 
-let typingThrottle = false;
+    setTyping(
+      true
+    );
 
+    setTimeout(
+      () => {
 
+        typingThrottle =
+          false;
 
-
-
-
-
-messageInput.addEventListener("input", () => {
-
-
-
-  if (typingThrottle) return;
-
-
-
-  typingThrottle = true;
-
-
-
-
-
-
-
-  setTyping(true);
-
-
-
-
-
-
-
-  setTimeout(() => {
-
-
-
-    typingThrottle = false;
-
-
-
-  }, 1500);
-
-
-
-});
-
-systemSendBtn.onclick = sendSystemMessage;
-
-
-
-
-
-
-
-systemMessageInput.addEventListener("keydown", e => {
-
-
-
-  if (e.key === "Enter") {
-
-
-
-    e.preventDefault();
-
-
-
-    sendSystemMessage();
-
-
+      },
+      1500
+    );
 
   }
+);
+
+messageInput.addEventListener(
+  "blur",
+  () => {
+
+    setTyping(
+      false
+    );
+
+  }
+);
 
 
+/* =========================================================
+   USERNAME INPUT
+========================================================= */
 
-});
+const handleUsernameChange =
+  () => {
 
+    if (
+      usernameInput.readOnly &&
+      !usernameOverrideAccess &&
+      !isOwner
+    ) {
 
+      const savedUsername =
+        getSavedUsername();
 
+      if (savedUsername) {
 
+        usernameInput.value =
+          savedUsername;
 
+        currentUsername =
+          savedUsername;
 
+      }
 
-messageInput.addEventListener("blur", () => {
-  setTyping(false);
-});
+      return;
 
-// --- CONSOLIDATED USERNAME & MUTE LOGIC --- 
-const handleUsernameChange = () => {
-    const newName = usernameInput.value.trim();
-    if (newName !== currentUsername) {
-        currentUsername = newName;
-        // Only ping the database once the user stops typing for 500ms
-        clearTimeout(window.muteCheckTimeout);
-        window.muteCheckTimeout = setTimeout(() => {
-            mutesRef.once("value", checkMuteStatus);
-        }, 500);
     }
-};
 
-usernameInput.addEventListener("input", handleUsernameChange);
+    const newName =
+      usernameInput.value.trim();
 
-usernameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        handleUsernameChange();
+    currentUsername =
+      newName;
+
+  };
+
+usernameInput.addEventListener(
+  "input",
+  handleUsernameChange
+);
+
+usernameInput.addEventListener(
+  "keydown",
+  e => {
+
+    if (
+      e.key === "Enter"
+    ) {
+
+      e.preventDefault();
+
+      handleUsernameChange();
+
     }
-});
 
-// Typing listener (Corrected to avoid self-detection)
-typingRef.on("value", snap => {
-    const data = snap.val() || {};
-    const now = Date.now();
-    const myUid = auth.currentUser?.uid || `guest_${currentUsername}`;
+  }
+);
 
-    const users = Object.entries(data)
-        .filter(([id, u]) => id !== myUid && u.time && now - u.time < 5000)
-        .map(([id, u]) => u.username);
+
+/* =========================================================
+   TYPING LISTENER
+========================================================= */
+
+typingRef.on(
+  "value",
+  snap => {
+
+    const data =
+      snap.val() || {};
+
+    const now =
+      Date.now();
+
+    const myUid =
+      auth.currentUser?.uid ||
+      `guest_${currentUsername}`;
+
+    const users =
+      Object.entries(data)
+
+        .filter(
+          ([id, u]) =>
+            id !== myUid &&
+            u.time &&
+            now - u.time < 5000
+        )
+
+        .map(
+          ([id, u]) =>
+            u.username
+        );
 
     if (!users.length) {
-        typingIndicator.style.visibility = "hidden";
-        return;
+
+      typingIndicator.style.visibility =
+        "hidden";
+
+      return;
+
     }
 
-    typingIndicator.style.visibility = "visible";
+    typingIndicator.style.visibility =
+      "visible";
+
     typingText.textContent =
-        users.join(", ") + (users.length === 1 ? " is typing..." : " are typing...");
-});
+      users.join(", ") +
+      (
+        users.length === 1
+          ? " is typing..."
+          : " are typing..."
+      );
 
-// ---------------- SYSTEM MESSAGE ----------------
+  }
+);
 
 
+/* =========================================================
+   SYSTEM MESSAGE
+========================================================= */
 
 function sendSystemMessage() {
 
+  if (!isOwner) {
 
+    return;
 
-  if (!isOwner) return;
+  }
 
+  const text =
+    systemMessageInput.value.trim();
 
+  if (!text) {
 
+    return;
 
-
-
-
-  const text = systemMessageInput.value.trim();
-
-
-
-  if (!text) return;
-
-
+  }
 
   messagesRef.push({
 
-    uid: "system",
+    uid:
+      "system",
 
-    username: "System",
+    username:
+      "System",
 
     text,
 
-    role: "system",
+    role:
+      "system",
 
-    time: Date.now()
+    time:
+      Date.now()
 
   });
 
-
-
-  systemMessageInput.value = "";
+  systemMessageInput.value =
+    "";
 
 }
 
+systemSendBtn.onclick =
+  sendSystemMessage;
 
+systemMessageInput.addEventListener(
+  "keydown",
+  e => {
 
-// ---------------- LOGIN ----------------
-ownerLoginBtn.onclick = () => {
-
-  auth.signInWithEmailAndPassword(
-    ownerEmail.value.trim(),
-    ownerPassword.value
-  )
-
-  .catch(err => {
-
-    // Wrong email/password
     if (
-      err.code === "auth/invalid-login-credentials" ||
-      err.code === "auth/user-not-found" ||
-      err.code === "auth/wrong-password" ||
-      err.code === "auth/invalid-email"
+      e.key === "Enter"
     ) {
-      showNotification("Invalid Credentials");
+
+      e.preventDefault();
+
+      sendSystemMessage();
+
     }
 
-    // Everything else
-    else {
-      showNotification("Login failed");
-      console.error(err);
-    }
-
-  });
-
-};
-
-// ---------------- LOGOUT ----------------
-logoutBtn.onclick = () => {
-  if (!auth.currentUser) {
-    showNotification("You're already logged out, dum–dum.");
-    return;
   }
-
-  auth.signOut().then(() => {
-    isOwner = false;
-    isAdmin = false;
-    currentUsername = "";
-    usernameInput.value = "";
-
-    showNotification("Logged out successfully");
-  });
-};
+);
 
 
+/* =========================================================
+   MUTE LISTENER
+========================================================= */
+
+mutesRef.on(
+  "value",
+  checkMuteStatus
+);
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+ownerLoginBtn.onclick =
+  () => {
+
+    auth
+      .signInWithEmailAndPassword(
+        ownerEmail.value.trim(),
+        ownerPassword.value
+      )
+
+      .catch(err => {
+
+        if (
+          err.code ===
+            "auth/invalid-login-credentials" ||
+          err.code ===
+            "auth/user-not-found" ||
+          err.code ===
+            "auth/wrong-password" ||
+          err.code ===
+            "auth/invalid-email"
+        ) {
+
+          showNotification(
+            "Invalid Credentials"
+          );
+
+        }
+
+        else {
+
+          showNotification(
+            "Login failed"
+          );
+
+          console.error(
+            err
+          );
+
+        }
+
+      });
+
+  };
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+logoutBtn.onclick =
+  () => {
+
+    if (!auth.currentUser) {
+
+      showNotification(
+        "You're already logged out, dum–dum."
+      );
+
+      return;
+
+    }
+
+    auth
+      .signOut()
+      .then(() => {
+
+        isOwner =
+          false;
+
+        isAdmin =
+          false;
+
+        usernameOverrideAccess =
+          false;
+
+        currentUsername =
+          "";
+
+        usernameInput.value =
+          "";
+
+        usernameOverrideBtn.style.display =
+          "none";
+
+        showNotification(
+          "Logged out successfully"
+        );
+
+      });
+
+  };
 
 </script>
 
+
+<!-- =======================================================
+     ANTI-PIRACY
+======================================================= -->
+
 <script>
-// 1. Disable Right-Click
-document.addEventListener('contextmenu', function(e) {
-  e.preventDefault();
-  triggerAntiPiracy();
-});
 
-// 2. Disable Common DevTools Keyboard Shortcuts
-document.addEventListener('keydown', function(e) {
-  // F12
-  if (e.key === "F12" || e.keyCode === 123) {
-    e.preventDefault();
-    triggerAntiPiracy();
-  }
-  // Ctrl + Shift + I (Inspect) or Ctrl + Shift + J (Console) or Ctrl + Shift + C (Element Selector)
-  if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
-    e.preventDefault();
-    triggerAntiPiracy();
-  }
-  // Ctrl + U (View Source)
-  if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.keyCode === 85)) {
-    e.preventDefault();
-    triggerAntiPiracy();
-  }
-});
+/* Disable right-click */
 
-// 3. Redirect to your Anti-Piracy Page
+document.addEventListener(
+  "contextmenu",
+  function(e) {
+
+    e.preventDefault();
+
+    triggerAntiPiracy();
+
+  }
+);
+
+
+/* Disable common DevTools shortcuts */
+
+document.addEventListener(
+  "keydown",
+  function(e) {
+
+    /* F12 */
+
+    if (
+      e.key === "F12" ||
+      e.keyCode === 123
+    ) {
+
+      e.preventDefault();
+
+      triggerAntiPiracy();
+
+    }
+
+
+    /* Ctrl + Shift + I
+       Ctrl + Shift + J
+       Ctrl + Shift + C
+    */
+
+    if (
+      e.ctrlKey &&
+      e.shiftKey &&
+      (
+        e.key === "I" ||
+        e.key === "J" ||
+        e.key === "C" ||
+        e.keyCode === 73 ||
+        e.keyCode === 74 ||
+        e.keyCode === 67
+      )
+    ) {
+
+      e.preventDefault();
+
+      triggerAntiPiracy();
+
+    }
+
+
+    /* Ctrl + U */
+
+    if (
+      e.ctrlKey &&
+      (
+        e.key === "u" ||
+        e.key === "U" ||
+        e.keyCode === 85
+      )
+    ) {
+
+      e.preventDefault();
+
+      triggerAntiPiracy();
+
+    }
+
+  }
+);
+
+
+/* Redirect */
+
 function triggerAntiPiracy() {
-  // Replace this with the actual URL path to your anti-piracy page
-  window.location.href = "/anti-piracy.html"; 
+
+  window.location.href =
+    "/anti-piracy.html";
+
 }
+
 </script>
 
 </body>
-
 </html>
