@@ -1947,18 +1947,13 @@ usernameNotYet.onclick = () => {
 usernameProceed.onclick = () => {
 
   if (!pendingUsernameMessage) {
-
     hideUsernameConfirmation();
-
     return;
-
   }
 
-  const name =
-    usernameInput.value.trim();
+  const name = usernameInput.value.trim();
 
   if (!name) {
-
     hideUsernameConfirmation();
 
     showNotification(
@@ -1966,26 +1961,26 @@ usernameProceed.onclick = () => {
     );
 
     return;
-
   }
 
   saveUsername(name);
 
-  currentUsername =
-    name;
+  currentUsername = name;
 
   lockUsernameInput();
 
+  // IMPORTANT:
+  // Register the username in Firebase so the owner
+  // can find this member with /assign-override-access.
+  registerUsername();
+
   hideUsernameConfirmation();
 
-  const pending =
-    pendingUsernameMessage;
+  const pending = pendingUsernameMessage;
 
-  pendingUsernameMessage =
-    null;
+  pendingUsernameMessage = null;
 
   sendChatMessage(pending);
-
 };
 
 
@@ -2870,7 +2865,9 @@ firebase.auth().onAuthStateChanged(
 
 loadSavedUsername();
 
-registerUsername();
+if (getSavedUsername()) {
+  registerUsername();
+}
 
 
       /* Owner Override button */
@@ -2898,7 +2895,13 @@ registerUsername();
 
       }
 
-
+      // Register the temporary username too.
+// This allows the owner to find the member even
+// before they send their first message.
+if (!getSavedUsername() && usernameInput.value.trim()) {
+  registerUsername();
+}
+      
       /* Check if this user has
          override access assigned
       */
@@ -3325,49 +3328,104 @@ chatForm.onsubmit =
 
 
     /* =====================================================
-   OWNER COMMAND: /assign-override-access [username]
+   OWNER COMMAND:
+   /assign-override-access [username]
 ===================================================== */
 
-if (text.startsWith("/assign-override-access") && isOwner) {
-  const targetUsername = text.replace("/assign-override-access", "").trim();
+if (
+  text.toLowerCase().startsWith("/assign-override-access") &&
+  isOwner
+) {
+
+  const targetUsername =
+    text
+      .slice("/assign-override-access".length)
+      .trim();
 
   if (!targetUsername) {
-    showNotification("Usage: /assign-override-access [username]");
+
+    showNotification(
+      "Usage: /assign-override-access [username]"
+    );
+
     return;
   }
 
   usersRef
-    .orderByChild("username")
-    .equalTo(targetUsername)
-    .once("value", snapshot => {
-      const data = snapshot.val();
+    .once("value")
+    .then(snapshot => {
 
-      if (!data) {
-        showNotification(`User '${targetUsername}' not found.`);
+      const users =
+        snapshot.val() || {};
+
+      const targetEntry =
+        Object.entries(users).find(
+          ([uid, user]) =>
+            user &&
+            typeof user.username === "string" &&
+            user.username.toLowerCase() ===
+              targetUsername.toLowerCase()
+        );
+
+      if (!targetEntry) {
+
+        showNotification(
+          `User '${targetUsername}' not found.`
+        );
+
         return;
       }
 
-      const targetUser = Object.values(data)[0];
-      const targetUid = targetUser?.uid;
-
-      if (!targetUid) {
-        showNotification("Could not find that user's ID.");
-        return;
-      }
+      const [targetUid, targetUser] =
+        targetEntry;
 
       overrideAccessRef
         .child(targetUid)
         .set(true)
         .then(() => {
-          showNotification(`Override access assigned to ${targetUsername}.`);
+
+          showNotification(
+            `Override access assigned to ${targetUser.username}.`
+          );
+
+          console.log(
+            "Override access granted:",
+            targetUser.username,
+            targetUid
+          );
+
         })
         .catch(err => {
-          console.error("Override command error:", err);
-          showNotification("Override failed: " + err.message);
+
+          console.error(
+            "Override command error:",
+            err
+          );
+
+          showNotification(
+            "Override failed: " +
+            err.message
+          );
+
         });
+
+    })
+    .catch(err => {
+
+      console.error(
+        "User lookup error:",
+        err
+      );
+
+      showNotification(
+        "Could not search users: " +
+        err.message
+      );
+
     });
 
   messageInput.value = "";
+
   return;
 }
 
