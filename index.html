@@ -1914,7 +1914,11 @@ function registerUsername() {
     .child(uid)
     .set({
       username: name,
+      usernameLower: name.toLowerCase(),
       uid: uid
+    })
+    .catch(err => {
+      console.error("Failed to register username:", err);
     });
 
 }
@@ -3382,9 +3386,9 @@ if (
   }
 
   usersRef
-    .orderByChild("username")
-    .equalTo(targetUsername)
-    .once("value")
+  .orderByChild("usernameLower")
+  .equalTo(targetUsername.toLowerCase())
+  .once("value")
     .then(snapshot => {
 
       const users = snapshot.val();
