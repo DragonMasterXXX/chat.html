@@ -1497,6 +1497,9 @@ const mutesRef =
 const overrideAccessRef =
   db.ref("usernameOverrideAccess");
 
+const usersRef =
+  db.ref("chatUsers");
+
 function watchOverrideAccess() {
 
   const uid = getMyUid();
@@ -1841,6 +1844,24 @@ function clearSavedUsername() {
   localStorage.removeItem(
     getSavedUsernameKey()
   );
+
+}
+
+function registerUsername() {
+
+  const uid = getMyUid();
+  const name = usernameInput.value.trim();
+
+  if (!uid || !name) {
+    return;
+  }
+
+  usernamesRef
+    .child(uid)
+    .set({
+      username: name,
+      uid: uid
+    });
 
 }
 
@@ -2847,7 +2868,9 @@ firebase.auth().onAuthStateChanged(
 
       /* Load saved username */
 
-      loadSavedUsername();
+loadSavedUsername();
+
+registerUsername();
 
 
       /* Owner Override button */
@@ -3181,6 +3204,8 @@ function sendChatMessage(data) {
   currentUsername =
     name;
 
+  registerUsername();
+
   usernameOverrideAccess =
     false;
 
@@ -3300,111 +3325,96 @@ chatForm.onsubmit =
 
 
     /* =====================================================
-       OWNER COMMAND:
-       /assign-override-access [username]
-    ===================================================== */
+   OWNER COMMAND:
+   /assign-override-access [username]
+===================================================== */
 
-    if (
-      text.startsWith(
-        "/assign-override-access"
-      ) &&
-      isOwner
-    ) {
+if (
+  text.startsWith("/assign-override-access") &&
+  isOwner
+) {
 
-      const targetUsername =
-        text
-          .replace(
-            "/assign-override-access",
-            ""
-          )
-          .trim();
+  const targetUsername =
+    text
+      .replace("/assign-override-access", "")
+      .trim();
 
-      if (!targetUsername) {
+  if (!targetUsername) {
+
+    showNotification(
+      "Usage: /assign-override-access [username]"
+    );
+
+    return;
+
+  }
+
+  usernamesRef
+    .orderByChild("username")
+    .equalTo(targetUsername)
+    .once("value")
+    .then(snapshot => {
+
+      const data =
+        snapshot.val();
+
+      if (!data) {
 
         showNotification(
-          "Usage: /assign-override-access [username]"
+          `User '${targetUsername}' not found.`
         );
 
         return;
 
       }
 
-      messagesRef
-        .orderByChild(
-          "username"
-        )
-        .equalTo(
-          targetUsername
-        )
-        .limitToLast(1)
-        .once(
-          "value",
-          snap => {
+      const targetUser =
+        Object.values(data)[0];
 
-            const data =
-              snap.val();
+      const targetUid =
+        targetUser.uid;
 
-            if (!data) {
+      if (!targetUid) {
 
-              showNotification(
-                `User '${targetUsername}' not found in recent history.`
-              );
-
-              return;
-
-            }
-
-            const [
-              key,
-              entry
-            ] =
-              Object.entries(
-                data
-              )[0];
-
-            const targetUid =
-              entry.uid;
-
-            if (!targetUid) {
-
-              showNotification(
-                "Could not find that user's ID."
-              );
-
-              return;
-
-            }
-
-            overrideAccessRef
-              .child(
-                targetUid
-              )
-              .set(true)
-              .then(() => {
-
-                showNotification(
-                  `Override access assigned to ${targetUsername}.`
-                );
-
-              })
-              .catch(err => {
-
-                showNotification(
-                  "Override failed: " +
-                  err.message
-                );
-
-              });
-
-          }
+        showNotification(
+          "Could not find that user's ID."
         );
 
-      messageInput.value =
-        "";
+        return;
 
-      return;
+      }
 
-    }
+      return overrideAccessRef
+        .child(targetUid)
+        .set(true);
+
+    })
+    .then(() => {
+
+      showNotification(
+        `Override access assigned to ${targetUsername}.`
+      );
+
+    })
+    .catch(err => {
+
+      console.error(
+        "Override command error:",
+        err
+      );
+
+      showNotification(
+        "Override failed: " +
+        err.message
+      );
+
+    });
+
+  messageInput.value = "";
+
+  return;
+
+}
 
 
     /* =====================================================
