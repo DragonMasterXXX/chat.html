@@ -374,11 +374,10 @@ main {
 }
 
 #usernameContainer {
-  display: flex;
-  flex-direction: column;
-
+  position: relative;
   flex: 1;
   min-width: 0;
+  height: 42px;
 }
 
 #usernameContainer #username {
@@ -387,9 +386,15 @@ main {
 }
 
 #username {
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+
   padding: 0.5rem;
+
   border-radius: 20px;
   border: 2px solid #ff4500;
+
   background: #220900;
   color: #fff;
   outline: none;
@@ -411,6 +416,7 @@ main {
 form {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
 #messageInputWrapper {
@@ -421,12 +427,26 @@ form {
 
   position: relative;
 
+  height: 42px;
+  box-sizing: border-box;
+
   border: 2px solid #ff4500;
   border-radius: 20px;
 
   background: #220900;
 
   overflow: hidden;
+}
+
+/* ---------------- SEND BUTTON ---------------- */
+
+#chatForm > button[type="submit"] {
+  height: 42px;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 0 1.2rem;
+  margin-top: 2px;
+  align-self: flex-start;
 }
 
 #messageInput {
@@ -438,6 +458,8 @@ form {
   padding: 0.5rem;
 
   width: 100%;
+  height: 100%;
+
   box-sizing: border-box;
 
   color: #fff;
@@ -521,10 +543,10 @@ button {
 
 #usernameOverrideBtn {
   display: none;
+  position: absolute;
 
-  align-self: flex-start;
-
-  margin-top: 4px;
+  top: calc(100% + 4px);
+  left: 0;
 
   background: #ff4500;
   color: #fff;
@@ -538,6 +560,7 @@ button {
   font-weight: bold;
 
   cursor: pointer;
+  z-index: 20;
 }
 
 #usernameOverrideBtn:hover {
@@ -1388,6 +1411,8 @@ let isAdmin = false;
 
 let usernameOverrideAccess = false;
 
+let usernameWasChanged = false;
+  
 let pendingUsernameMessage = null;
 
 let lastMessageTime = 0;
@@ -1472,6 +1497,31 @@ const mutesRef =
 const overrideAccessRef =
   db.ref("usernameOverrideAccess");
 
+function watchOverrideAccess() {
+
+  const uid = getMyUid();
+
+  overrideAccessRef
+    .child(uid)
+    .on("value", snapshot => {
+
+      usernameOverrideAccess =
+        snapshot.val() === true;
+
+      if (usernameOverrideAccess) {
+
+        unlockUsernameInput();
+
+        showNotification(
+          "Username unlocked!"
+        );
+
+      }
+
+    });
+
+}
+  
 document.getElementById(
   "currentYear"
 ).textContent =
@@ -2831,16 +2881,19 @@ firebase.auth().onAuthStateChanged(
       */
 
       overrideAccessRef
-        .child(user.uid)
-        .once(
-          "value",
-          snapshot => {
+  .child(user.uid)
+  .on("value", snapshot => {
 
-            usernameOverrideAccess =
-              snapshot.val() === true;
+    usernameOverrideAccess =
+      snapshot.val() === true;
 
-          }
-        );
+    if (usernameOverrideAccess) {
+      unlockUsernameInput();
+    } else {
+      loadSavedUsername();
+    }
+
+  });
 
 
       checkMuteStatus();
@@ -2874,7 +2927,8 @@ firebase.auth().onAuthStateChanged(
 
     refreshPermissionsUI();
 
-
+    watchOverrideAccess();
+    
     const showSystem =
       isOwner && user;
 
@@ -3117,7 +3171,27 @@ function sendChatMessage(data) {
     messageData
   );
 
+  if (
+  usernameOverrideAccess &&
+  !isOwner
+) {
 
+  saveUsername(name);
+
+  currentUsername =
+    name;
+
+  usernameOverrideAccess =
+    false;
+
+  lockUsernameInput();
+
+  overrideAccessRef
+    .child(getMyUid())
+    .remove();
+
+}
+  
   /* Reset input */
 
   messageInput.value =
@@ -3643,34 +3717,31 @@ chatForm.onsubmit =
         savedUsername
       ) {
 
-        /* Owner can bypass
-           ONLY after clicking Override.
-        */
+        /* Override access allows the user
+   to change their username once.
+*/
 
-        if (
-          isOwner &&
-          usernameOverrideAccess
-        ) {
+if (usernameOverrideAccess) {
 
-          /* Allowed */
+  /* Allowed */
 
-        }
+}
 
-        else {
+else {
 
-          usernameInput.value =
-            savedUsername;
+  usernameInput.value =
+    savedUsername;
 
-          currentUsername =
-            savedUsername;
+  currentUsername =
+    savedUsername;
 
-          showNotification(
-            "Your username is locked."
-          );
+  showNotification(
+    "Your username is locked."
+  );
 
-          return;
+  return;
 
-        }
+}
 
       }
 
