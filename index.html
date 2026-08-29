@@ -1502,42 +1502,74 @@ const overrideAccessRef =
 const usersRef =
   db.ref("chatUsers");
 
+let overrideListenerRef = null;
+
 function watchOverrideAccess() {
 
-  const checkUsername = () => {
+  // Stop listening to the previous username
+  if (overrideListenerRef) {
 
-    const name =
-      usernameInput.value.trim();
+    overrideListenerRef.off();
 
-    if (!name) {
-      return;
-    }
+    overrideListenerRef = null;
 
-    const accessKey =
-      usernameAccessKey(name);
+  }
 
-    overrideAccessRef
-      .child(accessKey)
-      .on("value", snapshot => {
+  const name =
+    usernameInput.value.trim();
 
-        usernameOverrideAccess =
-          snapshot.val() === true;
+  if (!name) {
 
-        if (usernameOverrideAccess) {
+    usernameOverrideAccess = false;
 
-          unlockUsernameInput();
+    return;
 
-          showNotification(
-            "Username unlocked!"
-          );
+  }
+
+  const accessKey =
+    usernameAccessKey(name);
+
+  overrideListenerRef =
+    overrideAccessRef.child(accessKey);
+
+  overrideListenerRef.on(
+    "value",
+    snapshot => {
+
+      const hasAccess =
+        snapshot.val() === true;
+
+      usernameOverrideAccess =
+        hasAccess;
+
+      if (hasAccess) {
+
+        unlockUsernameInput();
+
+      }
+
+      else if (!isOwner) {
+
+        // No override = username must stay locked
+        const savedUsername =
+          getSavedUsername();
+
+        if (savedUsername) {
+
+          usernameInput.value =
+            savedUsername;
+
+          currentUsername =
+            savedUsername;
+
+          lockUsernameInput();
 
         }
 
-      });
+      }
 
-  };
-
-  checkUsername();
+    }
+  );
 
 }
   
@@ -3220,61 +3252,37 @@ function sendChatMessage(data) {
   );
 
   if (
-  usernameOverrideAccess &&
-  !isOwner
-) {
+    usernameOverrideAccess &&
+    !isOwner
+  ) {
 
-  saveUsername(name);
+    saveUsername(name);
 
-  currentUsername =
-    name;
+    currentUsername =
+      name;
 
-  registerUsername();
+    registerUsername();
 
-  usernameOverrideAccess =
-    false;
+    usernameOverrideAccess =
+      false;
 
-  lockUsernameInput();
+    lockUsernameInput();
 
-  overrideAccessRef
-    .child(usernameAccessKey(name))
-    .remove();
+    overrideAccessRef
+      .child(uid)
+      .remove()
+      .catch(err => {
 
-}
-  
-  /* Reset input */
+        console.error(
+          "Failed to remove username override:",
+          err
+        );
 
-  messageInput.value =
-    "";
+      });
 
-  lastMessageTime =
-    now;
-
-
-  /* Reset reply */
-
-  replyTarget =
-    null;
-
-  replyPreview.style.display =
-    "none";
-
-  replyText.innerText =
-    "";
-
-
-  /* Reset edit */
-
-  editTarget =
-    null;
-
-
-  /* Reset image */
-
-  clearImagePreview();
+  }
 
 }
-
 
 /* =========================================================
    SEND MESSAGE
@@ -3984,7 +3992,17 @@ const handleUsernameChange =
       usernameInput.value.trim();
 
     currentUsername =
-      newName;
+  newName;
+
+if (
+  !usernameInput.readOnly ||
+  usernameOverrideAccess ||
+  isOwner
+) {
+
+  watchOverrideAccess();
+
+}
 
   };
 
@@ -4005,6 +4023,7 @@ usernameInput.addEventListener(
 
       handleUsernameChange();
 
+      watchOverrideAccess();
     }
 
   }
