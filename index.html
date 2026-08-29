@@ -3373,22 +3373,44 @@ if (
     return;
   }
 
-  const accessKey =
-    usernameAccessKey(targetUsername);
+  usersRef
+    .orderByChild("username")
+    .equalTo(targetUsername)
+    .once("value")
+    .then(snapshot => {
 
-  overrideAccessRef
-    .child(accessKey)
-    .set(true)
-    .then(() => {
+      const users = snapshot.val();
 
-      showNotification(
-        `Override access assigned to ${targetUsername}.`
-      );
+      if (!users) {
 
-      console.log(
-        "Override access granted:",
-        targetUsername
-      );
+        showNotification(
+          `User '${targetUsername}' not found.`
+        );
+
+        return;
+      }
+
+      const [targetUid] =
+        Object.keys(users);
+
+      /* Give access using the user's UID */
+
+      return overrideAccessRef
+        .child(targetUid)
+        .set(true)
+        .then(() => {
+
+          showNotification(
+            `Override access assigned to ${targetUsername}.`
+          );
+
+          console.log(
+            "Override access granted:",
+            targetUsername,
+            targetUid
+          );
+
+        });
 
     })
     .catch(err => {
