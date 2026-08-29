@@ -1415,6 +1415,8 @@ let usernameWasChanged = false;
   
 let pendingUsernameMessage = null;
 
+let overrideAccessUsername = "";
+
 let lastMessageTime = 0;
 
 let messageToDeleteKey = null;
@@ -1502,26 +1504,40 @@ const usersRef =
 
 function watchOverrideAccess() {
 
-  const uid = getMyUid();
+  const checkUsername = () => {
 
-  overrideAccessRef
-    .child(uid)
-    .on("value", snapshot => {
+    const name =
+      usernameInput.value.trim();
 
-      usernameOverrideAccess =
-        snapshot.val() === true;
+    if (!name) {
+      return;
+    }
 
-      if (usernameOverrideAccess) {
+    const accessKey =
+      usernameAccessKey(name);
 
-        unlockUsernameInput();
+    overrideAccessRef
+      .child(accessKey)
+      .on("value", snapshot => {
 
-        showNotification(
-          "Username unlocked!"
-        );
+        usernameOverrideAccess =
+          snapshot.val() === true;
 
-      }
+        if (usernameOverrideAccess) {
 
-    });
+          unlockUsernameInput();
+
+          showNotification(
+            "Username unlocked!"
+          );
+
+        }
+
+      });
+
+  };
+
+  checkUsername();
 
 }
   
@@ -1543,6 +1559,12 @@ function getMyUid() {
     sessionGuestId
   );
 
+}
+
+function usernameAccessKey(name) {
+  return encodeURIComponent(
+    name.trim().toLowerCase()
+  );
 }
 
 function isMyMessage(msgUid) {
@@ -3215,7 +3237,7 @@ function sendChatMessage(data) {
   lockUsernameInput();
 
   overrideAccessRef
-    .child(getMyUid())
+    .child(usernameAccessKey(name))
     .remove();
 
 }
@@ -3351,74 +3373,33 @@ if (
     return;
   }
 
-  usersRef
-    .once("value")
-    .then(snapshot => {
+  const accessKey =
+    usernameAccessKey(targetUsername);
 
-      const users =
-        snapshot.val() || {};
+  overrideAccessRef
+    .child(accessKey)
+    .set(true)
+    .then(() => {
 
-      const targetEntry =
-        Object.entries(users).find(
-          ([uid, user]) =>
-            user &&
-            typeof user.username === "string" &&
-            user.username.toLowerCase() ===
-              targetUsername.toLowerCase()
-        );
+      showNotification(
+        `Override access assigned to ${targetUsername}.`
+      );
 
-      if (!targetEntry) {
-
-        showNotification(
-          `User '${targetUsername}' not found.`
-        );
-
-        return;
-      }
-
-      const [targetUid, targetUser] =
-        targetEntry;
-
-      overrideAccessRef
-        .child(targetUid)
-        .set(true)
-        .then(() => {
-
-          showNotification(
-            `Override access assigned to ${targetUser.username}.`
-          );
-
-          console.log(
-            "Override access granted:",
-            targetUser.username,
-            targetUid
-          );
-
-        })
-        .catch(err => {
-
-          console.error(
-            "Override command error:",
-            err
-          );
-
-          showNotification(
-            "Override failed: " +
-            err.message
-          );
-
-        });
+      console.log(
+        "Override access granted:",
+        targetUsername
+      );
 
     })
     .catch(err => {
 
       console.error(
-        "User lookup error:",
+        "Override command error:",
         err
       );
 
       showNotification(
-        "Could not search users: " +
+        "Override failed: " +
         err.message
       );
 
