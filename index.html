@@ -3252,8 +3252,14 @@ function sendChatMessage(data) {
   /* Send */
 
   messagesRef.push(
-    messageData
-  );
+  messageData
+).then(() => {
+
+  /* Clear the visible fields */
+  usernameInput.value = "";
+  messageInput.value = "";
+
+});
 
   if (
     usernameOverrideAccess &&
@@ -3385,41 +3391,73 @@ if (
     return;
   }
 
+  const usernameLower =
+    targetUsername.toLowerCase();
+
+  /* -----------------------------------------------
+     FIRST: Search registered users
+  ------------------------------------------------ */
+
   usersRef
-  .orderByChild("usernameLower")
-  .equalTo(targetUsername.toLowerCase())
-  .once("value")
+    .orderByChild("usernameLower")
+    .equalTo(usernameLower)
+    .once("value")
     .then(snapshot => {
 
       const users = snapshot.val();
 
-      if (!users) {
+      if (users) {
 
-        showNotification(
-          `User '${targetUsername}' not found.`
+        const [targetUid] =
+          Object.keys(users);
+
+        return grantUsernameOverride(
+          targetUid,
+          targetUsername
         );
 
-        return;
       }
 
-      const [targetUid] =
-        Object.keys(users);
+      /* ---------------------------------------------
+         FALLBACK: Search recent chat messages
+      --------------------------------------------- */
 
-      /* Give access using the user's UID */
+      return messagesRef
+        .orderByChild("username")
+        .equalTo(targetUsername)
+        .limitToLast(1)
+        .once("value")
+        .then(messageSnapshot => {
 
-      return overrideAccessRef
-        .child(targetUid)
-        .set(true)
-        .then(() => {
+          const messages =
+            messageSnapshot.val();
 
-          showNotification(
-            `Override access assigned to ${targetUsername}.`
-          );
+          if (!messages) {
 
-          console.log(
-            "Override access granted:",
-            targetUsername,
-            targetUid
+            showNotification(
+              `User '${targetUsername}' not found.`
+            );
+
+            return;
+
+          }
+
+          const [key, message] =
+            Object.entries(messages)[0];
+
+          if (!message.uid) {
+
+            showNotification(
+              `User '${targetUsername}' has no valid UID.`
+            );
+
+            return;
+
+          }
+
+          return grantUsernameOverride(
+            message.uid,
+            targetUsername
           );
 
         });
@@ -3444,6 +3482,34 @@ if (
   return;
 }
 
+
+/* =====================================================
+   GRANT USERNAME OVERRIDE
+===================================================== */
+
+function grantUsernameOverride(
+  targetUid,
+  targetUsername
+) {
+
+  return overrideAccessRef
+    .child(targetUid)
+    .set(true)
+    .then(() => {
+
+      showNotification(
+        `Override access assigned to ${targetUsername}.`
+      );
+
+      console.log(
+        "Override access granted:",
+        targetUsername,
+        targetUid
+      );
+
+    });
+
+}
 
     /* =====================================================
        TIMEOUT COMMAND
