@@ -3102,7 +3102,6 @@ function sendChatMessage(data) {
   const now =
     data.now;
 
-
   /* Cooldown */
 
   if (
@@ -3118,7 +3117,6 @@ function sendChatMessage(data) {
     return;
 
   }
-
 
   /* Create message */
 
@@ -3150,48 +3148,79 @@ function sendChatMessage(data) {
 
   };
 
+  /* Send message FIRST */
 
-  /* Send */
+  messagesRef
+    .push(messageData)
+    .then(() => {
 
-  messagesRef.push(
-  messageData
-).then(() => {
+      /* Clear message box */
 
-  /* Clear the visible fields */
-  messageInput.value = "";
+      messageInput.value = "";
 
-});
+      /* -----------------------------------------
+         CONSUME ONE-TIME USERNAME OVERRIDE
+      ----------------------------------------- */
 
-  if (
-    usernameOverrideAccess &&
-    !isOwner
-  ) {
+      if (
+        usernameOverrideAccess &&
+        !isOwner
+      ) {
 
-    saveUsername(name);
+        /* Save the newly chosen username */
 
-    currentUsername =
-      name;
+        saveUsername(name);
 
-    registerUsername();
+        currentUsername =
+          name;
 
-    usernameOverrideAccess =
-      false;
+        registerUsername();
 
-    lockUsernameInput();
+        /* Immediately consume the permission */
 
-    overrideAccessRef
-      .child(uid)
-      .remove()
-      .catch(err => {
+        usernameOverrideAccess =
+          false;
 
-        console.error(
-          "Failed to remove username override:",
-          err
-        );
+        /* Immediately lock the input */
 
-      });
+        lockUsernameInput();
 
-  }
+        /* Remove the permission from Firebase */
+
+        overrideAccessRef
+          .child(uid)
+          .remove()
+          .then(() => {
+
+            console.log(
+              "One-time username override consumed."
+            );
+
+          })
+          .catch(err => {
+
+            console.error(
+              "Failed to consume username override:",
+              err
+            );
+
+          });
+
+      }
+
+    })
+    .catch(err => {
+
+      console.error(
+        "Failed to send message:",
+        err
+      );
+
+      showNotification(
+        "Message failed to send."
+      );
+
+    });
 
 }
 
@@ -3962,16 +3991,6 @@ const handleUsernameChange =
     currentUsername =
   newName;
 
-if (
-  !usernameInput.readOnly ||
-  usernameOverrideAccess ||
-  isOwner
-) {
-
-  watchOverrideAccess();
-
-}
-
   };
 
 usernameInput.addEventListener(
@@ -3991,7 +4010,6 @@ usernameInput.addEventListener(
 
       handleUsernameChange();
 
-      watchOverrideAccess();
     }
 
   }
