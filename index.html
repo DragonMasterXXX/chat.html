@@ -2614,85 +2614,50 @@ function isMobile() {
 
 }
 
-messagesQuery.on(
-  "child_added",
-  snap => {
+messagesQuery.on("value", snapshot => {
 
-    addMessage(
-      snap.val(),
-      snap.key
-    );
 
-    setTimeout(() => {
 
-      const isNearBottom =
-        chatWindow.scrollHeight -
-        chatWindow.clientHeight <=
-        chatWindow.scrollTop + 200;
+      chatWindow.innerHTML = "";
 
-      if (
-        !isMobile() &&
-        isNearBottom
-      ) {
 
-        chatWindow.scrollTo({
 
-          top:
-            chatWindow.scrollHeight,
+      snapshot.forEach(child => {
 
-          behavior:
-            "smooth"
+         addMessage(child.val(), child.key);
 
-        });
+     });
 
-      }
 
-      else if (
-        isMobile() &&
-        isNearBottom
-      ) {
 
-        chatWindow.scrollTop =
-          chatWindow.scrollHeight;
+     chatWindow.scrollTop =
 
-      }
-
-    }, 50);
-
-  }
-);
+         chatWindow.scrollHeight; });  
 
 
 /* =========================================================
    MESSAGE REMOVAL
 ========================================================= */
 
-messagesQuery.on(
-  "child_removed",
-  snap => {
-    const el =
-      chatWindow.querySelector(
-        `[data-key="${snap.key}"]`
-      );
+messagesQuery.on("value", snapshot => {
 
-    if (!el) return;
 
-    el.style.transition =
-      "opacity 0.2s ease, transform 0.2s ease";
 
-    el.style.opacity =
-      "0";
+      chatWindow.innerHTML = "";
 
-    el.style.transform =
-      "scale(0.95)";
 
-    setTimeout(
-      () => el.remove(),
-      200
-    );
-  }
-);
 
+      snapshot.forEach(child => {
+
+         addMessage(child.val(), child.key);
+
+     });
+
+
+
+     chatWindow.scrollTop =
+
+         chatWindow.scrollHeight; });  
 /* =========================================================
    MESSAGE EDITING
 ========================================================= */
