@@ -2634,30 +2634,6 @@ messagesQuery.on("value", snapshot => {
 
          chatWindow.scrollHeight; });  
 
-
-/* =========================================================
-   MESSAGE REMOVAL
-========================================================= */
-
-messagesQuery.on("value", snapshot => {
-
-
-
-      chatWindow.innerHTML = "";
-
-
-
-      snapshot.forEach(child => {
-
-         addMessage(child.val(), child.key);
-
-     });
-
-
-
-     chatWindow.scrollTop =
-
-         chatWindow.scrollHeight; });  
 /* =========================================================
    MESSAGE EDITING
 ========================================================= */
@@ -2832,21 +2808,17 @@ firebase.auth().onAuthStateChanged(
 
     if (user) {
 
-      liveEmail =
-        user.email.toLowerCase();
+      liveEmail = (user.email || "").trim().toLowerCase();
 
-      isOwner =
-        liveEmail ===
-        "dragonvr@fire-breathing.com";
+isOwner =
+  liveEmail === "dragonvr@fire-breathing.com";
 
-      isAdmin =
-        [
-          "michael@smj.com",
-          "purple@not-magic.com",
-          "kizzy$$$@dabest.com"
-        ].includes(
-          liveEmail
-        );
+isAdmin =
+  [
+    "michael@smj.com",
+    "purple@not-magic.com",
+    "kizzy$$$@dabest.com"
+  ].includes(liveEmail);
 
 
       /* Load saved username */
@@ -3306,9 +3278,12 @@ if (
   isOwner
 ) {
 
+  const command =
+    "/assign-override-access";
+
   const targetUsername =
     text
-      .slice("/assign-override-access".length)
+      .slice(command.length)
       .trim();
 
   if (!targetUsername) {
@@ -3324,7 +3299,7 @@ if (
     targetUsername.toLowerCase();
 
   /* -----------------------------------------------
-     FIRST: Search registered users
+     SEARCH REGISTERED USERS FIRST
   ------------------------------------------------ */
 
   usersRef
@@ -3333,22 +3308,25 @@ if (
     .once("value")
     .then(snapshot => {
 
-      const users = snapshot.val();
+      const users =
+        snapshot.val();
 
       if (users) {
 
+        const entries =
+          Object.entries(users);
+
         const [targetUid] =
-          Object.keys(users);
+          entries[0];
 
         return grantUsernameOverride(
           targetUid,
           targetUsername
         );
-
       }
 
       /* ---------------------------------------------
-         FALLBACK: Search recent chat messages
+         FALLBACK: SEARCH CHAT MESSAGES
       --------------------------------------------- */
 
       return messagesRef
@@ -3368,11 +3346,13 @@ if (
             );
 
             return;
-
           }
 
+          const entries =
+            Object.entries(messages);
+
           const [key, message] =
-            Object.entries(messages)[0];
+            entries[0];
 
           if (!message.uid) {
 
@@ -3381,7 +3361,6 @@ if (
             );
 
             return;
-
           }
 
           return grantUsernameOverride(
@@ -3411,7 +3390,6 @@ if (
   return;
 }
 
-
 /* =====================================================
    GRANT USERNAME OVERRIDE
 ===================================================== */
@@ -3420,6 +3398,23 @@ function grantUsernameOverride(
   targetUid,
   targetUsername
 ) {
+
+  if (!targetUid) {
+
+    showNotification(
+      "Invalid user UID."
+    );
+
+    return Promise.reject(
+      new Error("Invalid user UID")
+    );
+  }
+
+  console.log(
+    "Granting override:",
+    targetUsername,
+    targetUid
+  );
 
   return overrideAccessRef
     .child(targetUid)
@@ -3441,218 +3436,192 @@ function grantUsernameOverride(
 }
 
     /* =====================================================
-       TIMEOUT COMMAND
-    ===================================================== */
+   TIMEOUT COMMAND
+===================================================== */
 
-    if (
-      text.startsWith(
-        "/timeout"
-      ) &&
-      (
-        role === "owner" ||
-        role === "admin"
+if (
+  text.startsWith("/timeout") &&
+  canTimeout()
+) {
+
+  const rawContent =
+    text
+      .replace(
+        "/timeout",
+        ""
       )
-    ) {
+      .trim();
 
-      const rawContent =
-        text
-          .replace(
-            "/timeout",
-            ""
-          )
-          .trim();
+  const lastSpaceIndex =
+    rawContent.lastIndexOf(" ");
 
-      const lastSpaceIndex =
-        rawContent.lastIndexOf(
-          " "
-        );
+  if (
+    lastSpaceIndex === -1
+  ) {
 
-      if (
-        lastSpaceIndex === -1
-      ) {
+    showNotification(
+      "Usage: /timeout (user) (minutes/cancel)"
+    );
 
-        showNotification(
-          "Usage: /timeout (user) (minutes/cancel)"
-        );
+  }
 
-      }
+  else {
 
-      else {
+    const targetUser =
+      rawContent
+        .slice(
+          0,
+          lastSpaceIndex
+        )
+        .trim();
 
-        const targetUser =
-          rawContent
-            .slice(
-              0,
-              lastSpaceIndex
-            )
-            .trim();
+    const durationArg =
+      rawContent
+        .slice(
+          lastSpaceIndex
+        )
+        .trim()
+        .toLowerCase();
 
-        const durationArg =
-          rawContent
-            .slice(
-              lastSpaceIndex
-            )
-            .trim()
-            .toLowerCase();
+    messagesRef
+      .orderByChild("username")
+      .equalTo(targetUser)
+      .limitToLast(1)
+      .once(
+        "value",
+        snap => {
 
+          const data =
+            snap.val();
 
-        messagesRef
-          .orderByChild(
-            "username"
-          )
-          .equalTo(
-            targetUser
-          )
-          .limitToLast(1)
-          .once(
-            "value",
-            snap => {
+          if (data) {
 
-              const data =
-                snap.val();
+            const [
+              key,
+              entry
+            ] =
+              Object.entries(data)[0];
 
-              if (data) {
+            const targetUid =
+              entry.uid;
 
-                const [
-                  key,
-                  entry
-                ] =
-                  Object.entries(
-                    data
-                  )[0];
-
-                const targetUid =
-                  entry.uid;
-
-                const targetRole =
-                  entry?.role ||
-                  "member";
+            const targetRole =
+              entry?.role ||
+              "member";
 
 
-                /* Admins only timeout members */
+            /* Admins can only timeout members */
 
-                if (
-                  isAdmin &&
-                  targetRole !==
-                    "member"
-                ) {
+            if (
+              !isOwner &&
+              targetRole !== "member"
+            ) {
+
+              showNotification(
+                "Admins can only timeout members."
+              );
+
+              return;
+
+            }
+
+
+            /* Cancel timeout */
+
+            if (
+              durationArg === "cancel"
+            ) {
+
+              mutesRef
+                .child(targetUid)
+                .remove()
+                .then(() => {
 
                   showNotification(
-                    "Admins can only timeout members."
+                    `${targetUser} has been unmuted.`
                   );
 
-                  return;
+                })
+                .catch(err => {
 
-                }
+                  showNotification(
+                    "Error: " +
+                    err.message
+                  );
 
+                });
 
-                /* Cancel timeout */
+            }
 
-                if (
-                  durationArg ===
-                  "cancel"
-                ) {
+            /* Apply timeout */
 
-                  mutesRef
-                    .child(
-                      targetUid
-                    )
-                    .remove()
-                    .then(() => {
+            else {
 
-                      showNotification(
-                        `${targetUser} has been unmuted.`
-                      );
+              const minutes =
+                parseInt(durationArg);
 
-                    })
-                    .catch(err => {
+              if (
+                isNaN(minutes)
+              ) {
 
-                      showNotification(
-                        "Error: " +
-                        err.message
-                      );
-
-                    });
-
-                }
-
-                /* Apply timeout */
-
-                else {
-
-                  const minutes =
-                    parseInt(
-                      durationArg
-                    );
-
-                  if (
-                    isNaN(
-                      minutes
-                    )
-                  ) {
-
-                    showNotification(
-                      "Please provide a number of minutes or 'cancel'."
-                    );
-
-                  }
-
-                  else {
-
-                    const until =
-                      Date.now() +
-                      minutes *
-                      60 *
-                      1000;
-
-                    mutesRef
-                      .child(
-                        targetUid
-                      )
-                      .set(
-                        until
-                      )
-                      .then(() => {
-
-                        showNotification(
-                          `${targetUser} timed out for ${minutes}m.`
-                        );
-
-                      })
-                      .catch(err => {
-
-                        showNotification(
-                          "Mute failed: " +
-                          err.message
-                        );
-
-                      });
-
-                  }
-
-                }
+                showNotification(
+                  "Please provide a number of minutes or 'cancel'."
+                );
 
               }
 
               else {
 
-                showNotification(
-                  `User '${targetUser}' not found in recent history.`
-                );
+                const until =
+                  Date.now() +
+                  minutes *
+                  60 *
+                  1000;
+
+                mutesRef
+                  .child(targetUid)
+                  .set(until)
+                  .then(() => {
+
+                    showNotification(
+                      `${targetUser} timed out for ${minutes}m.`
+                    );
+
+                  })
+                  .catch(err => {
+
+                    showNotification(
+                      "Mute failed: " +
+                      err.message
+                    );
+
+                  });
 
               }
 
             }
-          );
 
-      }
+          }
 
-      messageInput.value =
-        "";
+          else {
 
-      return;
+            showNotification(
+              `User '${targetUser}' not found in recent history.`
+            );
 
-    }
+          }
+
+        }
+      );
+
+  }
+
+  messageInput.value =
+    "";
+
+  return;
+
+}
 
 
     /* =====================================================
