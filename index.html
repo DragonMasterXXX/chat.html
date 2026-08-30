@@ -1510,35 +1510,26 @@ function watchOverrideAccess() {
     overrideListenerRef = null;
   }
 
-  const user =
-    firebase.auth().currentUser;
+  const user = firebase.auth().currentUser;
 
   if (!user) {
     usernameOverrideAccess = false;
     return;
   }
 
-  overrideListenerRef =
-    overrideAccessRef.child(user.uid);
+  overrideListenerRef = overrideAccessRef.child(user.uid);
 
-  overrideListenerRef.on(
-    "value",
-    snapshot => {
-      const hasAccess =
-        snapshot.val() === true;
+  overrideListenerRef.on("value", snapshot => {
+    const hasAccess = snapshot.val() === true;
 
-      usernameOverrideAccess =
-        hasAccess;
+    usernameOverrideAccess = hasAccess;
 
-      if (hasAccess) {
-        unlockUsernameInput();
-      }
-
-      else if (!isOwner) {
-        loadSavedUsername();
-      }
+    if (hasAccess) {
+      unlockUsernameInput();
+    } else if (!isOwner) {
+      loadSavedUsername();
     }
-  );
+  });
 }
   
 document.getElementById(
@@ -2865,21 +2856,6 @@ if (!getSavedUsername() && usernameInput.value.trim()) {
       /* Check if this user has
          override access assigned
       */
-
-      overrideAccessRef
-  .child(user.uid)
-  .on("value", snapshot => {
-
-    usernameOverrideAccess =
-      snapshot.val() === true;
-
-    if (usernameOverrideAccess) {
-      unlockUsernameInput();
-    } else {
-      loadSavedUsername();
-    }
-
-  });
 
 
       checkMuteStatus();
