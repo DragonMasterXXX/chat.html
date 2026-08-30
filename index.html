@@ -1505,37 +1505,25 @@ const usersRef =
 let overrideListenerRef = null;
 
 function watchOverrideAccess() {
-
-  // Stop listening to the previous username
   if (overrideListenerRef) {
-
     overrideListenerRef.off();
-
     overrideListenerRef = null;
-
   }
 
-  const name =
-    usernameInput.value.trim();
+  const user =
+    firebase.auth().currentUser;
 
-  if (!name) {
-
+  if (!user) {
     usernameOverrideAccess = false;
-
     return;
-
   }
-
-  const accessKey =
-    usernameAccessKey(name);
 
   overrideListenerRef =
-    overrideAccessRef.child(accessKey);
+    overrideAccessRef.child(user.uid);
 
   overrideListenerRef.on(
     "value",
     snapshot => {
-
       const hasAccess =
         snapshot.val() === true;
 
@@ -1543,34 +1531,14 @@ function watchOverrideAccess() {
         hasAccess;
 
       if (hasAccess) {
-
         unlockUsernameInput();
-
       }
 
       else if (!isOwner) {
-
-        // No override = username must stay locked
-        const savedUsername =
-          getSavedUsername();
-
-        if (savedUsername) {
-
-          usernameInput.value =
-            savedUsername;
-
-          currentUsername =
-            savedUsername;
-
-          lockUsernameInput();
-
-        }
-
+        loadSavedUsername();
       }
-
     }
   );
-
 }
   
 document.getElementById(
