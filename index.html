@@ -1505,31 +1505,47 @@ const usersRef =
 let overrideListenerRef = null;
 
 function watchOverrideAccess() {
-  if (overrideListenerRef) {
-    overrideListenerRef.off();
-    overrideListenerRef = null;
-  }
 
-  const user = firebase.auth().currentUser;
-
-  if (!user) {
-    usernameOverrideAccess = false;
-    return;
-  }
-
-  overrideListenerRef = overrideAccessRef.child(user.uid);
-
-  overrideListenerRef.on("value", snapshot => {
-    const hasAccess = snapshot.val() === true;
-
-    usernameOverrideAccess = hasAccess;
-
-    if (hasAccess) {
-      unlockUsernameInput();
-    } else if (!isOwner) {
-      loadSavedUsername();
+    // Remove previous listener
+    if (overrideListenerRef) {
+        overrideListenerRef.off();
+        overrideListenerRef = null;
     }
-  });
+
+    // IMPORTANT:
+    // Regular chat users may not be Firebase-authenticated.
+    // They use sessionGuestId instead.
+    const uid = getMyUid();
+
+    if (!uid) {
+        usernameOverrideAccess = false;
+        return;
+    }
+
+    // Listen using the same UID that the owner assigns permission to.
+    overrideListenerRef = overrideAccessRef.child(uid);
+
+    overrideListenerRef.on("value", snapshot => {
+
+        const hasAccess = snapshot.val() === true;
+
+        usernameOverrideAccess = hasAccess;
+
+        if (hasAccess) {
+
+            unlockUsernameInput();
+
+            showNotification(
+                "Username change permission granted!"
+            );
+
+        } else if (!isOwner) {
+
+            loadSavedUsername();
+
+        }
+
+    });
 }
   
 document.getElementById(
@@ -3138,65 +3154,31 @@ function sendChatMessage(data) {
          CONSUME ONE-TIME USERNAME OVERRIDE
       ----------------------------------------- */
 
-      if (
-        usernameOverrideAccess &&
-        !isOwner
-      ) {
+      if (usernameOverrideAccess && !isOwner) {
 
-        /* Save the newly chosen username */
+    // Save the newly chosen username
+    saveUsername(name);
+    currentUsername = name;
+    registerUsername();
 
-        saveUsername(name);
-
-        currentUsername =
-          name;
-
-        registerUsername();
-
-        /* Immediately consume the permission */
-
-        usernameOverrideAccess =
-          false;
-
-        /* Immediately lock the input */
-
-        lockUsernameInput();
-
-        /* Remove the permission from Firebase */
-
-        overrideAccessRef
-          .child(uid)
-          .remove()
-          .then(() => {
-
+    // Consume the one-time permission
+    overrideAccessRef
+        .child(uid)
+        .remove()
+        .then(() => {
             console.log(
-              "One-time username override consumed."
+                "One-time username override consumed."
             );
-
-          })
-          .catch(err => {
-
+        })
+        .catch(err => {
             console.error(
-              "Failed to consume username override:",
-              err
+                "Failed to consume username override:",
+                err
             );
+        });
+}
 
-          });
-
-      }
-
-    })
-    .catch(err => {
-
-      console.error(
-        "Failed to send message:",
-        err
-      );
-
-      showNotification(
-        "Message failed to send."
-      );
-
-    });
+});
 
 }
 
