@@ -2667,10 +2667,9 @@ messagesQuery.on(
    MESSAGE REMOVAL
 ========================================================= */
 
-messagesRef.on(
+messagesQuery.on(
   "child_removed",
   snap => {
-
     const el =
       chatWindow.querySelector(
         `[data-key="${snap.key}"]`
@@ -2691,10 +2690,8 @@ messagesRef.on(
       () => el.remove(),
       200
     );
-
   }
 );
-
 
 /* =========================================================
    MESSAGE EDITING
