@@ -2622,24 +2622,12 @@ function isMobile() {
 }
 
 messagesQuery.on("value", snapshot => {
-
-
-
-      chatWindow.innerHTML = "";
-
-
-
-      snapshot.forEach(child => {
-
-         addMessage(child.val(), child.key);
-
-     });
-
-
-
-     chatWindow.scrollTop =
-
-         chatWindow.scrollHeight; });
+  chatWindow.innerHTML = "";
+  snapshot.forEach(child => {
+    addMessage(child.val(), child.key);
+  });
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+});
 /* =========================================================
    MESSAGE EDITING
 ========================================================= */
@@ -3077,125 +3065,46 @@ confirmDelete.onclick =
 ========================================================= */
 
 function sendChatMessage(data) {
+  const name = data.name;
+  const text = data.text;
+  const uid = data.uid;
+  const role = data.role;
+  const now = data.now;
 
-  const name =
-    data.name;
-
-  const text =
-    data.text;
-
-  const uid =
-    data.uid;
-
-  const role =
-    data.role;
-
-  const now =
-    data.now;
-
-  /* Cooldown */
-
-  if (
-    role === "member" &&
-    now - lastMessageTime <
-    COOLDOWN_MS
-  ) {
-
-    showNotification(
-      "Slow down"
-    );
-
+  if (role === "member" && now - lastMessageTime < COOLDOWN_MS) {
+    showNotification("Slow down");
     return;
-
   }
 
-  /* Create message */
-
   const messageData = {
-
     uid,
-
-    username:
-      name,
-
-    text:
-      role === "member"
-        ? cleanText(text)
-        : text,
-
+    username: name,
+    text: role === "member" ? cleanText(text) : text,
     role,
-
-    time:
-      now,
-
-    reply:
-      replyTarget
-        ? { ...replyTarget }
-        : null,
-
-    imageUrl:
-      selectedImageData ||
-      null
-
+    time: now,
+    reply: replyTarget ? { ...replyTarget } : null,
+    imageUrl: selectedImageData || null
   };
 
-  /* Send message FIRST */
+  messagesRef.push(messageData).then(() => {
+    messageInput.value = "";
+    clearImagePreview();
+    replyTarget = null;
+    replyPreview.style.display = "none";
+    lastMessageTime = Date.now();
 
-  messagesRef
-    .push(messageData)
-    .then(() => {
+    const savedUsername = getSavedUsername();
+    const actuallyChangedUsername = savedUsername && name !== savedUsername;
 
-      /* Clear message box */
-
-      messageInput.value = "";
-
-      /* -----------------------------------------------
-   CONSUME ONE-TIME USERNAME OVERRIDE
------------------------------------------------- */
-
-const savedUsername =
-  getSavedUsername();
-
-const actuallyChangedUsername =
-  savedUsername &&
-  name !== savedUsername;
-
-if (
-  usernameOverrideAccess &&
-  !isOwner &&
-  actuallyChangedUsername
-) {
-
-  saveUsername(name);
-
-  currentUsername =
-    name;
-
-  registerUsername();
-
-  usernameOverrideAccess =
-    false;
-
-  lockUsernameInput();
-
-  overrideAccessRef
-    .child(uid)
-    .remove()
-    .then(() => {
-
-      console.log(
-        "One-time username override consumed."
-      );
-
-    })
-    .catch(err => {
-
-      console.error(
-        "Failed to remove username override:",
-        err
-      );
-
-    });
+    if (usernameOverrideAccess && !isOwner && actuallyChangedUsername) {
+      saveUsername(name);
+      currentUsername = name;
+      registerUsername();
+      usernameOverrideAccess = false;
+      lockUsernameInput();
+      overrideAccessRef.child(uid).remove();
+    }
+  });
 }
 
 /* =========================================================
