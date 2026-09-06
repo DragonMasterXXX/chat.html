@@ -3150,36 +3150,53 @@ function sendChatMessage(data) {
 
       messageInput.value = "";
 
-      /* -----------------------------------------
-         CONSUME ONE-TIME USERNAME OVERRIDE
-      ----------------------------------------- */
+      /* -----------------------------------------------
+   CONSUME ONE-TIME USERNAME OVERRIDE
+------------------------------------------------ */
 
-      if (usernameOverrideAccess && !isOwner) {
+const savedUsername =
+  getSavedUsername();
 
-    // Save the newly chosen username
-    saveUsername(name);
-    currentUsername = name;
-    registerUsername();
+const actuallyChangedUsername =
+  savedUsername &&
+  name !== savedUsername;
 
-    // Consume the one-time permission
-    overrideAccessRef
-        .child(uid)
-        .remove()
-        .then(() => {
-            console.log(
-                "One-time username override consumed."
-            );
-        })
-        .catch(err => {
-            console.error(
-                "Failed to consume username override:",
-                err
-            );
-        });
-}
+if (
+  usernameOverrideAccess &&
+  !isOwner &&
+  actuallyChangedUsername
+) {
 
-});
+  saveUsername(name);
 
+  currentUsername =
+    name;
+
+  registerUsername();
+
+  usernameOverrideAccess =
+    false;
+
+  lockUsernameInput();
+
+  overrideAccessRef
+    .child(uid)
+    .remove()
+    .then(() => {
+
+      console.log(
+        "One-time username override consumed."
+      );
+
+    })
+    .catch(err => {
+
+      console.error(
+        "Failed to remove username override:",
+        err
+      );
+
+    });
 }
 
 /* =========================================================
@@ -3260,25 +3277,40 @@ chatForm.onsubmit =
    /assign-override-access [username]
 ===================================================== */
 
+const overrideCommand = "/assign-override-access";
+
 if (
-  text.toLowerCase().startsWith("/assign-override-access") &&
-  isOwner
+  isOwner &&
+  text.toLowerCase().startsWith(overrideCommand)
 ) {
+  const remainder = text
+    .slice(overrideCommand.length)
+    .trim();
 
-  const command =
-    "/assign-override-access";
+  // Make sure this is actually the command
+  // and not something like /assign-override-accessible
+  if (
+    text.length > overrideCommand.length &&
+    !/^\s/.test(
+      text.slice(overrideCommand.length, overrideCommand.length + 1)
+    )
+  ) {
+    showNotification(
+      "Invalid command. Use: /assign-override-access [username]"
+    );
 
-  const targetUsername =
-    text
-      .slice(command.length)
-      .trim();
+    messageInput.value = "";
+    return;
+  }
+
+  const targetUsername = remainder;
 
   if (!targetUsername) {
-
     showNotification(
       "Usage: /assign-override-access [username]"
     );
 
+    messageInput.value = "";
     return;
   }
 
@@ -3286,7 +3318,7 @@ if (
     targetUsername.toLowerCase();
 
   /* -----------------------------------------------
-     SEARCH REGISTERED USERS FIRST
+     FIRST: Search registered users
   ------------------------------------------------ */
 
   usersRef
@@ -3295,11 +3327,9 @@ if (
     .once("value")
     .then(snapshot => {
 
-      const users =
-        snapshot.val();
+      const users = snapshot.val();
 
       if (users) {
-
         const entries =
           Object.entries(users);
 
@@ -3313,13 +3343,10 @@ if (
       }
 
       /* ---------------------------------------------
-         FALLBACK: SEARCH CHAT MESSAGES
+         FALLBACK: Search chat messages
       --------------------------------------------- */
 
       return messagesRef
-        .orderByChild("username")
-        .equalTo(targetUsername)
-        .limitToLast(1)
         .once("value")
         .then(messageSnapshot => {
 
@@ -3327,7 +3354,6 @@ if (
             messageSnapshot.val();
 
           if (!messages) {
-
             showNotification(
               `User '${targetUsername}' not found.`
             );
@@ -3335,14 +3361,33 @@ if (
             return;
           }
 
-          const entries =
-            Object.entries(messages);
+          let foundMessage = null;
 
-          const [key, message] =
-            entries[0];
+          Object.values(messages)
+            .reverse()
+            .some(message => {
 
-          if (!message.uid) {
+              if (
+                message &&
+                typeof message.username === "string" &&
+                message.username.toLowerCase() === usernameLower
+              ) {
+                foundMessage = message;
+                return true;
+              }
 
+              return false;
+            });
+
+          if (!foundMessage) {
+            showNotification(
+              `User '${targetUsername}' not found.`
+            );
+
+            return;
+          }
+
+          if (!foundMessage.uid) {
             showNotification(
               `User '${targetUsername}' has no valid UID.`
             );
@@ -3351,12 +3396,10 @@ if (
           }
 
           return grantUsernameOverride(
-            message.uid,
-            targetUsername
+            foundMessage.uid,
+            foundMessage.username
           );
-
         });
-
     })
     .catch(err => {
 
@@ -3369,9 +3412,9 @@ if (
         "Override failed: " +
         err.message
       );
-
     });
 
+  // Commands are not sent as chat messages
   messageInput.value = "";
 
   return;
@@ -3385,9 +3428,7 @@ function grantUsernameOverride(
   targetUid,
   targetUsername
 ) {
-
   if (!targetUid) {
-
     showNotification(
       "Invalid user UID."
     );
@@ -3398,7 +3439,7 @@ function grantUsernameOverride(
   }
 
   console.log(
-    "Granting override:",
+    "Granting username override:",
     targetUsername,
     targetUid
   );
@@ -3419,9 +3460,7 @@ function grantUsernameOverride(
       );
 
     });
-
 }
-
     /* =====================================================
    TIMEOUT COMMAND
 ===================================================== */
