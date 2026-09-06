@@ -1505,47 +1505,33 @@ const usersRef =
 let overrideListenerRef = null;
 
 function watchOverrideAccess() {
+  if (overrideListenerRef) {
+    overrideListenerRef.off();
+    overrideListenerRef = null;
+  }
 
-    // Remove previous listener
-    if (overrideListenerRef) {
-        overrideListenerRef.off();
-        overrideListenerRef = null;
+  const uid = getMyUid();
+
+  if (!uid || isOwner) {
+    usernameOverrideAccess = false;
+    return;
+  }
+
+  overrideListenerRef = overrideAccessRef.child(uid);
+
+  overrideListenerRef.on("value", snapshot => {
+    const hasAccess = snapshot.val() === true;
+
+    usernameOverrideAccess = hasAccess;
+
+    if (hasAccess) {
+      unlockUsernameInput();
+      showNotification("Username change permission granted!");
+    } else {
+      // Re-lock username if permission is revoked or missing in database
+      loadSavedUsername();
     }
-
-    // IMPORTANT:
-    // Regular chat users may not be Firebase-authenticated.
-    // They use sessionGuestId instead.
-    const uid = getMyUid();
-
-    if (!uid) {
-        usernameOverrideAccess = false;
-        return;
-    }
-
-    // Listen using the same UID that the owner assigns permission to.
-    overrideListenerRef = overrideAccessRef.child(uid);
-
-    overrideListenerRef.on("value", snapshot => {
-
-        const hasAccess = snapshot.val() === true;
-
-        usernameOverrideAccess = hasAccess;
-
-        if (hasAccess) {
-
-            unlockUsernameInput();
-
-            showNotification(
-                "Username change permission granted!"
-            );
-
-        } else if (!isOwner) {
-
-            loadSavedUsername();
-
-        }
-
-    });
+  });
 }
   
 document.getElementById(
