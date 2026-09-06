@@ -2621,25 +2621,37 @@ function isMobile() {
 
 }
 
-messagesQuery.on("value", snapshot => {
+// 1. When a NEW message is added
+messagesQuery.on("child_added", snapshot => {
+    const msg = snapshot.val();
+    const key = snapshot.key;
+    
+    // Only add if not already showing
+    if (!chatWindow.querySelector(`[data-key="${key}"]`)) {
+        addMessage(msg, key);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+});
 
+// 2. When a message is EDITED (keep your existing one)
+messagesQuery.on("child_changed", snap => {
+    // Keep your existing code here
+});
 
+// 3. When a message is DELETED
+messagesQuery.on("child_removed", snapshot => {
+    const el = chatWindow.querySelector(`[data-key="${snapshot.key}"]`);
+    if (el) el.remove();
+});
 
-      chatWindow.innerHTML = "";
-
-
-
-      snapshot.forEach(child => {
-
-         addMessage(child.val(), child.key);
-
-     });
-
-
-
-     chatWindow.scrollTop =
-
-         chatWindow.scrollHeight; });  
+// 4. Initial load (happens once when page opens)
+messagesQuery.once("value", snapshot => {
+    chatWindow.innerHTML = "";
+    snapshot.forEach(child => {
+        addMessage(child.val(), child.key);
+    });
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+});
 
 /* =========================================================
    MESSAGE EDITING
