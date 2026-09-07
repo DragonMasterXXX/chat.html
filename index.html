@@ -3061,20 +3061,38 @@ function sendChatMessage(data) {
     const savedUsername = getSavedUsername();
     const actuallyChangedUsername = savedUsername && name !== savedUsername;
 
-    // Remove override access using the active listener target UID
     if (usernameOverrideAccess && !isOwner && actuallyChangedUsername) {
-      saveUsername(name);
-      currentUsername = name;
-      registerUsername();
-      usernameOverrideAccess = false;
-      lockUsernameInput();
-      
-      // Specifically target the exact UID node that was active during the override listener
-      if (activeOverrideUid) {
-        overrideAccessRef.child(activeOverrideUid).remove();
-        activeOverrideUid = null;
-      }
-    }
+  saveUsername(name);
+  currentUsername = name;
+  registerUsername();
+
+  // Immediately disable the permission locally
+  usernameOverrideAccess = false;
+  lockUsernameInput();
+
+  // Consume the one-time permission in Firebase
+  if (activeOverrideUid) {
+    const overrideUid = activeOverrideUid;
+
+    overrideAccessRef
+      .child(overrideUid)
+      .remove()
+      .then(() => {
+        console.log(
+          "Username override permission consumed:",
+          overrideUid
+        );
+      })
+      .catch(err => {
+        console.error(
+          "FAILED TO REMOVE USERNAME OVERRIDE:",
+          err
+        );
+      });
+
+    activeOverrideUid = null;
+  }
+}
   });
 }
 
