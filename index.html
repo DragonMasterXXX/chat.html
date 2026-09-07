@@ -1504,6 +1504,8 @@ const usersRef =
 
 let overrideListenerRef = null;
 
+let activeOverrideUid = null; // Add this global variable above watchOverrideAccess
+
 function watchOverrideAccess() {
   if (overrideListenerRef) {
     overrideListenerRef.off();
@@ -1514,21 +1516,21 @@ function watchOverrideAccess() {
 
   if (!uid || isOwner) {
     usernameOverrideAccess = false;
+    activeOverrideUid = null;
     return;
   }
 
+  activeOverrideUid = uid;
   overrideListenerRef = overrideAccessRef.child(uid);
 
   overrideListenerRef.on("value", snapshot => {
     const hasAccess = snapshot.val() === true;
-
     usernameOverrideAccess = hasAccess;
 
     if (hasAccess) {
       unlockUsernameInput();
       showNotification("Username change permission granted!");
     } else {
-      // Re-lock username if permission is revoked or missing in database
       loadSavedUsername();
     }
   });
@@ -3059,13 +3061,19 @@ function sendChatMessage(data) {
     const savedUsername = getSavedUsername();
     const actuallyChangedUsername = savedUsername && name !== savedUsername;
 
+    // Remove override access using the active listener target UID
     if (usernameOverrideAccess && !isOwner && actuallyChangedUsername) {
       saveUsername(name);
       currentUsername = name;
       registerUsername();
       usernameOverrideAccess = false;
       lockUsernameInput();
-      overrideAccessRef.child(uid).remove();
+      
+      // Specifically target the exact UID node that was active during the override listener
+      if (activeOverrideUid) {
+        overrideAccessRef.child(activeOverrideUid).remove();
+        activeOverrideUid = null;
+      }
     }
   });
 }
@@ -3074,55 +3082,33 @@ function sendChatMessage(data) {
    SEND MESSAGE
 ========================================================= */
 
-chatForm.onsubmit =
-  e => {
+chatForm.onsubmit = e => {
+  e.preventDefault();
 
-    e.preventDefault();
+  const text = messageInput.value.trim();
+  const savedUsername = getSavedUsername();
+  
+  // Force name to match savedUsername if the user isn't allowed to override
+  let name = usernameInput.value.trim();
+  if (savedUsername && !usernameOverrideAccess && !isOwner) {
+    name = savedUsername;
+    usernameInput.value = savedUsername;
+  }
 
-    const name =
-      usernameInput.value.trim();
+  if (!name) {
+    showNotification("Please enter a username.");
+    return;
+  }
 
-    const text =
-      messageInput.value.trim();
+  if (!text) {
+    showNotification("Please enter a message.");
+    return;
+  }
 
+  const user = auth.currentUser;
+  const uid = user ? user.uid : sessionGuestId;
 
-    /* Username required */
-
-    if (!name) {
-
-      showNotification(
-        "Please enter a username."
-      );
-
-      return;
-
-    }
-
-
-    /* Message required */
-
-    if (!text) {
-
-      showNotification(
-        "Please enter a message."
-      );
-
-      return;
-
-    }
-
-
-    const user =
-      auth.currentUser;
-
-    const uid =
-      user
-        ? user.uid
-        : sessionGuestId;
-
-
-    currentUsername =
-      name;
+  currentUsername = name;
 
 
     let role =
@@ -3148,33 +3134,12 @@ chatForm.onsubmit =
    /assign-override-access [username]
 ===================================================== */
 
-const overrideCommand = "/assign-override-access";
+const overrideMatch = text.match(
+  /^\/assign-override-access(?:\s+(.+))?$/i
+);
 
-if (
-  isOwner &&
-  text.toLowerCase().startsWith(overrideCommand)
-) {
-  const remainder = text
-    .slice(overrideCommand.length)
-    .trim();
-
-  // Make sure this is actually the command
-  // and not something like /assign-override-accessible
-  if (
-    text.length > overrideCommand.length &&
-    !/^\s/.test(
-      text.slice(overrideCommand.length, overrideCommand.length + 1)
-    )
-  ) {
-    showNotification(
-      "Invalid command. Use: /assign-override-access [username]"
-    );
-
-    messageInput.value = "";
-    return;
-  }
-
-  const targetUsername = remainder;
+if (isOwner && overrideMatch) {
+  const targetUsername = overrideMatch[1]?.trim();
 
   if (!targetUsername) {
     showNotification(
@@ -3185,27 +3150,18 @@ if (
     return;
   }
 
-  const usernameLower =
-    targetUsername.toLowerCase();
-
-  /* -----------------------------------------------
-     FIRST: Search registered users
-  ------------------------------------------------ */
+  const usernameLower = targetUsername.toLowerCase();
 
   usersRef
     .orderByChild("usernameLower")
     .equalTo(usernameLower)
     .once("value")
     .then(snapshot => {
-
       const users = snapshot.val();
 
       if (users) {
-        const entries =
-          Object.entries(users);
-
-        const [targetUid] =
-          entries[0];
+        const entries = Object.entries(users);
+        const [targetUid] = entries[0];
 
         return grantUsernameOverride(
           targetUid,
@@ -3213,22 +3169,16 @@ if (
         );
       }
 
-      /* ---------------------------------------------
-         FALLBACK: Search chat messages
-      --------------------------------------------- */
-
+      // Fallback for users who aren't registered in chatUsers
       return messagesRef
         .once("value")
         .then(messageSnapshot => {
-
-          const messages =
-            messageSnapshot.val();
+          const messages = messageSnapshot.val();
 
           if (!messages) {
             showNotification(
               `User '${targetUsername}' not found.`
             );
-
             return;
           }
 
@@ -3237,7 +3187,6 @@ if (
           Object.values(messages)
             .reverse()
             .some(message => {
-
               if (
                 message &&
                 typeof message.username === "string" &&
@@ -3254,7 +3203,6 @@ if (
             showNotification(
               `User '${targetUsername}' not found.`
             );
-
             return;
           }
 
@@ -3262,7 +3210,6 @@ if (
             showNotification(
               `User '${targetUsername}' has no valid UID.`
             );
-
             return;
           }
 
@@ -3273,21 +3220,61 @@ if (
         });
     })
     .catch(err => {
-
       console.error(
         "Override command error:",
         err
       );
 
-      showNotification(
-        "Override failed: " +
-        err.message
-      );
+      // If chatUsers can't be searched, try message history
+      return messagesRef
+        .once("value")
+        .then(messageSnapshot => {
+          const messages = messageSnapshot.val();
+
+          if (!messages) {
+            throw err;
+          }
+
+          let foundMessage = null;
+
+          Object.values(messages)
+            .reverse()
+            .some(message => {
+              if (
+                message &&
+                typeof message.username === "string" &&
+                message.username.toLowerCase() === usernameLower
+              ) {
+                foundMessage = message;
+                return true;
+              }
+
+              return false;
+            });
+
+          if (!foundMessage || !foundMessage.uid) {
+            throw err;
+          }
+
+          return grantUsernameOverride(
+            foundMessage.uid,
+            foundMessage.username
+          );
+        })
+        .catch(fallbackError => {
+          console.error(
+            "Override fallback error:",
+            fallbackError
+          );
+
+          showNotification(
+            `Override failed: ${fallbackError.message}`
+          );
+        });
     });
 
-  // Commands are not sent as chat messages
+  // Do not send the command as a normal chat message
   messageInput.value = "";
-
   return;
 }
 
@@ -3602,10 +3589,6 @@ if (
     /* =====================================================
        SAVED USERNAME CHECK
     ===================================================== */
-
-    const savedUsername =
-      getSavedUsername();
-
 
     /* Existing saved username */
 
