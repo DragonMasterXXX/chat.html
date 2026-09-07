@@ -1885,50 +1885,27 @@ function registerUsername() {
 }
 
 function lockUsernameInput() {
-
-  usernameInput.classList.add(
-    "username-locked"
-  );
-
-  usernameInput.readOnly =
-    true;
-
+  usernameInput.classList.add("username-locked");
+  usernameInput.setAttribute("readonly", "true");
+  usernameInput.style.pointerEvents = "none";
 }
 
 function unlockUsernameInput() {
-
-  usernameInput.classList.remove(
-    "username-locked"
-  );
-
-  usernameInput.readOnly =
-    false;
-
+  usernameInput.classList.remove("username-locked");
+  usernameInput.removeAttribute("readonly");
+  usernameInput.style.pointerEvents = "auto";
 }
 
 function loadSavedUsername() {
-
-  const savedUsername =
-    getSavedUsername();
+  const savedUsername = getSavedUsername();
 
   if (savedUsername) {
-
-    usernameInput.value =
-      savedUsername;
-
-    currentUsername =
-      savedUsername;
-
+    usernameInput.value = savedUsername;
+    currentUsername = savedUsername;
     lockUsernameInput();
-
-  }
-
-  else {
-
+  } else if (!usernameOverrideAccess) {
     unlockUsernameInput();
-
   }
-
 }
 
 function showUsernameConfirmation() {
@@ -2835,11 +2812,11 @@ if (getSavedUsername()) {
 
       }
 
-      // Register the temporary username too.
-// This allows the owner to find the member even
-// before they send their first message.
-if (!getSavedUsername() && usernameInput.value.trim()) {
-  registerUsername();
+if (getSavedUsername()) {
+  loadSavedUsername();
+} else if (!usernameInput.value.trim()) {
+  currentUsername = user.email.split("@")[0];
+  usernameInput.value = currentUsername;
 }
       
       /* Check if this user has
@@ -3850,39 +3827,17 @@ messageInput.addEventListener(
    USERNAME INPUT
 ========================================================= */
 
-const handleUsernameChange =
-  () => {
+const handleUsernameChange = () => {
+  const savedUsername = getSavedUsername();
 
-    if (
-      usernameInput.readOnly &&
-      !usernameOverrideAccess &&
-      !isOwner
-    ) {
+  if (savedUsername && !usernameOverrideAccess && !isOwner) {
+    usernameInput.value = savedUsername;
+    currentUsername = savedUsername;
+    return;
+  }
 
-      const savedUsername =
-        getSavedUsername();
-
-      if (savedUsername) {
-
-        usernameInput.value =
-          savedUsername;
-
-        currentUsername =
-          savedUsername;
-
-      }
-
-      return;
-
-    }
-
-    const newName =
-      usernameInput.value.trim();
-
-    currentUsername =
-  newName;
-
-  };
+  currentUsername = usernameInput.value.trim();
+};
 
 usernameInput.addEventListener(
   "input",
