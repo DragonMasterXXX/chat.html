@@ -1702,7 +1702,7 @@ function formatMarkdown(text = "") {
 
 function cleanText(t = "") {
 
-  profanity.forEach(w => {
+  profanityList.forEach(w => {
 
     const escaped =
       w.replace(
@@ -1724,7 +1724,6 @@ function cleanText(t = "") {
   return t;
 
 }
-
 
 /* =========================================================
    NOTIFICATION
@@ -1997,17 +1996,34 @@ usernameProceed.onclick = () => {
   // IMPORTANT:
   // Register the username in Firebase so the owner
   // can find this member with /assign-override-access.
-  registerUsername();
+  registerUsername()
+  .then(() => {
 
-  hideUsernameConfirmation();
+    hideUsernameConfirmation();
 
-  const pending = pendingUsernameMessage;
+    const pending =
+      pendingUsernameMessage;
 
-  pendingUsernameMessage = null;
+    pendingUsernameMessage = null;
 
-  sendChatMessage(pending);
+    return sendChatMessage(pending);
+
+  })
+  .catch(err => {
+
+    console.error(
+      "Username registration failed:",
+      err
+    );
+
+    showNotification(
+      "Could not save your username: " +
+      err.message
+    );
+
+  });
+
 };
-
 
 /* =========================================================
    LOAD SAVED USERNAME
