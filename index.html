@@ -1433,31 +1433,6 @@ let selectedImage = null;
 
 let selectedImageData = null;
 
-
-/* =========================================================
-   GUEST ID
-========================================================= */
-
-let sessionGuestId =
-  localStorage.getItem(
-    "chat_guest_id"
-  );
-
-if (!sessionGuestId) {
-
-  sessionGuestId =
-    "guest_" +
-    Math.random()
-      .toString(36)
-      .substr(2, 9);
-
-  localStorage.setItem(
-    "chat_guest_id",
-    sessionGuestId
-  );
-}
-
-
 /* =========================================================
    FIREBASE
 ========================================================= */
@@ -1545,11 +1520,7 @@ document.getElementById(
 
 function getMyUid() {
 
-  return (
-    firebase.auth()
-      .currentUser?.uid ||
-    sessionGuestId
-  );
+  return firebase.auth().currentUser?.uid || null;
 
 }
 
@@ -1820,8 +1791,7 @@ removeImageBtn.onclick =
 function getSavedUsernameKey() {
 
   const uid =
-    auth.currentUser?.uid ||
-    sessionGuestId;
+  auth.currentUser?.uid;
 
   return (
     "saved_chat_username_" +
@@ -2214,9 +2184,8 @@ function injectTrashIcon(
     firebase.auth().currentUser;
 
   const isMyMessage =
-    (user &&
-      authorUid === user.uid) ||
-    authorUid === sessionGuestId;
+  !!user &&
+  authorUid === user.uid;
 
   /* Remove old controls first */
 
@@ -2431,8 +2400,7 @@ function checkMuteStatus() {
   }
 
   const myUid =
-    firebase.auth().currentUser?.uid ||
-    sessionGuestId;
+  firebase.auth().currentUser?.uid;
 
   mutesRef
     .child(myUid)
@@ -2751,94 +2719,65 @@ let liveEmail =
 firebase.auth().onAuthStateChanged(
   user => {
 
-    if (user) {
+    if (!user) {
+      firebase.auth().signInAnonymously()
+        .catch(err => {
+          console.error(
+            "Anonymous sign-in failed:",
+            err
+          );
+        });
 
-      liveEmail = (user.email || "").trim().toLowerCase();
+      return;
+    }
 
-isOwner =
-  liveEmail === "dragonvr@fire-breathing.com";
+    liveEmail =
+      (user.email || "")
+        .trim()
+        .toLowerCase();
 
-isAdmin =
-  [
-    "michael@smj.com",
-    "purple@not-magic.com",
-    "kizzy$$$@dabest.com"
-  ].includes(liveEmail);
+    isOwner =
+      liveEmail === "dragonvr@fire-breathing.com";
 
+    isAdmin =
+      [
+        "michael@smj.com",
+        "purple@not-magic.com",
+        "kizzy$$$@dabest.com"
+      ].includes(liveEmail);
 
-      /* Load saved username */
+    loadSavedUsername();
 
-loadSavedUsername();
+    if (getSavedUsername()) {
+      registerUsername();
+    }
 
-if (getSavedUsername()) {
-  registerUsername();
-}
+    usernameOverrideBtn.style.display =
+      isOwner
+        ? "block"
+        : "none";
 
+    if (
+      !getSavedUsername() &&
+      !usernameInput.value.trim()
+    ) {
 
-      /* Owner Override button */
-
-      usernameOverrideBtn.style.display =
-        isOwner
-          ? "block"
-          : "none";
-
-
-      /* If no saved username,
-         use email prefix temporarily.
-      */
-
-      if (
-        !getSavedUsername() &&
-        !usernameInput.value.trim()
-      ) {
-
+      if (user.email) {
         currentUsername =
           user.email.split("@")[0];
 
         usernameInput.value =
           currentUsername;
-
       }
 
-      
-      /* Check if this user has
-         override access assigned
-      */
-
-
-      checkMuteStatus();
-
     }
 
-    else {
-
-      isOwner =
-        false;
-
-      isAdmin =
-        false;
-
-      usernameOverrideAccess =
-        false;
-
-      currentUsername =
-        "";
-
-      usernameInput.value =
-        "";
-
-      usernameOverrideBtn.style.display =
-        "none";
-
-      loadSavedUsername();
-
-    }
-
+    checkMuteStatus();
 
     refreshPermissionsUI();
 
     watchOverrideAccess();
-    
+
     const showSystem =
       isOwner && user;
 
@@ -2944,9 +2883,8 @@ confirmDelete.onclick =
       messageEl.dataset.authorUid;
 
     const myUid =
-      firebase.auth()
-        .currentUser?.uid ||
-      sessionGuestId;
+  firebase.auth()
+    .currentUser?.uid;
 
     let allowed =
       false;
@@ -3107,7 +3045,7 @@ chatForm.onsubmit = e => {
   }
 
   const user = auth.currentUser;
-  const uid = user ? user.uid : sessionGuestId;
+  const uid = user ? user.uid : null;
 
   currentUsername = name;
 
