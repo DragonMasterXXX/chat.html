@@ -1411,11 +1411,7 @@ let isAdmin = false;
 
 let usernameOverrideAccess = false;
 
-let usernameWasChanged = false;
-  
 let pendingUsernameMessage = null;
-
-let overrideAccessUsername = "";
 
 let lastMessageTime = 0;
 
@@ -1503,6 +1499,7 @@ const usersRef =
   db.ref("chatUsers");
 
 let overrideListenerRef = null;
+let muteListenerRef = null;
 
 let activeOverrideUid = null; // Add this global variable above watchOverrideAccess
 
@@ -1554,12 +1551,6 @@ function getMyUid() {
     sessionGuestId
   );
 
-}
-
-function usernameAccessKey(name) {
-  return encodeURIComponent(
-    name.trim().toLowerCase()
-  );
 }
 
 function isMyMessage(msgUid) {
@@ -1870,10 +1861,10 @@ function registerUsername() {
   const name = usernameInput.value.trim();
 
   if (!uid || !name) {
-    return;
+    return Promise.resolve();
   }
 
-  usersRef
+  return usersRef
     .child(uid)
     .set({
       username: name,
@@ -1882,6 +1873,7 @@ function registerUsername() {
     })
     .catch(err => {
       console.error("Failed to register username:", err);
+      throw err;
     });
 
 }
@@ -1905,7 +1897,7 @@ function loadSavedUsername() {
     usernameInput.value = savedUsername;
     currentUsername = savedUsername;
     lockUsernameInput();
-  } else if (!usernameOverrideAccess) {
+  } else {
     unlockUsernameInput();
   }
 }
@@ -2756,12 +2748,6 @@ cancelReplyBtn.onclick =
 let liveEmail =
   "";
 
-let liveIsOwner =
-  false;
-
-let liveIsAdmin =
-  false;
-
 firebase.auth().onAuthStateChanged(
   user => {
 
@@ -2814,12 +2800,6 @@ if (getSavedUsername()) {
 
       }
 
-if (getSavedUsername()) {
-  loadSavedUsername();
-} else if (!usernameInput.value.trim()) {
-  currentUsername = user.email.split("@")[0];
-  usernameInput.value = currentUsername;
-}
       
       /* Check if this user has
          override access assigned
@@ -3038,7 +3018,7 @@ function sendChatMessage(data) {
 
   if (role === "member" && now - lastMessageTime < COOLDOWN_MS) {
     showNotification("Slow down");
-    return;
+    return Promise.resolve(false);
   }
 
   const messageData = {
@@ -3051,49 +3031,52 @@ function sendChatMessage(data) {
     imageUrl: selectedImageData || null
   };
 
-  messagesRef.push(messageData).then(() => {
-    messageInput.value = "";
-    clearImagePreview();
-    replyTarget = null;
-    replyPreview.style.display = "none";
-    lastMessageTime = Date.now();
+  return messagesRef.push(messageData)
+    .then(() => {
+      messageInput.value = "";
+      clearImagePreview();
+      replyTarget = null;
+      replyPreview.style.display = "none";
+      lastMessageTime = Date.now();
 
-    const savedUsername = getSavedUsername();
-    const actuallyChangedUsername = savedUsername && name !== savedUsername;
+      const savedUsername = getSavedUsername();
+      const actuallyChangedUsername = !!savedUsername && name !== savedUsername;
 
-    if (usernameOverrideAccess && !isOwner && actuallyChangedUsername) {
-  saveUsername(name);
-  currentUsername = name;
-  registerUsername();
+      if (usernameOverrideAccess && !isOwner && actuallyChangedUsername) {
+        saveUsername(name);
+        currentUsername = name;
+        usernameInput.value = name;
+        lockUsernameInput();
 
-  // Immediately disable the permission locally
-  usernameOverrideAccess = false;
-  lockUsernameInput();
+        const overrideUid = activeOverrideUid;
 
-  // Consume the one-time permission in Firebase
-  if (activeOverrideUid) {
-    const overrideUid = activeOverrideUid;
+        if (overrideUid) {
+          return registerUsername()
+            .then(() => overrideAccessRef.child(overrideUid).remove())
+            .then(() => {
+              usernameOverrideAccess = false;
+              activeOverrideUid = null;
+              console.log("Username override permission consumed:", overrideUid);
+              return true;
+            })
+            .catch(err => {
+              console.error("FAILED TO CONSUME USERNAME OVERRIDE:", err);
+              showNotification("Username changed, but override permission could not be removed. Check Firebase Rules.");
+              return true;
+            });
+        }
 
-    overrideAccessRef
-      .child(overrideUid)
-      .remove()
-      .then(() => {
-        console.log(
-          "Username override permission consumed:",
-          overrideUid
-        );
-      })
-      .catch(err => {
-        console.error(
-          "FAILED TO REMOVE USERNAME OVERRIDE:",
-          err
-        );
-      });
+        usernameOverrideAccess = false;
+        activeOverrideUid = null;
+      }
 
-    activeOverrideUid = null;
-  }
-}
-  });
+      return true;
+    })
+    .catch(err => {
+      console.error("Failed to send message:", err);
+      showNotification("Message failed to send: " + err.message);
+      return false;
+    });
 }
 
 /* =========================================================
@@ -3653,9 +3636,7 @@ else {
        ASK FOR CONFIRMATION
     ===================================================== */
 
-    else if (
-      !usernameOverrideAccess
-    ) {
+    else {
 
       pendingUsernameMessage = {
 
@@ -3734,9 +3715,7 @@ function setTyping(state) {
 
   }
 
-  const typingId =
-    auth.currentUser?.uid ||
-    `guest_${currentUsername}`;
+  const typingId = getMyUid();
 
   const ref =
     typingRef.child(
@@ -3877,9 +3856,7 @@ typingRef.on(
     const now =
       Date.now();
 
-    const myUid =
-      auth.currentUser?.uid ||
-      `guest_${currentUsername}`;
+    const myUid = getMyUid();
 
     const users =
       Object.entries(data)
@@ -3982,16 +3959,6 @@ systemMessageInput.addEventListener(
     }
 
   }
-);
-
-
-/* =========================================================
-   MUTE LISTENER
-========================================================= */
-
-mutesRef.on(
-  "value",
-  checkMuteStatus
 );
 
 
