@@ -1264,19 +1264,84 @@ const MUTE_DURATION_MS =
    PROFANITY
 ========================================================= */
 
-let profanity = [];
+let profanityList = [];
 
 fetch("profanity.json")
-  .then(res => res.json())
-  .then(data => {
-    profanity = data;
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
   })
-  .catch(err => {
-    console.error(
-      "Failed to load profanity list",
-      err
-    );
+  .then(data => {
+    if (!Array.isArray(data)) {
+      throw new Error("profanity.json must contain an array");
+    }
+
+    profanityList = data
+      .filter(word => typeof word === "string")
+      .map(word => word.toLowerCase().trim())
+      .filter(Boolean);
+
+    console.log(`Loaded ${profanityList.length} profanity filters.`);
+  })
+  .catch(error => {
+    console.error("Failed to load profanity list:", error);
   });
+
+
+function normalizeProfanityText(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    // Common character substitutions
+    .replace(/[@4]/g, "a")
+    .replace(/[3]/g, "e")
+    .replace(/[1!|]/g, "i")
+    .replace(/[0]/g, "o")
+    .replace(/[5$]/g, "s")
+    .replace(/[7]/g, "t")
+    // Remove spaces, punctuation, and symbols
+    .replace(/[^a-z0-9]/g, "")
+    // Collapse repeated letters:
+    // shiiit -> shit
+    // fuuuck -> fuck
+    // biiitch -> bitch
+    .replace(/(.)\1+/g, "$1");
+}
+
+function containsProfanity(text) {
+  if (!text || profanityList.length === 0) {
+    return false;
+  }
+
+  const original = text.toLowerCase();
+
+  // Check normally typed words first.
+  const words = original.match(/[a-z0-9]+/g) || [];
+
+  for (const word of words) {
+    if (profanityList.includes(word)) {
+      return true;
+    }
+  }
+
+  // Check common bypasses.
+  const normalized = normalizeProfanityText(text);
+
+  for (const word of profanityList) {
+    const normalizedWord = normalizeProfanityText(word);
+
+    if (!normalizedWord) continue;
+
+    if (normalized.includes(normalizedWord)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 
 /* =========================================================
