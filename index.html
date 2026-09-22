@@ -1595,7 +1595,11 @@ function isMyMessage(msgUid) {
 
 }
 
-function canEditMessage(msgUid) {
+function canEditMessage(msgUid, role) {
+
+  if (role === "system") {
+    return isOwner;
+  }
 
   return isMyMessage(msgUid);
 
@@ -2344,20 +2348,27 @@ function injectTrashIcon(
   edit.onclick = () => {
 
     const actualAuthorUid =
-      messageDiv.dataset.authorUid;
+  messageDiv.dataset.authorUid;
 
-    if (
-      actualAuthorUid !==
-      getMyUid()
-    ) {
+const actualRole =
+  messageDiv.dataset.role;
 
-      showNotification(
-        "You can only edit your own messages."
-      );
+if (
+  !canEditMessage(
+    actualAuthorUid,
+    actualRole
+  )
+) {
 
-      return;
+  showNotification(
+    actualRole === "system"
+      ? "Only the owner can edit system messages."
+      : "You can only edit your own messages."
+  );
 
-    }
+  return;
+
+}
 
     const text =
       messageDiv.querySelector(
@@ -3566,21 +3577,41 @@ if (
       }
 
       messagesRef
-        .child(
-          editTarget.key
-        )
-        .update({
+  .child(
+    editTarget.key
+  )
+  .update({
 
-          text:
-            newText,
+    text:
+      newText,
 
-          edited:
-            true,
+    edited:
+      true,
 
-          editTime:
-            Date.now()
+    editTime:
+      Date.now()
 
-        });
+  })
+  .then(() => {
+
+    showNotification(
+      "Message updated"
+    );
+
+  })
+  .catch(err => {
+
+    console.error(
+      "Edit failed:",
+      err
+    );
+
+    showNotification(
+      "Edit failed: " +
+      err.message
+    );
+
+  });
 
       showNotification(
         "Message updated"
