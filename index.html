@@ -4067,7 +4067,10 @@ ownerLoginBtn.onclick = async () => {
 logoutBtn.onclick =
   () => {
 
-    if (!auth.currentUser) {
+    const user = auth.currentUser;
+
+    // Anonymous users are not considered logged in.
+    if (!user || user.isAnonymous) {
 
       showNotification(
         "You're already logged out, dum–dum."
