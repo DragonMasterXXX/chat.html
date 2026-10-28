@@ -662,7 +662,7 @@ button {
   pointer-events: all;
 }
 
-/* ---------------- REPLY PREVIEW ---------------- */
+/* ---------------- ---------------- */
 
 #replyPreview {
   display: none;
@@ -963,6 +963,49 @@ footer a {
 
     padding: 1rem;
   }
+}
+
+/* ---------------- MESSAGE REFERENCE ---------------- */
+.message-reference {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 8px 0;
+  padding: 5px 9px;
+  border-left: 3px solid #ff4500;
+  border-radius: 0 6px 6px 0;
+  background: rgba(0, 0, 0, 0.2);
+  color: #ccc;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.message-reference:hover {
+  background: rgba(255, 69, 0, 0.18);
+}
+
+.message-reference-name {
+  color: #ff9a52;
+  font-weight: 700;
+}
+
+.message-reference-text {
+  color: #ccc;
+}
+
+.message-reference.deleted {
+  border-left-color: #777;
+  color: #999;
+  cursor: default;
+  font-style: italic;
+}
+
+.message.jump-highlight {
+  border-color: #ff8c00 !important;
+  box-shadow: 0 0 12px rgba(255, 106, 0, 0.65);
 }
 
 </style>
@@ -2137,28 +2180,24 @@ function addMessage(msg, key) {
 
   }
 
-  let replyHTML = "";
+  
+let replyHTML = "";
 
-  if (msg.reply) {
+if (msg.reply && msg.reply.key) {
+  replyHTML = `
+    <div
+      class="message-reference"
+      data-reply-key="${escapeHTML(msg.reply.key)}"
+      role="button"
+      tabindex="0"
+      aria-label="Jump to replied message"
+    >
+      <span class="message-reference-name"></span>
+      <span class="message-reference-text">Loading message...</span>
+    </div>
+  `;
+}
 
-    replyHTML = `
-      <div style="
-        border-left: 3px solid #ff4500;
-        padding-left: 6px;
-        margin-bottom: 5px;
-        font-size: 0.8rem;
-        color: #ccc;
-      ">
-        ↪ ${escapeHTML(
-          msg.reply.username || ""
-        )}:
-        ${escapeHTML(
-          msg.reply.text || ""
-        )}
-      </div>
-    `;
-
-  }
 
   let imageHTML = "";
 
@@ -2216,13 +2255,19 @@ function addMessage(msg, key) {
 
   `;
 
-  chatWindow.appendChild(div);
+  chatWindow.appendChild(
+  div
+);
 
-  injectTrashIcon(
-    div,
-    msg.uid,
-    role
-  );
+if (msg.reply && msg.reply.key) {
+  refreshReplyReference(div, msg.reply);
+}
+
+injectTrashIcon(
+  div,
+  msg.uid,
+  role
+);
 
   /* IMPORTANT:
      This makes "(edited)" survive
@@ -2251,6 +2296,128 @@ function addMessage(msg, key) {
 
 }
 
+
+function refreshReplyReference(messageDiv, reply) {
+  const reference = messageDiv.querySelector(".message-reference");
+  if (!reference || !reply?.key) return;
+
+  const nameElement = reference.querySelector(".message-reference-name");
+  const textElement = reference.querySelector(".message-reference-text");
+  if (!nameElement || !textElement) return;
+
+  const requestedKey = reply.key;
+
+  messagesRef.child(requestedKey).once("value")
+    .then(snapshot => {
+      // Ignore the result if the reference was changed or removed.
+      if (!reference.isConnected ||
+          reference.dataset.replyKey !== requestedKey) return;
+
+      if (!snapshot.exists()) {
+        showDeletedReplyReference(reference);
+        return;
+      }
+
+      const original = snapshot.val();
+      reference.classList.remove("deleted");
+      reference.setAttribute("role", "button");
+      reference.setAttribute("tabindex", "0");
+      reference.setAttribute("aria-label", "Jump to replied message");
+
+      nameElement.textContent = original.username || reply.username || "Unknown";
+
+      const originalText = original.text || "";
+      textElement.textContent =
+        originalText.length > 120
+          ? originalText.slice(0, 120) + "…"
+          : originalText;
+    })
+    .catch(error => {
+      console.error("Failed to load reply reference:", error);
+      if (!reference.isConnected) return;
+      nameElement.textContent = reply.username || "Unknown";
+      textElement.textContent = reply.text || "Message unavailable";
+    });
+}
+
+function showDeletedReplyReference(reference) {
+  reference.classList.add("deleted");
+  reference.removeAttribute("role");
+  reference.removeAttribute("tabindex");
+  reference.setAttribute("aria-label", "Original message deleted");
+
+  const nameElement = reference.querySelector(".message-reference-name");
+  const textElement = reference.querySelector(".message-reference-text");
+
+  if (nameElement) nameElement.textContent = "";
+  if (textElement) {
+    textElement.textContent = "Original message was deleted.";
+  }
+}
+
+function refreshRepliesToMessage(messageKey) {
+  chatWindow.querySelectorAll(".message-reference").forEach(reference => {
+    if (reference.dataset.replyKey !== messageKey) return;
+
+    const replyMessage = reference.closest(".message");
+    if (!replyMessage) return;
+
+    refreshReplyReference(replyMessage, {
+      key: messageKey,
+      username:
+        reference.querySelector(".message-reference-name")?.textContent || "",
+      text:
+        reference.querySelector(".message-reference-text")?.textContent || ""
+    });
+  });
+}
+
+function jumpToOriginalMessage(messageKey) {
+  const original = Array.from(
+    chatWindow.querySelectorAll(".message[data-key]")
+  ).find(message => message.dataset.key === messageKey);
+
+  if (!original) {
+    showNotification(
+      "That message isn't loaded in the chat. Older message loading can be added separately."
+    );
+    return;
+  }
+
+  original.scrollIntoView({ behavior: "smooth", block: "center" });
+  original.classList.add("jump-highlight");
+
+  setTimeout(() => {
+    original.classList.remove("jump-highlight");
+  }, 1600);
+}
+
+
+chatWindow.addEventListener("click", event => {
+  const reference = event.target.closest(".message-reference");
+
+  if (!reference || reference.classList.contains("deleted")) return;
+
+  const messageKey = reference.dataset.replyKey;
+  if (messageKey) {
+    jumpToOriginalMessage(messageKey);
+  }
+});
+
+chatWindow.addEventListener("keydown", event => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+
+  const reference = event.target.closest(".message-reference");
+
+  if (!reference || reference.classList.contains("deleted")) return;
+
+  event.preventDefault();
+
+  const messageKey = reference.dataset.replyKey;
+  if (messageKey) {
+    jumpToOriginalMessage(messageKey);
+  }
+});
 
 /* =========================================================
    MESSAGE CONTROLS
@@ -2294,37 +2461,25 @@ function injectTrashIcon(
   reply.innerHTML =
     `<img src="https://i.imgur.com/tUveWHG.png" width="18">`;
 
-  reply.onclick = () => {
+  
+reply.onclick = () => {
+  const messageText =
+    messageDiv.querySelector(".msg-text")?.innerText || "";
 
-    replyTarget = {
-
-      key,
-
-      username:
-        (
-          messageDiv.querySelector(
-            ".username"
-          )?.innerText ||
-          "Unknown"
-        ).replace(/:$/, ""),
-
-      text:
-        (
-          messageDiv.querySelector(
-            ".msg-text"
-          )?.innerText ||
-          ""
-        ).slice(0, 80)
-
-    };
-
-    replyPreview.style.display =
-      "block";
-
-    replyText.innerText =
-      `${replyTarget.username}: ${replyTarget.text}`;
-
+  replyTarget = {
+    key,
+    username: (
+      messageDiv.querySelector(".username")?.innerText || "Unknown"
+    ).replace(/:$/, ""),
+    text: messageText.slice(0, 120)
   };
+
+  replyPreview.style.display = "block";
+  replyText.innerText =
+    `${replyTarget.username}: ${replyTarget.text}`;
+
+  messageInput.focus();
+};
 
   messageDiv.appendChild(
     reply
@@ -2649,89 +2804,43 @@ messagesQuery.on("value", snapshot => {
    MESSAGE EDITING
 ========================================================= */
 
-messagesRef.on(
-  "child_changed",
-  snap => {
 
-    const el =
-      chatWindow.querySelector(
-        `[data-key="${snap.key}"]`
-      );
+messagesRef.on("child_changed", snap => {
+  refreshRepliesToMessage(snap.key);
 
-    if (!el) return;
+  const el = chatWindow.querySelector(
+    `[data-key="${snap.key}"]`
+  );
 
-    const msg =
-      snap.val();
+  if (!el) return;
 
-    const textSpan =
-      el.querySelector(
-        ".msg-text"
-      );
+  const msg = snap.val();
 
-    if (textSpan) {
+  // Update the message text.
+  const textEl = el.querySelector(".msg-text");
 
-      textSpan.innerHTML =
-        formatMarkdown(
-          escapeHTML(
-            msg.text
-          )
-        );
+  if (textEl) {
+    textEl.innerHTML = formatMarkdown(
+      escapeHTML(msg.text || "")
+    );
+  }
 
-    }
+  // Update the edited label.
+  let editedTag = el.querySelector(".edited-tag");
 
-    el.dataset.authorUid =
-      msg.uid;
-
-    el.dataset.role =
-      msg.role ||
-      "member";
-
-
-    /* Remove old edited tag */
-
-    const oldEditedTag =
-      el.querySelector(
-        ".edited-tag"
-      );
-
-    if (oldEditedTag) {
-
-      oldEditedTag.remove();
-
-    }
-
-
-    /* Add edited tag if needed */
-
-    if (msg.edited) {
-
-      const editedTag =
-        document.createElement("div");
-
-      editedTag.className =
-        "edited-tag";
-
-      editedTag.textContent =
-        "(edited)";
-
+  if (msg.edited) {
+    if (!editedTag) {
+      editedTag = document.createElement("div");
+      editedTag.className = "edited-tag";
       editedTag.style.cssText =
         "font-size:0.7rem;color:#999;margin-top:3px;";
-
-      el.appendChild(
-        editedTag
-      );
-
+      editedTag.textContent = "(edited)";
+      el.appendChild(editedTag);
     }
-
-    injectTrashIcon(
-      el,
-      msg.uid,
-      msg.role
-    );
-
+  } else if (editedTag) {
+    editedTag.remove();
   }
-);
-
+});
 
 /* =========================================================
    ESCAPE = CANCEL EDIT
