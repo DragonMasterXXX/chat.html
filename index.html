@@ -135,6 +135,39 @@ main {
   );
 }
 
+/* ---------------- LOAD MORE MESSAGES ---------------- */
+
+#loadMoreMessages {
+  display: block;
+  margin: 12px auto;
+  padding: 10px 20px;
+
+  border: 2px solid #ff4500;
+  border-radius: 20px;
+
+  background: rgba(34, 9, 0, 0.9);
+  color: #ff6a00;
+
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+#loadMoreMessages:hover {
+  background: #ff4500;
+  color: #fff;
+}
+
+#loadMoreMessages:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+#loadMoreMessages[hidden] {
+  display: none;
+}
+
 /* ---------------- IMAGE BUTTON ---------------- */
 
 #imageBtn {
@@ -1083,6 +1116,10 @@ footer a {
   <!-- ---------------- CHAT ---------------- -->
 
   <div id="chatWindow"></div>
+
+  <button id="loadMoreMessages" type="button" hidden>
+  🔥 Load More Messages
+</button>
 
   <!-- ---------------- INPUT AREA ---------------- -->
 
@@ -2793,13 +2830,176 @@ function isMobile() {
 
 }
 
+/* =========================================================
+   LOAD OLDER MESSAGES
+========================================================= */
+
+const loadMoreMessagesBtn =
+  document.getElementById("loadMoreMessages");
+
+let oldestLoadedKey = null;
+let hasMoreMessages = true;
+let loadingOlderMessages = false;
+
+async function loadOlderMessages() {
+
+  if (
+    loadingOlderMessages ||
+    !oldestLoadedKey ||
+    !hasMoreMessages
+  ) {
+    return;
+  }
+
+  loadingOlderMessages = true;
+  loadMoreMessagesBtn.disabled = true;
+  loadMoreMessagesBtn.textContent = "Loading...";
+
+  try {
+
+    const snapshot = await messagesRef
+      .orderByKey()
+      .endAt(oldestLoadedKey)
+      .limitToLast(52)
+      .once("value");
+
+    const olderMessages = [];
+
+    snapshot.forEach(child => {
+
+      if (child.key !== oldestLoadedKey) {
+        olderMessages.push({
+          key: child.key,
+          data: child.val()
+        });
+      }
+
+    });
+
+    const page = olderMessages.slice(-50);
+
+    hasMoreMessages = olderMessages.length > 50;
+
+    if (page.length > 0) {
+
+      const oldHeight = chatWindow.scrollHeight;
+      const firstExisting = chatWindow.firstElementChild;
+
+      page.forEach(message => {
+
+        const previousCount = chatWindow.children.length;
+
+        addMessage(message.data, message.key);
+
+        if (chatWindow.children.length > previousCount) {
+
+          const newMessage = chatWindow.lastElementChild;
+
+          chatWindow.insertBefore(
+            newMessage,
+            firstExisting
+          );
+
+        }
+
+      });
+
+      oldestLoadedKey = page[0].key;
+
+      chatWindow.scrollTop +=
+        chatWindow.scrollHeight - oldHeight;
+
+    }
+
+  } catch (error) {
+
+    console.error("Failed to load older messages:", error);
+
+    showNotification("Couldn't load older messages.");
+
+  }
+
+  finally {
+
+    loadingOlderMessages = false;
+    loadMoreMessagesBtn.disabled = false;
+    loadMoreMessagesBtn.textContent = "🔥 Load More Messages";
+
+    updateLoadMoreButton();
+
+  }
+
+}
+
+function updateLoadMoreButton() {
+
+  loadMoreMessagesBtn.hidden =
+    !hasMoreMessages ||
+    chatWindow.scrollTop > 30;
+
+}
+
+loadMoreMessagesBtn.addEventListener(
+  "click",
+  loadOlderMessages
+);
+
+chatWindow.addEventListener(
+  "scroll",
+  updateLoadMoreButton
+);
+
 messagesQuery.on("value", snapshot => {
+
+  const wasAtBottom =
+    chatWindow.scrollHeight -
+    chatWindow.scrollTop -
+    chatWindow.clientHeight < 80;
+
+  const latestKeys = new Set();
+
+  snapshot.forEach(child => {
+    latestKeys.add(child.key);
+  });
+
+  // Preserve older messages already loaded.
+  const olderMessages = Array.from(
+    chatWindow.children
+  ).filter(message =>
+    !latestKeys.has(message.dataset.key)
+  );
+
   chatWindow.innerHTML = "";
+
+  // Put older messages back first.
+  olderMessages.forEach(message => {
+    chatWindow.appendChild(message);
+  });
+
+  // Render the latest 50 messages.
   snapshot.forEach(child => {
     addMessage(child.val(), child.key);
   });
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+
+  // Set the initial oldest message key.
+  if (!oldestLoadedKey && snapshot.numChildren() > 0) {
+
+    oldestLoadedKey =
+      snapshot.val()
+        ? Object.keys(snapshot.val())[0]
+        : null;
+
+  }
+
+  // Only scroll down if the user was already near the bottom.
+  if (wasAtBottom) {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  updateLoadMoreButton();
+
 });
+
 /* =========================================================
    MESSAGE EDITING
 ========================================================= */
