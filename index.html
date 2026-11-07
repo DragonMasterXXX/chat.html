@@ -4328,6 +4328,19 @@ systemMessageInput.addEventListener(
 
 ownerLoginBtn.onclick = async () => {
 
+  const currentUser = auth.currentUser;
+
+  // Check if already logged in.
+  if (currentUser && !currentUser.isAnonymous) {
+
+    showNotification(
+      "You're already logged in, dum–dum."
+    );
+
+    return;
+
+  }
+
   const email = ownerEmail.value.trim();
   const password = ownerPassword.value;
 
